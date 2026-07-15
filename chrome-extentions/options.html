@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helpy Tab Tracker Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+      /* =========================================
+         1. DESIGN SYSTEM - HANDMADE AESTHETIC
+         ========================================= */
+      :root {
+        /* Warm, Organic Color Palette */
+        --paper-bg: #fef9e7;
+        --paper-text: #2d1810;
+        --accent-1: #e67e22; /* Warm Orange */
+        --accent-2: #c0392b; /* Red-Brown */
+        --accent-3: #27ae60; /* Warm Green */
+        --ink-dark: #1a1a1a;
+        --ink-light: #5d4037;
+        --border-ink: #4a3728;
+        --line-color: #e0d5c7;
+        --shadow-soft: rgba(0, 0, 0, 0.15);
+
+        /* Hand-Drawn Borders */
+        --border-thick: 3px solid var(--border-ink);
+        --border-thin: 2px solid var(--border-ink);
+
+        /* Fonts */
+        --font-hand: 'Caveat', cursive;
+        --font-body: 'Patrick Hand', cursive;
+      }
+
+      /* =========================================
+         2. GLOBAL & LAYOUT - PAPER TEXTURE
+         ========================================= */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      *::selection {
+        background: var(--accent-1);
+        color: var(--paper-bg);
+      }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        min-height: 100vh;
+        padding: 2rem;
+        font-family: var(--font-body);
+        line-height: 1.7;
+        color: var(--ink-dark);
+        background-color: var(--paper-bg);
+        background-image:
+          linear-gradient(90deg, var(--line-color) 1px, transparent 1px),
+          linear-gradient(var(--line-color) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      .container {
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      h1, h2, h3 {
+        font-family: var(--font-hand);
+        color: var(--ink-dark);
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        transform: rotate(-1deg);
+        margin-bottom: 0.5rem;
+      }
+
+      .eyebrow {
+        font-family: var(--font-hand);
+        font-size: 1.25rem;
+        color: var(--accent-1);
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 0.25rem;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 1rem;
+        color: var(--ink-light);
+        margin-bottom: 2rem;
+      }
+
+      .section {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        background-color: #fffdf5;
+        border: var(--border-thin);
+        border-radius: 2px 12px 6px 10px;
+        box-shadow: 4px 4px 0px var(--border-ink);
+        transform: rotate(0.3deg);
+      }
+
+      .section:nth-child(even) {
+        transform: rotate(-0.4deg);
+      }
+
+      .section h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px dashed var(--border-ink);
+        display: inline-block;
+        padding-bottom: 0.25rem;
+      }
+
+      /* Form Labels */
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
+      .form-label {
+        display: block;
+        font-family: var(--font-hand);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--ink-dark);
+        margin-bottom: 0.5rem;
+      }
+      .helper-text {
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        color: var(--ink-light);
+      }
+
+      /* Buttons */
+      button,
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: var(--border-thick);
+        border-radius: 6px 16px 10px 12px;
+        font-family: var(--font-hand);
+        font-size: 1.25rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 4px 4px 0 var(--border-ink);
+        transform: rotate(-0.5deg);
+      }
+      button:hover,
+      .btn:hover {
+        transform: translateY(-2px) rotate(0deg);
+        box-shadow: 6px 6px 0 var(--border-ink);
+      }
+      .btn-primary {
+        background-color: var(--accent-1);
+        color: var(--paper-bg);
+      }
+      .btn-secondary {
+        background-color: var(--paper-bg);
+        color: var(--ink-dark);
+      }
+      .btn-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      /* Inputs */
+      input, textarea, select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: var(--border-thin);
+        background-color: var(--paper-bg);
+        border-radius: 6px 2px 10px 4px;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        color: var(--ink-dark);
+        box-shadow: 3px 3px 0 var(--border-ink);
+        transition: all 0.2s ease;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        box-shadow: 5px 5px 0 var(--border-ink);
+        background-color: #fff7e6;
+      }
+
+      /* Checkbox */
+      .form-group label input[type="checkbox"] {
+        width: auto;
+        margin-right: 0.5rem;
+        appearance: none;
+        -webkit-appearance: none;
+        width: 24px;
+        height: 24px;
+        border: var(--border-thin);
+        border-radius: 4px 8px 6px 10px;
+        cursor: pointer;
+        background: var(--paper-bg);
+        box-shadow: 2px 2px 0 var(--border-ink);
+        position: relative;
+        vertical-align: middle;
+      }
+      .form-group label input[type="checkbox"]:checked {
+        background-color: var(--accent-3);
+      }
+      .form-group label input[type="checkbox"]:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 1.5rem;
+        font-family: var(--font-hand);
+      }
+
+      /* Message */
+      .message {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border: var(--border-thin);
+        border-radius: 6px 14px 10px 8px;
+        font-family: var(--font-body);
+        font-size: 1rem;
+        font-weight: 600;
+        box-shadow: 3px 3px 0 var(--border-ink);
+      }
+      .message-success {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .message-error {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+
+      /* Dark Mode Toggle */
+      .dark-mode-toggle {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        background: var(--paper-bg);
+        border: var(--border-thin);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 2px 2px 0 var(--border-ink);
+      }
+    </style>
+  </head>
+  <body>
+    <button id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode">🌙</button>
+    <div class="container">
+      <div class="eyebrow">Settings</div>
+      <h1>Helpy Tab Tracker</h1>
+      <p class="subtitle">Customize your Chrome tracking experience and keep it aligned with the Helpy desktop app.</p>
+
+      <div class="section">
+        <h2>Personalization</h2>
+        <div class="form-group">
+          <label for="displayName" class="form-label">Your Name</label>
+          <input
+            type="text"
+            id="displayName"
+            placeholder="Enter your name"
+            maxlength="40"
+          />
+          <p class="helper-text">Add your name to personalize reminders and status messages.</p>
+        </div>
+        <div class="form-group">
+          <label for="email" class="form-label">Email (Optional)</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="Enter your email"
+            maxlength="255"
+          />
+          <p class="helper-text">Your email will be kept private and secure.</p>
+        </div>
+        <div class="form-group">
+          <label for="bio" class="form-label">Bio (Optional)</label>
+          <textarea
+            id="bio"
+            placeholder="Tell us a little about yourself"
+            maxlength="500"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Privacy Settings</h2>
+        <div class="form-group">
+          <label class="form-label">
+            <input type="checkbox" id="collectAnalytics" checked />
+            Collect anonymized usage data
+          </label>
+          <p class="helper-text">Helps us improve the product. No personal data is shared.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            <input type="checkbox" id="allowPersonalization" checked />
+            Allow personalization
+          </label>
+          <p class="helper-text">Customize your experience based on usage patterns.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Tab Tracking</h2>
+        <div class="form-group">
+          <label for="inactivityMinutes" class="form-label">Inactivity Duration (minutes)</label>
+          <input
+            type="number"
+            id="inactivityMinutes"
+            min="1"
+            max="1440"
+            value="10"
+          />
+          <p class="helper-text">How long a tab should be inactive before triggering a reminder.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="notificationIntervalMinutes" class="form-label">Notification Interval (minutes)</label>
+          <input
+            type="number"
+            id="notificationIntervalMinutes"
+            min="1"
+            max="1440"
+            value="5"
+          />
+          <p class="helper-text">How often to remind you about inactive tabs.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="maxTabs" class="form-label">Maximum Open Tabs</label>
+          <input type="number" id="maxTabs" min="1" max="200" value="50" />
+          <p class="helper-text">Maximum number of open tabs before receiving a reminder.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Pomodoro Timer</h2>
+        <div class="form-group">
+          <label for="focusMinutes" class="form-label">Focus Duration (minutes)</label>
+          <input type="number" id="focusMinutes" min="1" max="120" value="25" />
+          <p class="helper-text">Duration of focused work sessions.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="breakMinutes" class="form-label">Break Duration (minutes)</label>
+          <input type="number" id="breakMinutes" min="1" max="60" value="5" />
+          <p class="helper-text">Duration of break between focus sessions.</p>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button id="saveBtn" class="btn btn-primary">Save Settings</button>
+        <button id="testBtn" class="btn btn-secondary">Test Notification</button>
+      </div>
+
+      <div
+        id="message"
+        class="message"
+        role="status"
+        aria-live="polite"
+        style="display: none"
+      ></div>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

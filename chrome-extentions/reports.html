@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helpy - Time Usage Reports</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <style>
+      /* =========================================
+         1. DESIGN SYSTEM - HANDMADE AESTHETIC
+         ========================================= */
+      :root {
+        /* Warm, Organic Color Palette */
+        --paper-bg: #fef9e7;
+        --paper-text: #2d1810;
+        --accent-1: #e67e22; /* Warm Orange */
+        --accent-2: #c0392b; /* Red-Brown */
+        --accent-3: #27ae60; /* Warm Green */
+        --ink-dark: #1a1a1a;
+        --ink-light: #5d4037;
+        --border-ink: #4a3728;
+        --line-color: #e0d5c7;
+        --shadow-soft: rgba(0, 0, 0, 0.15);
+
+        /* Hand-Drawn Borders */
+        --border-thick: 3px solid var(--border-ink);
+        --border-thin: 2px solid var(--border-ink);
+
+        /* Fonts */
+        --font-hand: 'Caveat', cursive;
+        --font-body: 'Patrick Hand', cursive;
+      }
+
+      /* =========================================
+         2. GLOBAL & LAYOUT - PAPER TEXTURE
+         ========================================= */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      *::selection {
+        background: var(--accent-1);
+        color: var(--paper-bg);
+      }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        font-family: var(--font-body);
+        font-size: 1rem;
+        line-height: 1.7;
+        color: var(--ink-dark);
+        background-color: var(--paper-bg);
+        background-image:
+          linear-gradient(90deg, var(--line-color) 1px, transparent 1px),
+          linear-gradient(var(--line-color) 1px, transparent 1px);
+        background-size: 24px 24px;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1, h2, h3 {
+        font-family: var(--font-hand);
+        color: var(--ink-dark);
+      }
+
+      /* Header */
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px dashed var(--border-ink);
+      }
+      .header-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transform: rotate(-0.5deg);
+      }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.25rem;
+        background: var(--paper-bg);
+        border: var(--border-thick);
+        border-radius: 6px 16px 10px 12px;
+        font-family: var(--font-hand);
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--ink-dark);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        box-shadow: 4px 4px 0 var(--border-ink);
+        transform: rotate(-0.5deg);
+      }
+      .back-btn:hover {
+        transform: translateY(-2px) rotate(0deg);
+        box-shadow: 6px 6px 0 var(--border-ink);
+        background-color: #fff7e6;
+      }
+
+      /* Date Selector */
+      .date-selector {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+      .date-btn {
+        padding: 0.75rem 1.5rem;
+        border: var(--border-thin);
+        border-radius: 4px 12px 8px 10px;
+        background: #fffdf5;
+        font-family: var(--font-hand);
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--ink-dark);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 3px 3px 0 var(--border-ink);
+        transform: rotate(-0.3deg);
+      }
+      .date-btn:hover {
+        transform: translateY(-1px) rotate(0deg);
+        box-shadow: 4px 4px 0 var(--border-ink);
+      }
+      .date-btn.active {
+        background-color: var(--accent-1);
+        color: var(--paper-bg);
+        box-shadow: 4px 4px 0 var(--border-ink);
+        transform: rotate(0.5deg);
+      }
+
+      /* Sections & Cards */
+      .section {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        background-color: #fffdf5;
+        border: var(--border-thin);
+        border-radius: 2px 12px 6px 10px;
+        box-shadow: 4px 4px 0px var(--border-ink);
+        transform: rotate(0.3deg);
+      }
+      .section:nth-child(even) {
+        transform: rotate(-0.4deg);
+      }
+      .section h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px dashed var(--border-ink);
+        display: inline-block;
+        padding-bottom: 0.25rem;
+      }
+
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .stat-card {
+        padding: 1.5rem;
+        background-color: #fffdf5;
+        border: var(--border-thin);
+        border-radius: 2px 12px 6px 10px;
+        box-shadow: 4px 4px 0px var(--border-ink);
+        transform: rotate(0.3deg);
+      }
+      .stat-card:nth-child(even) {
+        transform: rotate(-0.4deg);
+      }
+      .stat-label {
+        font-size: 1rem;
+        color: var(--ink-light);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        font-family: var(--font-body);
+      }
+      .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent-1);
+        font-family: var(--font-hand);
+      }
+      .stat-change {
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        color: var(--accent-3);
+        font-weight: 500;
+      }
+
+      /* Charts Grid */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      @media (max-width: 900px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .chart-card {
+        padding: 1.5rem;
+        background-color: #fffdf5;
+        border: var(--border-thin);
+        border-radius: 2px 12px 6px 10px;
+        box-shadow: 4px 4px 0px var(--border-ink);
+        transform: rotate(0.3deg);
+      }
+      .chart-card:nth-child(even) {
+        transform: rotate(-0.4deg);
+      }
+      .chart-canvas-wrap {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 320px;
+      }
+      #domainChart {
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 1;
+      }
+      .chart-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-family: var(--font-hand);
+        margin-bottom: 1.5rem;
+      }
+
+      /* Domain List */
+      .domain-list {
+        list-style: none;
+      }
+      .domain-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--line-color);
+      }
+      .domain-item:last-child {
+        border-bottom: none;
+      }
+      .domain-info {
+        flex: 1;
+      }
+      .domain-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      .domain-visits {
+        font-size: 0.95rem;
+        color: var(--ink-light);
+      }
+      .domain-time {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--accent-1);
+        font-family: var(--font-hand);
+      }
+
+      /* Loading & Empty State */
+      .loading, .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        font-size: 1.25rem;
+        color: var(--ink-light);
+      }
+      .empty-state svg {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+      }
+      .empty-state h2 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-title">
+          <span>📊</span>
+          Time Usage Reports
+        </div>
+        <a href="popup.html" class="back-btn"> ← Back </a>
+      </header>
+
+      <div class="date-selector">
+        <button class="date-btn active" data-period="1">Today</button>
+        <button class="date-btn" data-period="7">This Week</button>
+        <button class="date-btn" data-period="30">This Month</button>
+      </div>
+
+      <div id="loading" class="loading">Loading report data...</div>
+
+      <div id="emptyState" class="empty-state" style="display: none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M8 12h8M12 8v8" />
+        </svg>
+        <h2>No Data Yet</h2>
+        <p>Keep browsing to see your time usage statistics.</p>
+      </div>
+
+      <div id="content" style="display: none">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Focus Time</div>
+            <div class="stat-value" id="totalTime">0h</div>
+            <div class="stat-change">Tracked today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tabs Switched</div>
+            <div class="stat-value" id="switchCount">0</div>
+            <div class="stat-change">Activity count</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Domains Visited</div>
+            <div class="stat-value" id="domainCount">0</div>
+            <div class="stat-change">Unique sites</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Time Distribution by Domain</div>
+            <div class="chart-canvas-wrap">
+              <canvas id="domainChart"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Top Domains</div>
+            <ul id="domainList" class="domain-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="reports.js"></script>
+  </body>
+</html>

@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Helpy Tab Tracker",
+  "version": "1.3.0",
+  "description": "Track browser tabs for Helpy app - stay productive and focused! Use /plan to start planning!",
+  "permissions": ["tabs", "notifications", "storage", "alarms", "identity"],
+  "host_permissions": ["http://localhost:3456/*", "https://www.googleapis.com/*", "https://accounts.google.com/*"],
+  "omnibox": { "keyword": "helpy" },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "Helpy Tab Tracker"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "options_page": "options.html",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["categories.json", "reports.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "MacCtrl+Shift+H"
+      }
+    },
+    "toggle-tracking": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "MacCtrl+Shift+P"
+      },
+      "description": "Toggle tab tracking"
+    },
+    "toggle-pomodoro": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "MacCtrl+Shift+T"
+      },
+      "description": "Toggle Pomodoro timer"
+    },
+    "open-reports": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+R",
+        "mac": "MacCtrl+Shift+R"
+      },
+      "description": "Open reports page"
+    }
+  }
+}
