@@ -1,0 +1,746 @@
+/* =========================================
+   1. DESIGN SYSTEM - HANDMADE AESTHETIC
+   ========================================= */
+:root {
+  /* Warm, Organic Color Palette */
+  --paper-bg: #fef9e7;
+  --paper-text: #2d1810;
+  --accent-1: #e67e22; /* Warm Orange */
+  --accent-2: #c0392b; /* Red-Brown */
+  --accent-3: #27ae60; /* Warm Green */
+  --ink-dark: #1a1a1a;
+  --ink-light: #5d4037;
+  --border-ink: #4a3728;
+  --line-color: #e0d5c7;
+  --shadow-soft: rgba(0, 0, 0, 0.15);
+
+  /* Hand-Drawn Borders */
+  --border-thick: 3px solid var(--border-ink);
+  --border-thin: 2px solid var(--border-ink);
+
+  /* Fonts */
+  --font-hand: 'Caveat', cursive;
+  --font-body: 'Patrick Hand', cursive;
+}
+
+/* =========================================
+   2. GLOBAL & LAYOUT - PAPER TEXTURE
+   ========================================= */
+* {
+  box-sizing: border-box;
+}
+
+*::selection {
+  background: var(--accent-1);
+  color: var(--paper-bg);
+}
+
+body {
+  font-family: var(--font-body);
+  margin: 0;
+  padding: 32px;
+  min-height: 100vh;
+  color: var(--ink-dark);
+  line-height: 1.7;
+  background-color: var(--paper-bg);
+  background-image:
+    linear-gradient(90deg, var(--line-color) 1px, transparent 1px),
+    linear-gradient(var(--line-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+  position: relative;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: var(--paper-bg);
+  padding: 40px;
+  border-radius: 2px 8px 4px 12px;
+  border: var(--border-thick);
+  box-shadow: 6px 6px 0px var(--border-ink);
+  position: relative;
+  transform: rotate(-0.5deg);
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border: 2px dashed var(--border-ink);
+  border-radius: 12px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+h1 {
+  text-align: center;
+  margin: 0 0 32px;
+  font-size: 3.5rem;
+  font-weight: 700;
+  font-family: var(--font-hand);
+  color: var(--ink-dark);
+  transform: rotate(-1deg);
+}
+
+h2 {
+  font-family: var(--font-hand);
+  margin: 0 0 24px;
+  font-size: 2rem;
+  color: var(--ink-dark);
+  transform: rotate(0.5deg);
+  border-bottom: 2px dashed var(--border-ink);
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+/* =========================================
+   3. TABS - HAND-DRAWN TABS
+   ========================================= */
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.tab-button {
+  padding: 10px 24px;
+  border: var(--border-thin);
+  background-color: var(--paper-bg);
+  cursor: pointer;
+  font-family: var(--font-hand);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--ink-dark);
+  border-radius: 4px 12px 8px 16px;
+  transform: rotate(-1deg);
+  transition: all 0.2s ease;
+  box-shadow: 3px 3px 0 var(--border-ink);
+}
+
+.tab-button:hover {
+  transform: translateY(-2px) rotate(0deg);
+  box-shadow: 5px 5px 0 var(--border-ink);
+  background-color: #fff7e6;
+}
+
+.tab-button.active {
+  background-color: var(--accent-1);
+  color: var(--paper-bg);
+  box-shadow: 4px 4px 0 var(--border-ink);
+  transform: rotate(0.5deg);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* =========================================
+   4. SECTIONS
+   ========================================= */
+.section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background-color: #fffdf5;
+  border: var(--border-thin);
+  border-radius: 2px 12px 6px 10px;
+  box-shadow: 4px 4px 0 var(--border-ink);
+  transform: rotate(0.3deg);
+  position: relative;
+}
+
+.section:nth-child(even) {
+  transform: rotate(-0.4deg);
+}
+
+/* =========================================
+   5. FORMS & INPUTS
+   ========================================= */
+#commandInput,
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px 16px;
+  border: var(--border-thin);
+  background-color: var(--paper-bg);
+  border-radius: 6px 2px 10px 4px;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  color: var(--ink-dark);
+  box-shadow: 3px 3px 0 var(--border-ink);
+  transition: all 0.2s ease;
+}
+
+#commandInput:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  box-shadow: 5px 5px 0 var(--border-ink);
+  background-color: #fff7e6;
+}
+
+#commandResult {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background-color: #fff7e6;
+  border: var(--border-thin);
+  border-radius: 8px 2px 12px 4px;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-hand);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* Custom Checkboxes */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border: var(--border-thin);
+  border-radius: 4px 8px 6px 10px;
+  cursor: pointer;
+  background: var(--paper-bg);
+  box-shadow: 2px 2px 0 var(--border-ink);
+  position: relative;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--accent-3);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.5rem;
+  font-family: var(--font-hand);
+}
+
+/* =========================================
+   6. BUTTONS
+   ========================================= */
+button,
+.primary-btn,
+.secondary-btn,
+.danger-btn {
+  padding: 12px 24px;
+  border: var(--border-thick);
+  border-radius: 6px 16px 10px 12px;
+  font-family: var(--font-hand);
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 4px 4px 0 var(--border-ink);
+  transform: rotate(-0.5deg);
+}
+
+button:hover,
+.primary-btn:hover,
+.secondary-btn:hover,
+.danger-btn:hover {
+  transform: translateY(-2px) rotate(0deg);
+  box-shadow: 6px 6px 0 var(--border-ink);
+}
+
+.primary-btn,
+button:not(.secondary-btn):not(.danger-btn):not(.mark-read-btn):not(.delete-notification-btn):not(.oauth-btn):not(.delete-btn) {
+  background-color: var(--accent-1);
+  color: var(--paper-bg);
+}
+
+.secondary-btn {
+  background-color: var(--paper-bg);
+  color: var(--ink-dark);
+}
+
+.danger-btn {
+  background-color: var(--accent-2);
+  color: var(--paper-bg);
+}
+
+/* =========================================
+   7. TIMER
+   ========================================= */
+.timer-mode-indicator {
+  text-align: center;
+  font-family: var(--font-hand);
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+}
+
+.timer-mode-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.mode-btn {
+  font-family: var(--font-hand);
+  font-size: 1.4rem;
+}
+
+.mode-btn.active {
+  background-color: var(--accent-1);
+  color: var(--paper-bg);
+}
+
+.timer-display {
+  font-size: 5rem;
+  font-family: var(--font-hand);
+  font-weight: 700;
+  text-align: center;
+  padding: 32px;
+  border: var(--border-thick);
+  border-radius: 8px 16px 12px 20px;
+  margin-bottom: 24px;
+  background-color: #fff7e6;
+  box-shadow: 6px 6px 0 var(--border-ink);
+}
+
+.timer-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* =========================================
+   8. TASKS, HABITS & PLANS
+   ========================================= */
+.task-item,
+.habit-item,
+.plan-item {
+  padding: 16px;
+  border: var(--border-thin);
+  border-radius: 4px 12px 8px 10px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fffdf5;
+  box-shadow: 3px 3px 0 var(--border-ink);
+  transform: rotate(-0.3deg);
+  gap: 16px;
+}
+
+.task-item:nth-child(even),
+.habit-item:nth-child(even),
+.plan-item:nth-child(even) {
+  transform: rotate(0.4deg);
+}
+
+.task-item:hover,
+.habit-item:hover,
+.plan-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0 var(--border-ink);
+}
+
+.task-title,
+.habit-name,
+.plan-title {
+  font-family: var(--font-hand);
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.task-item.completed {
+  opacity: 0.7;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.task-actions,
+.habit-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.task-actions button,
+.habit-actions button {
+  padding: 8px 16px;
+  font-size: 1.1rem;
+}
+
+/* =========================================
+   9. NOTIFICATIONS
+   ========================================= */
+.notification-item {
+  padding: 16px;
+  border: var(--border-thin);
+  border-radius: 6px 14px 10px 8px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fffdf5;
+  box-shadow: 3px 3px 0 var(--border-ink);
+  gap: 16px;
+}
+
+.notification-item.read {
+  opacity: 0.7;
+  background-color: #f8f4e7;
+}
+
+.notification-item.unread {
+  background-color: #fff7e6;
+}
+
+.notification-title {
+  font-family: var(--font-hand);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.notification-actions button {
+  padding: 8px 16px;
+  font-size: 1.1rem;
+}
+
+/* =========================================
+   10. PROFILE & AUTH
+   ========================================= */
+.auth-form {
+  max-width: 400px;
+}
+
+.auth-toggle-text {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+}
+
+.oauth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.oauth-btn {
+  font-family: var(--font-hand);
+  font-size: 1.3rem;
+}
+
+.google-btn {
+  background-color: white;
+}
+
+.github-btn {
+  background-color: #24292f;
+  color: white;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border: var(--border-thin);
+  border-radius: 8px 16px 12px 10px;
+  background-color: #fffdf5;
+  box-shadow: 4px 4px 0 var(--border-ink);
+}
+
+.profile-name {
+  font-family: var(--font-hand);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* =========================================
+   11. RESPONSIVE DESIGN
+   ========================================= */
+/* Current Plan Styles */
+.adhd-plan-card {
+  padding: 24px;
+  border-radius: 8px 16px 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid var(--border-ink);
+  box-shadow: 4px 4px 0 var(--border-ink);
+  margin-bottom: 24px;
+  transform: rotate(-0.3deg);
+}
+
+.adhd-plan-card h3 {
+  font-family: var(--font-hand);
+  font-size: 1.8rem;
+  margin: 0 0 8px 0;
+}
+
+.adhd-plan-card p {
+  margin: 0 0 16px 0;
+  opacity: 0.9;
+}
+
+.plan-progress-container {
+  margin-bottom: 20px;
+}
+
+.plan-progress-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-family: var(--font-hand);
+  font-size: 1.1rem;
+}
+
+.plan-progress-bar {
+  height: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--border-ink);
+}
+
+.plan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  transition: width 0.3s ease;
+  border-radius: 6px;
+}
+
+.adhd-plan-card .task-item {
+  padding: 14px 16px;
+  border-radius: 4px 12px 4px 12px;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid transparent;
+}
+
+.adhd-plan-card .task-item:hover {
+  transform: translateX(4px);
+  border-color: var(--accent-1);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.adhd-plan-card .task-item.task-completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.task-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid var(--border-ink);
+  border-radius: 4px 8px 4px 8px;
+  background: var(--paper-bg);
+  box-shadow: 2px 2px 0 var(--border-ink);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.task-checkbox:checked {
+  background: var(--accent-3);
+}
+
+.task-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 1.2rem;
+  font-family: var(--font-hand);
+}
+
+.task-duration {
+  font-size: 0.875rem;
+  opacity: 0.7;
+  margin-left: auto;
+  font-family: var(--font-hand);
+}
+
+/* Notifications - Type Icons */
+.notification-type-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px 16px 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-right: 16px;
+  flex-shrink: 0;
+  border: 2px solid var(--border-ink);
+  box-shadow: 2px 2px 0 var(--border-ink);
+}
+
+.notification-type-icon.task {
+  background: #dbeafe;
+}
+
+.notification-type-icon.reminder {
+  background: #fef3c7;
+}
+
+.notification-type-icon.achievement {
+  background: #f3e8ff;
+}
+
+.notification-type-icon.focus {
+  background: #d1fae5;
+}
+
+.notification-type-icon.system {
+  background: #f3f4f6;
+}
+
+/* Stats Grid Enhancement */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-item {
+  padding: 20px;
+  border: 2px solid var(--border-ink);
+  border-radius: 4px 16px 4px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 4px 4px 0 var(--border-ink);
+  text-align: center;
+  transform: rotate(-0.3deg);
+}
+
+.stat-item:nth-child(even) {
+  transform: rotate(0.3deg);
+}
+
+.stat-value {
+  font-family: var(--font-hand);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent-2);
+}
+
+.stat-label {
+  font-family: var(--font-hand);
+  font-size: 1.1rem;
+  color: var(--ink-light);
+  margin-top: 4px;
+}
+
+/* Recent Plans List */
+.recent-plan-item {
+  padding: 14px 16px;
+  border: 2px solid var(--border-ink);
+  border-radius: 4px 12px 4px 12px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 3px 3px 0 var(--border-ink);
+  transform: rotate(-0.2deg);
+}
+
+.recent-plan-item:hover {
+  transform: translateY(-2px) rotate(0deg);
+  box-shadow: 5px 5px 0 var(--border-ink);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.recent-plan-info h4 {
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 1.3rem;
+}
+
+.recent-plan-info p {
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--accent-1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 16px;
+  }
+  .container {
+    padding: 20px;
+  }
+  h1 {
+    font-size: 2.5rem;
+  }
+  .timer-display {
+    font-size: 3.5rem;
+  }
+  .task-item,
+  .habit-item,
+  .plan-item,
+  .notification-item,
+  .recent-plan-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .task-actions,
+  .habit-actions,
+  .notification-actions {
+    width: 100%;
+  }
+  .adhd-plan-card .task-item {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

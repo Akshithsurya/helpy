@@ -1,0 +1,54 @@
+[
+  {
+    "planId": "mrhi865wyrkj4cwfwy7",
+    "title": "Test Focus Plan",
+    "goal": "",
+    "durationMinutes": 25,
+    "actualDurationMinutes": null,
+    "status": "in_progress",
+    "source": "test",
+    "createdAt": "2026-07-12T08:01:12.500Z",
+    "completedAt": null,
+    "taskId": null,
+    "taskTitle": "Test Focus Plan"
+  },
+  {
+    "planId": "mrez7a9q28ylujwkri6",
+    "title": "Test Focus Plan",
+    "goal": "",
+    "durationMinutes": 25,
+    "actualDurationMinutes": null,
+    "status": "in_progress",
+    "source": "test",
+    "createdAt": "2026-07-10T13:33:06.075Z",
+    "completedAt": null,
+    "taskId": 1783690386077,
+    "taskTitle": "Test Focus Plan"
+  },
+  {
+    "planId": "mrewmr6wllrue2ik4e",
+    "title": "Test Plan",
+    "goal": "Testing",
+    "durationMinutes": 30,
+    "actualDurationMinutes": null,
+    "status": "in_progress",
+    "source": "unknown",
+    "createdAt": "2026-07-10T12:21:09.027Z",
+    "completedAt": null,
+    "taskId": null,
+    "taskTitle": "Test Plan"
+  },
+  {
+    "planId": "mrewjh70jnsfy9n4n",
+    "title": "Test Plan",
+    "goal": "Testing",
+    "durationMinutes": 30,
+    "actualDurationMinutes": 0,
+    "status": "in_progress",
+    "source": "unknown",
+    "createdAt": "2026-07-10T12:18:36.105Z",
+    "completedAt": null,
+    "taskId": 0,
+    "taskTitle": "Test Plan"
+  }
+]

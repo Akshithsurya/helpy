@@ -1,0 +1,12 @@
+{
+  "akshithsurya1@gmail.com": {
+    "id": "e07b9cb8-cddc-49f1-a6a6-883b3209d6f8",
+    "email": "akshithsurya1@gmail.com",
+    "passwordHash": "",
+    "displayName": "Akshith",
+    "createdAt": "2026-07-15T12:02:19.753Z",
+    "updatedAt": "2026-07-15T12:02:19.753Z",
+    "isEmailVerified": false,
+    "provider": "google"
+  }
+}

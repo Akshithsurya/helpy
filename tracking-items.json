@@ -1,0 +1,9 @@
+[
+  {
+    "id": "imported-item",
+    "name": "Imported Item",
+    "type": "custom",
+    "enabled": true,
+    "config": {}
+  }
+]

@@ -1,0 +1,119 @@
+{
+  "name": "helpy",
+  "version": "1.0.0",
+  "description": "A lightweight reminder and task manager app with tab tracking",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "stage:chrome-extension": "node scripts/stage-chrome-extension.js",
+    "build": "npm run stage:chrome-extension && electron-builder",
+    "build:win": "npm run stage:chrome-extension && electron-builder --win",
+    "build:dir": "npm run stage:chrome-extension && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.helpy.app",
+    "productName": "Helpy",
+    "directories": {
+      "output": "release/app"
+    },
+    "files": [
+      "**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.vscode",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!__tests__",
+      "!.trae",
+      "!dist/**",
+      "!release/**",
+      "!active-focus-session.json",
+      "!analytics-data.json",
+      "!app-history.json",
+      "!focus-history.json",
+      "!focus-plan-history.json",
+      "!focus-plan-templates.json",
+      "!habits-data.json",
+      "!jwt-secret.json",
+      "!notifications-data.json",
+      "!settings.json",
+      "!tab-history-store.json",
+      "!tab-history.json",
+      "!tags.json",
+      "!tasks-data.json",
+      "!tasks.json",
+      "!tracking-items.json",
+      "!tracking-records.json",
+      "!users.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "keywords": [
+    "productivity",
+    "task-manager",
+    "reminders",
+    "electron"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "active-win": "^7.7.2",
+    "auto-launch": "^5.0.6",
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^2.3.0",
+    "date-fns": "^4.4.0",
+    "dotenv": "^17.4.2",
+    "electron-context-menu": "^4.1.2",
+    "electron-store": "^8.2.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "node-notifier": "^6.0.0",
+    "twilio": "^6.0.2",
+    "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "electron": "^42.5.1",
+    "electron-builder": "^26.15.3",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "globals": "^15.12.0",
+    "jest": "^26.6.3",
+    "prettier": "^3.3.3"
+  }
+}

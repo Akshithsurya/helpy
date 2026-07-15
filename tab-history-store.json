@@ -1,0 +1,3368 @@
+[
+  {
+    "tabId": 1,
+    "url": "https://example.com",
+    "title": "Test Tab",
+    "domain": "example.com",
+    "startTime": 1783843267485,
+    "endTime": 1783843272485,
+    "duration": 5000
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783941838385,
+    "endTime": 1783941842412,
+    "duration": 4027
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783941846239,
+    "endTime": 1783941956084,
+    "duration": 109845
+  },
+  {
+    "tabId": 778734262,
+    "url": "https://chat.z.ai/c/d66d45e8-fd8c-4a52-9ac9-af91c46cdb8e",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1783941956084,
+    "endTime": 1783942289909,
+    "duration": 333825
+  },
+  {
+    "tabId": 778734352,
+    "url": "https://accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "title": "accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "domain": "accounts.google.com",
+    "startTime": 1783942640936,
+    "endTime": 1783942644552,
+    "duration": 3616
+  },
+  {
+    "tabId": 778734367,
+    "url": "https://accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "title": "accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "domain": "accounts.google.com",
+    "startTime": 1783942650356,
+    "endTime": 1783942653955,
+    "duration": 3599
+  },
+  {
+    "tabId": 778734387,
+    "url": "https://accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "title": "accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "domain": "accounts.google.com",
+    "startTime": 1783942662115,
+    "endTime": 1783942689668,
+    "duration": 27553
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942691587,
+    "endTime": 1783942701266,
+    "duration": 9679
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942704743,
+    "endTime": 1783942709103,
+    "duration": 4360
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942709106,
+    "endTime": 1783942718110,
+    "duration": 9004
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942718112,
+    "endTime": 1783942722338,
+    "duration": 4226
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/my/notifications",
+    "title": "Notifications - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942725323,
+    "endTime": 1783942728520,
+    "duration": 3197
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Notifications - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942728520,
+    "endTime": 1783942734155,
+    "duration": 5635
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://raffle.stardance.hackclub.com/",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1783942734176,
+    "endTime": 1783942926895,
+    "duration": 192719
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783942926897,
+    "endTime": 1783942931799,
+    "duration": 4902
+  },
+  {
+    "tabId": 778734262,
+    "url": "https://chat.z.ai/c/d66d45e8-fd8c-4a52-9ac9-af91c46cdb8e",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1783942931802,
+    "endTime": 1783943019401,
+    "duration": 87599
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://mail.google.com/mail/u/0/#inbox/FMfcgzQhVNXbbzwkjMrvVWNXGxnkvSfj",
+    "title": "You've got 7 unread messages - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783943037991,
+    "endTime": 1783943041259,
+    "duration": 3268
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://mail.google.com/mail/u/0/#inbox",
+    "title": "Inbox (893) - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783943049366,
+    "endTime": 1783943054696,
+    "duration": 5330
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://mail.google.com/mail/u/0/#inbox/FMfcgzQhVNXZxqLgfcPnQNcvLmzbRnWR",
+    "title": "Inbox (892) - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783943054698,
+    "endTime": 1783943060285,
+    "duration": 5587
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://mail.google.com/mail/u/0/#inbox/FMfcgzQhVNXbRkGmLQwdJFSgQSDvHDnH",
+    "title": "Inbox (891) - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783943070516,
+    "endTime": 1783943369893,
+    "duration": 299377
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://mail.google.com/mail/u/0/#inbox/FMfcgzQhVNXbRkGmLQwdJFSgQSDvHDnH",
+    "title": "What's new at Netlify this month - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783943543741,
+    "endTime": 1783943558644,
+    "duration": 14903
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://claude.ai/chat/045cdac1-56cc-4244-b1ea-a57bae6b0942",
+    "title": "Claude",
+    "domain": "claude.ai",
+    "startTime": 1783943652613,
+    "endTime": 1783943688431,
+    "duration": 35818
+  },
+  {
+    "tabId": 778734262,
+    "url": "https://chat.z.ai/c/d66d45e8-fd8c-4a52-9ac9-af91c46cdb8e",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1783943688530,
+    "endTime": 1783943824722,
+    "duration": 136192
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://claude.ai/chat/045cdac1-56cc-4244-b1ea-a57bae6b0942",
+    "title": "Claude",
+    "domain": "claude.ai",
+    "startTime": 1783943824792,
+    "endTime": 1783944058978,
+    "duration": 234186
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783944058979,
+    "endTime": 1783944252930,
+    "duration": 193951
+  },
+  {
+    "tabId": 778734452,
+    "url": "https://claude.ai/chat/045cdac1-56cc-4244-b1ea-a57bae6b0942",
+    "title": "Claude",
+    "domain": "claude.ai",
+    "startTime": 1783944252944,
+    "endTime": 1783944300677,
+    "duration": 47733
+  },
+  {
+    "tabId": 778734537,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783944903542,
+    "endTime": 1783944906658,
+    "duration": 3116
+  },
+  {
+    "tabId": 778734537,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783944907165,
+    "endTime": 1783945053393,
+    "duration": 146228
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945053410,
+    "endTime": 1783945061847,
+    "duration": 8437
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945061853,
+    "endTime": 1783945067840,
+    "duration": 5987
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945067843,
+    "endTime": 1783945079956,
+    "duration": 12113
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/projects/28672",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945079958,
+    "endTime": 1783945094992,
+    "duration": 15034
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/projects/28672",
+    "title": "Helpy - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945095021,
+    "endTime": 1783945103570,
+    "duration": 8549
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Helpy - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945105688,
+    "endTime": 1783945113481,
+    "duration": 7793
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945113484,
+    "endTime": 1783945119402,
+    "duration": 5918
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945119404,
+    "endTime": 1783945283108,
+    "duration": 163704
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/my/achievements",
+    "title": "Achievements - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783945283110,
+    "endTime": 1783945474724,
+    "duration": 191614
+  },
+  {
+    "tabId": 778734537,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783946111488,
+    "endTime": 1783946518310,
+    "duration": 406822
+  },
+  {
+    "tabId": 778734537,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783946518362,
+    "endTime": 1783946521904,
+    "duration": 3542
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/my/achievements",
+    "title": "Achievements - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783946526297,
+    "endTime": 1783947005891,
+    "duration": 479594
+  },
+  {
+    "tabId": 778734537,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783947425828,
+    "endTime": 1783947429610,
+    "duration": 3782
+  },
+  {
+    "tabId": 778734537,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783947430825,
+    "endTime": 1783948234654,
+    "duration": 803829
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/my/achievements",
+    "title": "Achievements - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948234660,
+    "endTime": 1783948238226,
+    "duration": 3566
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Achievements - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948238381,
+    "endTime": 1783948242967,
+    "duration": 4586
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948242968,
+    "endTime": 1783948248579,
+    "duration": 5611
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948250362,
+    "endTime": 1783948622576,
+    "duration": 372214
+  },
+  {
+    "tabId": 778734682,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783948638618,
+    "endTime": 1783948641825,
+    "duration": 3207
+  },
+  {
+    "tabId": 778734682,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783948642792,
+    "endTime": 1783948646038,
+    "duration": 3246
+  },
+  {
+    "tabId": 778734682,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783948646281,
+    "endTime": 1783948754877,
+    "duration": 108596
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948754880,
+    "endTime": 1783948762673,
+    "duration": 7793
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948762675,
+    "endTime": 1783948767022,
+    "duration": 4347
+  },
+  {
+    "tabId": 778734216,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948767834,
+    "endTime": 1783948773140,
+    "duration": 5306
+  },
+  {
+    "tabId": 778734689,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783948782203,
+    "endTime": 1783948786100,
+    "duration": 3897
+  },
+  {
+    "tabId": 778734682,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783948786134,
+    "endTime": 1783949057363,
+    "duration": 271229
+  },
+  {
+    "tabId": 778734697,
+    "url": "https://www.seikowatches.com/in-en",
+    "title": "SEIKO WATCH | Always one step ahead of the rest.",
+    "domain": "seikowatches.com",
+    "startTime": 1783949400956,
+    "endTime": 1783949412963,
+    "duration": 12007
+  },
+  {
+    "tabId": 778734697,
+    "url": "https://www.seikowatches.com/in-en/world#visit",
+    "title": "Learn about SEIKO | Seiko Watch Corporation",
+    "domain": "seikowatches.com",
+    "startTime": 1783949412972,
+    "endTime": 1783949418138,
+    "duration": 5166
+  },
+  {
+    "tabId": 778734682,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783949866462,
+    "endTime": 1783949872622,
+    "duration": 6160
+  },
+  {
+    "tabId": 778734682,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783949873471,
+    "endTime": 1783950003458,
+    "duration": 129987
+  },
+  {
+    "tabId": 778734725,
+    "url": "https://chat.z.ai/",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1783950232035,
+    "endTime": 1783950248115,
+    "duration": 16080
+  },
+  {
+    "tabId": 778734725,
+    "url": "https://chat.z.ai/c/3d5d7ffd-ca4b-49da-a0c2-520282d64f08",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1783950248118,
+    "endTime": 1783950256931,
+    "duration": 8813
+  },
+  {
+    "tabId": 778734788,
+    "url": "https://accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=your_google_client_id_here&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "title": "accounts.google.com/signin/oauth/error?authError=Cg5pbnZhbGlkX2NsaWVudBIfVGhlIE9BdXRoIGNsaWVudCB3YXMgbm90IGZvdW5kLiCRAw&flowName=GeneralOAuthFlow&client_id=your_google_client_id_here&aes=AbzcAbFm8cbVn8oGDufFisJZercW",
+    "domain": "accounts.google.com",
+    "startTime": 1783951244402,
+    "endTime": 1783951273902,
+    "duration": 29500
+  },
+  {
+    "tabId": 778734811,
+    "url": "https://app.netlify.com/projects/akshith-surya-portfolio-ak/overview",
+    "title": "Project overview | akshith-surya-portfolio-ak | Netlify",
+    "domain": "app.netlify.com",
+    "startTime": 1783953129055,
+    "endTime": 1783953133230,
+    "duration": 4175
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953139017,
+    "endTime": 1783953146582,
+    "duration": 7565
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953146587,
+    "endTime": 1783953150189,
+    "duration": 3602
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953150240,
+    "endTime": 1783953246010,
+    "duration": 95770
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953262189,
+    "endTime": 1783953283348,
+    "duration": 21159
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953283350,
+    "endTime": 1783953296031,
+    "duration": 12681
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953298026,
+    "endTime": 1783953523266,
+    "duration": 225240
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953651224,
+    "endTime": 1783953748459,
+    "duration": 97235
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953768291,
+    "endTime": 1783953772077,
+    "duration": 3786
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953783718,
+    "endTime": 1783953787543,
+    "duration": 3825
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953801161,
+    "endTime": 1783953812812,
+    "duration": 11651
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953848543,
+    "endTime": 1783953873858,
+    "duration": 25315
+  },
+  {
+    "tabId": 778734826,
+    "url": "https://akshith-surya-portfolio-ak.netlify.app/",
+    "title": "AKSHITH SURYA — Space Science & Engineering",
+    "domain": "akshith-surya-portfolio-ak.netlify.app",
+    "startTime": 1783953880322,
+    "endTime": 1783953883654,
+    "duration": 3332
+  },
+  {
+    "tabId": 778734829,
+    "url": "https://app.netlify.com/projects/akshith-surya-portfolio-ak/overview",
+    "title": "Project overview | akshith-surya-portfolio-ak | Netlify",
+    "domain": "app.netlify.com",
+    "startTime": 1783953883694,
+    "endTime": 1783953898838,
+    "duration": 15144
+  },
+  {
+    "tabId": 778734829,
+    "url": "https://app.netlify.com/projects/akshith-surya-portfolio-ak/overview",
+    "title": "Project overview | akshith-surya-portfolio-ak | Netlify",
+    "domain": "app.netlify.com",
+    "startTime": 1783953898840,
+    "endTime": 1783953934584,
+    "duration": 35744
+  },
+  {
+    "tabId": 778734833,
+    "url": "https://akshith-surya-portfolio-ak.netlify.app/",
+    "title": "AKSHITH SURYA — Blackhole · Space Science & Engineering",
+    "domain": "akshith-surya-portfolio-ak.netlify.app",
+    "startTime": 1783953938934,
+    "endTime": 1783953952551,
+    "duration": 13617
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953954145,
+    "endTime": 1783953962846,
+    "duration": 8701
+  },
+  {
+    "tabId": 778734833,
+    "url": "https://akshith-surya-portfolio-ak.netlify.app/",
+    "title": "AKSHITH SURYA — Blackhole · Space Science & Engineering",
+    "domain": "akshith-surya-portfolio-ak.netlify.app",
+    "startTime": 1783953962867,
+    "endTime": 1783953968632,
+    "duration": 5765
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783953968633,
+    "endTime": 1783954044063,
+    "duration": 75430
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954046259,
+    "endTime": 1783954060847,
+    "duration": 14588
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954063589,
+    "endTime": 1783954067053,
+    "duration": 3464
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954067057,
+    "endTime": 1783954074612,
+    "duration": 7555
+  },
+  {
+    "tabId": 778734838,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954074633,
+    "endTime": 1783954078292,
+    "duration": 3659
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/votes/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954078336,
+    "endTime": 1783954084194,
+    "duration": 5858
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/votes/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954089140,
+    "endTime": 1783954092631,
+    "duration": 3491
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954092637,
+    "endTime": 1783954096239,
+    "duration": 3602
+  },
+  {
+    "tabId": 778734846,
+    "url": "https://arnavaggarwal-dev.github.io/unblocked-games/",
+    "title": "Heh",
+    "domain": "arnavaggarwal-dev.github.io",
+    "startTime": 1783954099468,
+    "endTime": 1783954109835,
+    "duration": 10367
+  },
+  {
+    "tabId": 778734852,
+    "url": "https://arnavaggarwal-dev.github.io/unblocked-games/games/dead_zone.html",
+    "title": "DEAD ZONE",
+    "domain": "arnavaggarwal-dev.github.io",
+    "startTime": 1783954116968,
+    "endTime": 1783954156177,
+    "duration": 39209
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954158243,
+    "endTime": 1783954204106,
+    "duration": 45863
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954211981,
+    "endTime": 1783954217388,
+    "duration": 5407
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954219870,
+    "endTime": 1783954234321,
+    "duration": 14451
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954235511,
+    "endTime": 1783954247650,
+    "duration": 12139
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/certificate",
+    "title": "Certificate - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954247654,
+    "endTime": 1783954253646,
+    "duration": 5992
+  },
+  {
+    "tabId": 778734862,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783954253649,
+    "endTime": 1783954257356,
+    "duration": 3707
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/my/notifications",
+    "title": "Notifications - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783954261305,
+    "endTime": 1783956502102,
+    "duration": 2240797
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Notifications - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956502110,
+    "endTime": 1783956517033,
+    "duration": 14923
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Notifications - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956519100,
+    "endTime": 1783956524264,
+    "duration": 5164
+  },
+  {
+    "tabId": 778734875,
+    "url": "https://github.com/Nikhil20222/deepread",
+    "title": "Nikhil20222/deepread: AI-powered research assistant that transforms PDFs into interactive knowledge graphs.",
+    "domain": "github.com",
+    "startTime": 1783956532674,
+    "endTime": 1783956537003,
+    "duration": 4329
+  },
+  {
+    "tabId": 778734872,
+    "url": "https://deepread-lake.vercel.app/",
+    "title": "DeepRead",
+    "domain": "deepread-lake.vercel.app",
+    "startTime": 1783956539692,
+    "endTime": 1783956543016,
+    "duration": 3324
+  },
+  {
+    "tabId": 778734872,
+    "url": "https://deepread-lake.vercel.app/#upload",
+    "title": "DeepRead",
+    "domain": "deepread-lake.vercel.app",
+    "startTime": 1783956543021,
+    "endTime": 1783956562505,
+    "duration": 19484
+  },
+  {
+    "tabId": 778734872,
+    "url": "https://deepread-lake.vercel.app/#upload",
+    "title": "DeepRead",
+    "domain": "deepread-lake.vercel.app",
+    "startTime": 1783956562509,
+    "endTime": 1783956575956,
+    "duration": 13447
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956576529,
+    "endTime": 1783956632314,
+    "duration": 55785
+  },
+  {
+    "tabId": 778734872,
+    "url": "https://deepread-lake.vercel.app/#upload",
+    "title": "DeepRead",
+    "domain": "deepread-lake.vercel.app",
+    "startTime": 1783956632326,
+    "endTime": 1783956635372,
+    "duration": 3046
+  },
+  {
+    "tabId": 778734878,
+    "url": "https://deepread-lake.vercel.app/#upload",
+    "title": "DeepRead",
+    "domain": "deepread-lake.vercel.app",
+    "startTime": 1783956643292,
+    "endTime": 1783956657034,
+    "duration": 13742
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956661359,
+    "endTime": 1783956666966,
+    "duration": 5607
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956670416,
+    "endTime": 1783956674433,
+    "duration": 4017
+  },
+  {
+    "tabId": 778734883,
+    "url": "https://version2.yixboost.eu/",
+    "title": "Yixboost Games V2",
+    "domain": "version2.yixboost.eu",
+    "startTime": 1783956679412,
+    "endTime": 1783956686206,
+    "duration": 6794
+  },
+  {
+    "tabId": 778734883,
+    "url": "https://version2.yixboost.eu/",
+    "title": "Yixboost Games V2",
+    "domain": "version2.yixboost.eu",
+    "startTime": 1783956686237,
+    "endTime": 1783956689740,
+    "duration": 3503
+  },
+  {
+    "tabId": 778734883,
+    "url": "https://version2.yixboost.eu/g/infinite-mario",
+    "title": "Infinite Mario | Yixboost Games V2",
+    "domain": "version2.yixboost.eu",
+    "startTime": 1783956689745,
+    "endTime": 1783956693885,
+    "duration": 4140
+  },
+  {
+    "tabId": 778734883,
+    "url": "https://version2.yixboost.eu/g/infinite-mario",
+    "title": "Infinite Mario | Yixboost Games V2",
+    "domain": "version2.yixboost.eu",
+    "startTime": 1783956693889,
+    "endTime": 1783956705900,
+    "duration": 12011
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956757666,
+    "endTime": 1783956766813,
+    "duration": 9147
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956770305,
+    "endTime": 1783956774688,
+    "duration": 4383
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/27803/devlogs/20983",
+    "title": "Devlog by @LadiesMan225 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956774693,
+    "endTime": 1783956780654,
+    "duration": 5961
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/27803",
+    "title": "WarioWare Game - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956780661,
+    "endTime": 1783956784123,
+    "duration": 3462
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956790420,
+    "endTime": 1783956793544,
+    "duration": 3124
+  },
+  {
+    "tabId": 778734893,
+    "url": "https://ladiesman225.itch.io/wariowaregame-nak",
+    "title": "WarioWareGame - N.A.K by LadiesMan225",
+    "domain": "ladiesman225.itch.io",
+    "startTime": 1783956794286,
+    "endTime": 1783956828436,
+    "duration": 34150
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956830498,
+    "endTime": 1783956855229,
+    "duration": 24731
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya?tab=projects",
+    "title": "Your projects",
+    "domain": "github.com",
+    "startTime": 1783956868308,
+    "endTime": 1783956875966,
+    "duration": 7658
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/users/Akshithsurya/projects/4",
+    "title": "View 1 · @Akshithsurya's untitled project",
+    "domain": "github.com",
+    "startTime": 1783956875970,
+    "endTime": 1783956879200,
+    "duration": 3230
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/users/Akshithsurya/projects/4/views/1",
+    "title": "View 1 · @Akshithsurya's untitled project",
+    "domain": "github.com",
+    "startTime": 1783956879204,
+    "endTime": 1783956885154,
+    "duration": 5950
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/users/Akshithsurya/projects/4/views/1?layout_template=board",
+    "title": "View 1 · @Akshithsurya's untitled project",
+    "domain": "github.com",
+    "startTime": 1783956885159,
+    "endTime": 1783956894994,
+    "duration": 9835
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/users/Akshithsurya/projects/4/views/1",
+    "title": "View 1 · @Akshithsurya's untitled project",
+    "domain": "github.com",
+    "startTime": 1783956895000,
+    "endTime": 1783956900060,
+    "duration": 5060
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya?tab=projects",
+    "title": "Your projects",
+    "domain": "github.com",
+    "startTime": 1783956903520,
+    "endTime": 1783956908299,
+    "duration": 4779
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya?tab=repositories",
+    "title": "Your projects",
+    "domain": "github.com",
+    "startTime": 1783956908303,
+    "endTime": 1783956916237,
+    "duration": 7934
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya/Portfolio_",
+    "title": "Akshithsurya/Portfolio_",
+    "domain": "github.com",
+    "startTime": 1783956916240,
+    "endTime": 1783956932072,
+    "duration": 15832
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya/Portfolio_/edit/main/index.html",
+    "title": "Portfolio_/index.html at main · Akshithsurya/Portfolio_",
+    "domain": "github.com",
+    "startTime": 1783956934809,
+    "endTime": 1783956941378,
+    "duration": 6569
+  },
+  {
+    "tabId": 778734896,
+    "url": "https://github.com/NahiyanKhandaker/WarioWareGame_N.A.K",
+    "title": "NahiyanKhandaker/WarioWareGame_N.A.K",
+    "domain": "github.com",
+    "startTime": 1783956943637,
+    "endTime": 1783956948081,
+    "duration": 4444
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956948770,
+    "endTime": 1783956971431,
+    "duration": 22661
+  },
+  {
+    "tabId": 778734906,
+    "url": "https://pypi.org/project/downsorter/",
+    "title": "downsorter · PyPI",
+    "domain": "pypi.org",
+    "startTime": 1783956977135,
+    "endTime": 1783956980553,
+    "duration": 3418
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956980582,
+    "endTime": 1783956985018,
+    "duration": 4436
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783956985022,
+    "endTime": 1783956990676,
+    "duration": 5654
+  },
+  {
+    "tabId": 778734910,
+    "url": "https://pack-for-your-trip-tool.vercel.app/",
+    "title": "Pack for Your Trip",
+    "domain": "pack-for-your-trip-tool.vercel.app",
+    "startTime": 1783956992388,
+    "endTime": 1783957008977,
+    "duration": 16589
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957008980,
+    "endTime": 1783957034495,
+    "duration": 25515
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957037054,
+    "endTime": 1783957053367,
+    "duration": 16313
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya/Portfolio_/edit/main/index.html",
+    "title": "Editing Portfolio_/index.html at main · Akshithsurya/Portfolio_",
+    "domain": "github.com",
+    "startTime": 1783957058009,
+    "endTime": 1783957062472,
+    "duration": 4463
+  },
+  {
+    "tabId": 778734913,
+    "url": "https://called-it-self.vercel.app/",
+    "title": "Called It — a free, status-based prediction game",
+    "domain": "called-it-self.vercel.app",
+    "startTime": 1783957064913,
+    "endTime": 1783957072698,
+    "duration": 7785
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957072703,
+    "endTime": 1783957076673,
+    "duration": 3970
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957076678,
+    "endTime": 1783957080698,
+    "duration": 4020
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya/Portfolio_/blob/main/index.html",
+    "title": "Portfolio_/index.html at main · Akshithsurya/Portfolio_",
+    "domain": "github.com",
+    "startTime": 1783957089415,
+    "endTime": 1783957164536,
+    "duration": 75121
+  },
+  {
+    "tabId": 778734918,
+    "url": "https://stardance-rocket-builder.vercel.app/",
+    "title": "Stardance Rocket Builder",
+    "domain": "stardance-rocket-builder.vercel.app",
+    "startTime": 1783957164540,
+    "endTime": 1783957191907,
+    "duration": 27367
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957191914,
+    "endTime": 1783957232566,
+    "duration": 40652
+  },
+  {
+    "tabId": 778734918,
+    "url": "https://stardance-rocket-builder.vercel.app/",
+    "title": "Stardance Rocket Builder",
+    "domain": "stardance-rocket-builder.vercel.app",
+    "startTime": 1783957232581,
+    "endTime": 1783957264192,
+    "duration": 31611
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957264215,
+    "endTime": 1783957271882,
+    "duration": 7667
+  },
+  {
+    "tabId": 778734918,
+    "url": "https://stardance-rocket-builder.vercel.app/",
+    "title": "Stardance Rocket Builder",
+    "domain": "stardance-rocket-builder.vercel.app",
+    "startTime": 1783957273740,
+    "endTime": 1783957297625,
+    "duration": 23885
+  },
+  {
+    "tabId": 778734921,
+    "url": "https://cybertron-os.vercel.app/",
+    "title": "CYBERTRON OS",
+    "domain": "cybertron-os.vercel.app",
+    "startTime": 1783957297629,
+    "endTime": 1783957319695,
+    "duration": 22066
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957319703,
+    "endTime": 1783957359402,
+    "duration": 39699
+  },
+  {
+    "tabId": 778734918,
+    "url": "https://stardance-rocket-builder.vercel.app/",
+    "title": "Stardance Rocket Builder",
+    "domain": "stardance-rocket-builder.vercel.app",
+    "startTime": 1783957360216,
+    "endTime": 1783957381309,
+    "duration": 21093
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957381324,
+    "endTime": 1783957392061,
+    "duration": 10737
+  },
+  {
+    "tabId": 778734918,
+    "url": "https://stardance-rocket-builder.vercel.app/",
+    "title": "Stardance Rocket Builder",
+    "domain": "stardance-rocket-builder.vercel.app",
+    "startTime": 1783957392776,
+    "endTime": 1783957437676,
+    "duration": 44900
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957437692,
+    "endTime": 1783957443727,
+    "duration": 6035
+  },
+  {
+    "tabId": 778734925,
+    "url": "https://aahishabbani.me/",
+    "title": "Aahish Abbani",
+    "domain": "aahishabbani.me",
+    "startTime": 1783957458440,
+    "endTime": 1783957464584,
+    "duration": 6144
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957464607,
+    "endTime": 1783957518994,
+    "duration": 54387
+  },
+  {
+    "tabId": 778734929,
+    "url": "https://domax.lt/",
+    "title": "DoMax",
+    "domain": "domax.lt",
+    "startTime": 1783957524943,
+    "endTime": 1783957528094,
+    "duration": 3151
+  },
+  {
+    "tabId": 778734929,
+    "url": "https://domax.lt/",
+    "title": "DoMax",
+    "domain": "domax.lt",
+    "startTime": 1783957528107,
+    "endTime": 1783957532911,
+    "duration": 4804
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957537068,
+    "endTime": 1783957542298,
+    "duration": 5230
+  },
+  {
+    "tabId": 778734918,
+    "url": "https://stardance-rocket-builder.vercel.app/",
+    "title": "Stardance Rocket Builder",
+    "domain": "stardance-rocket-builder.vercel.app",
+    "startTime": 1783957542305,
+    "endTime": 1783957594238,
+    "duration": 51933
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957602639,
+    "endTime": 1783957613106,
+    "duration": 10467
+  },
+  {
+    "tabId": 778734938,
+    "url": "https://annaxiomm.github.io/",
+    "title": "annaxiomm",
+    "domain": "annaxiomm.github.io",
+    "startTime": 1783957620001,
+    "endTime": 1783957626603,
+    "duration": 6602
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957626609,
+    "endTime": 1783957667003,
+    "duration": 40394
+  },
+  {
+    "tabId": 778734944,
+    "url": "https://astrophoto-tools.vercel.app/",
+    "title": "Astrophotography Tools",
+    "domain": "astrophoto-tools.vercel.app",
+    "startTime": 1783957689695,
+    "endTime": 1783957693327,
+    "duration": 3632
+  },
+  {
+    "tabId": 778734944,
+    "url": "https://astrophoto-tools.vercel.app/index.html",
+    "title": "Astrophotography Tools",
+    "domain": "astrophoto-tools.vercel.app",
+    "startTime": 1783957694967,
+    "endTime": 1783957715891,
+    "duration": 20924
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957715916,
+    "endTime": 1783957749096,
+    "duration": 33180
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957756378,
+    "endTime": 1783957762028,
+    "duration": 5650
+  },
+  {
+    "tabId": 778734953,
+    "url": "https://jow5445.github.io/video-player/",
+    "title": "Custom Video Player",
+    "domain": "jow5445.github.io",
+    "startTime": 1783957767276,
+    "endTime": 1783957772471,
+    "duration": 5195
+  },
+  {
+    "tabId": 778734900,
+    "url": "https://github.com/Akshithsurya/Portfolio_/blob/main/index.html",
+    "title": "Portfolio_/index.html at main · Akshithsurya/Portfolio_",
+    "domain": "github.com",
+    "startTime": 1783957772476,
+    "endTime": 1783957776621,
+    "duration": 4145
+  },
+  {
+    "tabId": 778734953,
+    "url": "https://jow5445.github.io/video-player/",
+    "title": "Custom Video Player",
+    "domain": "jow5445.github.io",
+    "startTime": 1783957777465,
+    "endTime": 1783957781342,
+    "duration": 3877
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957781350,
+    "endTime": 1783957788952,
+    "duration": 7602
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957800656,
+    "endTime": 1783957805975,
+    "duration": 5319
+  },
+  {
+    "tabId": 778734960,
+    "url": "https://cob-web-os.vercel.app/",
+    "title": "CobWebOS",
+    "domain": "cob-web-os.vercel.app",
+    "startTime": 1783957810711,
+    "endTime": 1783957847682,
+    "duration": 36971
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783957847707,
+    "endTime": 1783957905677,
+    "duration": 57970
+  },
+  {
+    "tabId": 778734965,
+    "url": "https://applications.uwcindia.org/waiver/form/2tS_TSBO_iuVjfG5_QgOYanqFgOwfZW4z1fY40ZNERk",
+    "title": "Apply — The United World Colleges India National Committee",
+    "domain": "applications.uwcindia.org",
+    "startTime": 1783957909442,
+    "endTime": 1783958174403,
+    "duration": 264961
+  },
+  {
+    "tabId": 778734971,
+    "url": "https://gemini.google.com/app",
+    "title": "Google Gemini",
+    "domain": "gemini.google.com",
+    "startTime": 1783958189762,
+    "endTime": 1783958204757,
+    "duration": 14995
+  },
+  {
+    "tabId": 778734968,
+    "url": "https://www.youtube.com/watch?v=HFLWR0HJC8I",
+    "title": "(5) What is Form 26AS|| How to Download Form 26AS | Step-by-Step Guide - YouTube",
+    "domain": "youtube.com",
+    "startTime": 1783958204763,
+    "endTime": 1783958222419,
+    "duration": 17656
+  },
+  {
+    "tabId": 778734971,
+    "url": "https://gemini.google.com/app/8459349fd6da0917",
+    "title": "Understanding and Downloading Form 26AS - Google Gemini",
+    "domain": "gemini.google.com",
+    "startTime": 1783958224394,
+    "endTime": 1783958229992,
+    "duration": 5598
+  },
+  {
+    "tabId": 778734971,
+    "url": "https://gemini.google.com/app/8459349fd6da0917",
+    "title": "Understanding and Downloading Form 26AS - Google Gemini",
+    "domain": "gemini.google.com",
+    "startTime": 1783958231650,
+    "endTime": 1783958248519,
+    "duration": 16869
+  },
+  {
+    "tabId": 778734968,
+    "url": "https://www.youtube.com/watch?v=HFLWR0HJC8I",
+    "title": "(5) What is Form 26AS|| How to Download Form 26AS | Step-by-Step Guide - YouTube",
+    "domain": "youtube.com",
+    "startTime": 1783958248522,
+    "endTime": 1783958300126,
+    "duration": 51604
+  },
+  {
+    "tabId": 778734968,
+    "url": "https://www.youtube.com/watch?v=HFLWR0HJC8I",
+    "title": "(5) What is Form 26AS|| How to Download Form 26AS | Step-by-Step Guide - YouTube",
+    "domain": "youtube.com",
+    "startTime": 1783958302762,
+    "endTime": 1783958316776,
+    "duration": 14014
+  },
+  {
+    "tabId": 778734965,
+    "url": "https://applications.uwcindia.org/waiver/form/2tS_TSBO_iuVjfG5_QgOYanqFgOwfZW4z1fY40ZNERk",
+    "title": "Apply — The United World Colleges India National Committee",
+    "domain": "applications.uwcindia.org",
+    "startTime": 1783958318053,
+    "endTime": 1783958322330,
+    "duration": 4277
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958326405,
+    "endTime": 1783958336647,
+    "duration": 10242
+  },
+  {
+    "tabId": 778734974,
+    "url": "https://katherinef2023.github.io/RecipesToGroceries/",
+    "title": "Recipes to Groceries",
+    "domain": "katherinef2023.github.io",
+    "startTime": 1783958340389,
+    "endTime": 1783958365010,
+    "duration": 24621
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958365018,
+    "endTime": 1783958374530,
+    "duration": 9512
+  },
+  {
+    "tabId": 778734968,
+    "url": "https://www.youtube.com/watch?v=HFLWR0HJC8I",
+    "title": "(5) What is Form 26AS|| How to Download Form 26AS | Step-by-Step Guide - YouTube",
+    "domain": "youtube.com",
+    "startTime": 1783958375139,
+    "endTime": 1783958391183,
+    "duration": 16044
+  },
+  {
+    "tabId": 778734941,
+    "url": "https://mail.google.com/mail/u/0/#inbox/FMfcgzQhVNXZgHRsvFVNzCwZHMKRgXPC",
+    "title": "Complete your UWC India fee-waiver form - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783958391201,
+    "endTime": 1783958461931,
+    "duration": 70730
+  },
+  {
+    "tabId": 778734968,
+    "url": "https://www.youtube.com/watch?v=HFLWR0HJC8I",
+    "title": "(5) What is Form 26AS|| How to Download Form 26AS | Step-by-Step Guide - YouTube",
+    "domain": "youtube.com",
+    "startTime": 1783958461937,
+    "endTime": 1783958465157,
+    "duration": 3219
+  },
+  {
+    "tabId": 778734965,
+    "url": "https://applications.uwcindia.org/waiver/form/2tS_TSBO_iuVjfG5_QgOYanqFgOwfZW4z1fY40ZNERk",
+    "title": "Apply — The United World Colleges India National Committee",
+    "domain": "applications.uwcindia.org",
+    "startTime": 1783958466265,
+    "endTime": 1783958471475,
+    "duration": 5210
+  },
+  {
+    "tabId": 778734941,
+    "url": "https://mail.google.com/mail/u/0/#inbox/FMfcgzQhVNXZgHRsvFVNzCwZHMKRgXPC",
+    "title": "Complete your UWC India fee-waiver form - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1783958471507,
+    "endTime": 1783958530781,
+    "duration": 59274
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958534686,
+    "endTime": 1783958608403,
+    "duration": 73717
+  },
+  {
+    "tabId": 778735037,
+    "url": "https://hallow303.github.io/MyownWebOS/",
+    "title": "MyWebOS",
+    "domain": "hallow303.github.io",
+    "startTime": 1783958612034,
+    "endTime": 1783958622636,
+    "duration": 10602
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958622670,
+    "endTime": 1783958625970,
+    "duration": 3300
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958625976,
+    "endTime": 1783958639094,
+    "duration": 13118
+  },
+  {
+    "tabId": 778735041,
+    "url": "https://golink.avycado13.workers.dev/",
+    "title": "golink",
+    "domain": "golink.avycado13.workers.dev",
+    "startTime": 1783958643473,
+    "endTime": 1783958660516,
+    "duration": 17043
+  },
+  {
+    "tabId": 778735041,
+    "url": "https://golink.avycado13.workers.dev/",
+    "title": "golink",
+    "domain": "golink.avycado13.workers.dev",
+    "startTime": 1783958662795,
+    "endTime": 1783958667858,
+    "duration": 5063
+  },
+  {
+    "tabId": 778735041,
+    "url": "https://golink.avycado13.workers.dev/",
+    "title": "golink",
+    "domain": "golink.avycado13.workers.dev",
+    "startTime": 1783958676992,
+    "endTime": 1783958681103,
+    "duration": 4111
+  },
+  {
+    "tabId": 778735041,
+    "url": "https://golink.avycado13.workers.dev/",
+    "title": "golink",
+    "domain": "golink.avycado13.workers.dev",
+    "startTime": 1783958684960,
+    "endTime": 1783958692466,
+    "duration": 7506
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958698635,
+    "endTime": 1783958798358,
+    "duration": 99723
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958798370,
+    "endTime": 1783958812283,
+    "duration": 13913
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958812302,
+    "endTime": 1783958815826,
+    "duration": 3524
+  },
+  {
+    "tabId": 778735054,
+    "url": "https://gregarious-pothos-4d89e8.netlify.app/",
+    "title": "Custom Word Substitutor",
+    "domain": "gregarious-pothos-4d89e8.netlify.app",
+    "startTime": 1783958818704,
+    "endTime": 1783958867630,
+    "duration": 48926
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958867656,
+    "endTime": 1783958905986,
+    "duration": 38330
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958905993,
+    "endTime": 1783958911766,
+    "duration": 5773
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783958914657,
+    "endTime": 1783958918140,
+    "duration": 3483
+  },
+  {
+    "tabId": 778735059,
+    "url": "https://apexos.nshettigar.me/",
+    "title": "ApexOS | Retro-Modern WebOS",
+    "domain": "apexos.nshettigar.me",
+    "startTime": 1783958921541,
+    "endTime": 1783959029288,
+    "duration": 107747
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959029332,
+    "endTime": 1783959075191,
+    "duration": 45859
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/@manayp",
+    "title": "manayp - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959075198,
+    "endTime": 1783959089695,
+    "duration": 14497
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/@manayp",
+    "title": "manayp - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959091135,
+    "endTime": 1783959110017,
+    "duration": 18882
+  },
+  {
+    "tabId": 778735063,
+    "url": "https://huncikoma-code.github.io/Iss-tracker/",
+    "title": "ISS · Orbital Tracker",
+    "domain": "huncikoma-code.github.io",
+    "startTime": 1783959120500,
+    "endTime": 1783959159072,
+    "duration": 38572
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959159103,
+    "endTime": 1783959204865,
+    "duration": 45762
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/rate/new",
+    "title": "Rate this project - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959204871,
+    "endTime": 1783959208088,
+    "duration": 3217
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959210570,
+    "endTime": 1783959214505,
+    "duration": 3935
+  },
+  {
+    "tabId": 778735046,
+    "url": "https://akshith-surya-portfolio-ak.netlify.app/",
+    "title": "AKSHITH SURYA — Blackhole · Space Science & Engineering",
+    "domain": "akshith-surya-portfolio-ak.netlify.app",
+    "startTime": 1783959217188,
+    "endTime": 1783959237630,
+    "duration": 20442
+  },
+  {
+    "tabId": 778735073,
+    "url": "https://gemini.google.com/",
+    "title": "‎Google Gemini",
+    "domain": "gemini.google.com",
+    "startTime": 1783959261487,
+    "endTime": 1783959268698,
+    "duration": 7211
+  },
+  {
+    "tabId": 778735073,
+    "url": "https://gemini.google.com/app/8459349fd6da0917",
+    "title": "Understanding and Downloading Form 26AS - Google Gemini",
+    "domain": "gemini.google.com",
+    "startTime": 1783959273229,
+    "endTime": 1783959316786,
+    "duration": 43557
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959316868,
+    "endTime": 1783959346561,
+    "duration": 29693
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/b5095d4a-9c7f-4bf3-97f9-65ddcc82fb32",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959347078,
+    "endTime": 1783959389904,
+    "duration": 42826
+  },
+  {
+    "tabId": 778735089,
+    "url": "https://naizop.com/free-instagram-followers",
+    "title": "Free Instagram Followers - 100% Real, Safe & Instant",
+    "domain": "naizop.com",
+    "startTime": 1783959396994,
+    "endTime": 1783959401134,
+    "duration": 4140
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/b5095d4a-9c7f-4bf3-97f9-65ddcc82fb32",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959401138,
+    "endTime": 1783959436691,
+    "duration": 35553
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959439920,
+    "endTime": 1783959444277,
+    "duration": 4357
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959446885,
+    "endTime": 1783959450259,
+    "duration": 3374
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959453686,
+    "endTime": 1783959484105,
+    "duration": 30419
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959492073,
+    "endTime": 1783959496206,
+    "duration": 4133
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/@jd-bro",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959508913,
+    "endTime": 1783959522667,
+    "duration": 13754
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/@jd-bro",
+    "title": "@jd-bro | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959523735,
+    "endTime": 1783959527344,
+    "duration": 3609
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=daily&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959538743,
+    "endTime": 1783959543992,
+    "duration": 5249
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/b5095d4a-9c7f-4bf3-97f9-65ddcc82fb32",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959545631,
+    "endTime": 1783959554094,
+    "duration": 8463
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959554105,
+    "endTime": 1783959626012,
+    "duration": 71907
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/b5095d4a-9c7f-4bf3-97f9-65ddcc82fb32",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959626040,
+    "endTime": 1783959644744,
+    "duration": 18704
+  },
+  {
+    "tabId": 778735095,
+    "url": "https://www.google.com/search?q=how+many+days+ago+was+2020&rlz=1C1GCEA_enIN1140IN1143&oq=how+many+days+ago+was+&gs_lcrp=EgZjaHJvbWUqDQgBEAAYgwEYsQMYgAQyBggAEEUYOTINCAEQABiDARixAxiABDIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIHCAUQABiABDIHCAYQABiABDIHCAcQABiABDIHCAgQABiABDIHCAkQABiABNIBCDc1OTNqMGo3qAIAsAIA&sourceid=chrome&source=chrome.ob&ie=UTF-8",
+    "title": "how many days ago was 2020 - Google Search",
+    "domain": "google.com",
+    "startTime": 1783959655860,
+    "endTime": 1783959667959,
+    "duration": 12099
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/b5095d4a-9c7f-4bf3-97f9-65ddcc82fb32",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959668005,
+    "endTime": 1783959758093,
+    "duration": 90088
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959758098,
+    "endTime": 1783959768110,
+    "duration": 10012
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=daily&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959771900,
+    "endTime": 1783959778868,
+    "duration": 6968
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=daily&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959780088,
+    "endTime": 1783959783380,
+    "duration": 3292
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=daily&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959785482,
+    "endTime": 1783959790210,
+    "duration": 4728
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959792442,
+    "endTime": 1783959799134,
+    "duration": 6692
+  },
+  {
+    "tabId": 778735092,
+    "url": "https://hackatime.hackclub.com/leaderboards?period_type=last_7_days&scope=country",
+    "title": "Leaderboards | Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1783959804720,
+    "endTime": 1783959811864,
+    "duration": 7144
+  },
+  {
+    "tabId": 778734815,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783959811869,
+    "endTime": 1783959818550,
+    "duration": 6681
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/e062e029-73b5-4d05-aeac-b5171a996b40",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959825458,
+    "endTime": 1783959956780,
+    "duration": 131322
+  },
+  {
+    "tabId": 778735070,
+    "url": "https://chat.qwen.ai/c/e062e029-73b5-4d05-aeac-b5171a996b40",
+    "title": "Qwen Studio",
+    "domain": "chat.qwen.ai",
+    "startTime": 1783959958158,
+    "endTime": 1783960062519,
+    "duration": 104361
+  },
+  {
+    "tabId": 778735102,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783960066569,
+    "endTime": 1783960074408,
+    "duration": 7839
+  },
+  {
+    "tabId": 778735102,
+    "url": "https://stardance.hackclub.com/projects/28672",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783960076803,
+    "endTime": 1783960104158,
+    "duration": 27355
+  },
+  {
+    "tabId": 778735102,
+    "url": "https://stardance.hackclub.com/projects/28672",
+    "title": "Helpy - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783960191785,
+    "endTime": 1783960247263,
+    "duration": 55478
+  },
+  {
+    "tabId": 778735102,
+    "url": "https://stardance.hackclub.com/projects/28672",
+    "title": "Helpy - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1783960247275,
+    "endTime": 1783960255150,
+    "duration": 7875
+  },
+  {
+    "tabId": 778735244,
+    "url": "https://www.google.com/search?q=temp+mail&rlz=1C1GCEA_enIN1140IN1143&oq=temp&gs_lcrp=EgZjaHJvbWUqCggBEAAYsQMYgAQyBggAEEUYOTIKCAEQABixAxiABDIMCAIQRRg7GLEDGIAEMgoIAxAAGLEDGIAEMg0IBBAAGJIDGIAEGIoFMgoIBRAAGJIDGIAEMgoIBhAAGLEDGIAEMgYIBxBFGDzSAQgzNjM3ajBqN6gCALACAA&sourceid=chrome&source=chrome.ob&ie=UTF-8",
+    "title": "temp mail - Google Search",
+    "domain": "google.com",
+    "startTime": 1784027222728,
+    "endTime": 1784027267147,
+    "duration": 44419
+  },
+  {
+    "tabId": 778735244,
+    "url": "https://temp-mail.org/en/",
+    "title": "Temp Mail - Disposable Temporary Email",
+    "domain": "temp-mail.org",
+    "startTime": 1784027267156,
+    "endTime": 1784027286358,
+    "duration": 19202
+  },
+  {
+    "tabId": 778735244,
+    "url": "https://temp-mail.org/en/view/6a561879d083601666be4a2c",
+    "title": "Temp Mail - Disposable Temporary Email",
+    "domain": "temp-mail.org",
+    "startTime": 1784027286367,
+    "endTime": 1784027562674,
+    "duration": 276307
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027572430,
+    "endTime": 1784027581536,
+    "duration": 9106
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027581544,
+    "endTime": 1784027586743,
+    "duration": 5199
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027586750,
+    "endTime": 1784027594466,
+    "duration": 7716
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027594485,
+    "endTime": 1784027602804,
+    "duration": 8319
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027602817,
+    "endTime": 1784027606723,
+    "duration": 3906
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027606735,
+    "endTime": 1784027613594,
+    "duration": 6859
+  },
+  {
+    "tabId": 778735389,
+    "url": "https://www.trae.ai/authorization?login_version=1&auth_from=trae&login_channel=native_ide&plugin_version=2.3.50210&auth_type=local&client_id=ono9krqynydwx5&redirect=0&login_trace_id=2c2f2b5e-97ca-4ffa-ba3f-1e30d793168a&auth_callback_url=http://127.0.0.1:56245/authorize&machine_id=92fe1e8824c3e080476a2adcc99e0b8c06a263585d8b68f8a1a0430ac028c730&device_id=7646432422901220885&x_device_id=7646432422901220885&x_machine_id=92fe1e8824c3e080476a2adcc99e0b8c06a263585d8b68f8a1a0430ac028c730&x_device_brand=Latitude%207480&x_device_type=windows&x_os_version=Windows%2011%20Pro&x_env=&x_app_version=3.5.73&x_app_type=stable&code_challenge=K_cJFu5Prr_UUkkkOTj0MSH7gIe-6LM534x-fGZr8Nk&code_challenge_method=S256",
+    "title": "Authorization | TRAE - Collaborate with Intelligence",
+    "domain": "trae.ai",
+    "startTime": 1784027616446,
+    "endTime": 1784027641193,
+    "duration": 24747
+  },
+  {
+    "tabId": 778735389,
+    "url": "https://www.trae.ai/authorization?login_version=1&auth_from=trae&login_channel=native_ide&plugin_version=2.3.50210&auth_type=local&client_id=ono9krqynydwx5&redirect=1&login_trace_id=a2fb72d7-70c7-4fac-ae80-2391b8c0dd6a&auth_callback_url=http://127.0.0.1:56245/authorize&machine_id=92fe1e8824c3e080476a2adcc99e0b8c06a263585d8b68f8a1a0430ac028c730&device_id=7646432422901220885&x_device_id=7646432422901220885&x_machine_id=92fe1e8824c3e080476a2adcc99e0b8c06a263585d8b68f8a1a0430ac028c730&x_device_brand=Latitude%207480&x_device_type=windows&x_os_version=Windows%2011%20Pro&x_env=&x_app_version=3.5.73&x_app_type=stable&code_challenge=1INxLSZ_AVt5T3Z6XGVIhTzAEs1lXegCJREDjgnlPtU&code_challenge_method=S256",
+    "title": "trae.ai/authorization?login_version=1&auth_from=trae&login_channel=native_ide&plugin_version=2.3.50210&auth_type=local&client_id=ono9krqynydwx5&redirect=1&login_trace_id=a2fb72d7-70c7-4fac-ae80-2391b8c0dd6a&auth_callback_url=http://127.0.0.1:56245/authorize&machine_id=92fe1e8824c3e080476a2adcc99e0b8",
+    "domain": "trae.ai",
+    "startTime": 1784027641199,
+    "endTime": 1784027766020,
+    "duration": 124821
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784027766794,
+    "endTime": 1784028280662,
+    "duration": 513868
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028280683,
+    "endTime": 1784028286914,
+    "duration": 6231
+  },
+  {
+    "tabId": 778735386,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028286927,
+    "endTime": 1784028290408,
+    "duration": 3481
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028307040,
+    "endTime": 1784028315378,
+    "duration": 8338
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028315397,
+    "endTime": 1784028323826,
+    "duration": 8429
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028323833,
+    "endTime": 1784028517995,
+    "duration": 194162
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028518029,
+    "endTime": 1784028529638,
+    "duration": 11609
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://raffle.stardance.hackclub.com/",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1784028529651,
+    "endTime": 1784028535286,
+    "duration": 5635
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://raffle.stardance.hackclub.com/dashboard",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1784028535301,
+    "endTime": 1784028542368,
+    "duration": 7067
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://raffle.stardance.hackclub.com/dashboard?page=18&limit=10",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1784028542384,
+    "endTime": 1784028546876,
+    "duration": 4492
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://raffle.stardance.hackclub.com/dashboard?limit=10&page=1",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1784028546895,
+    "endTime": 1784028555847,
+    "duration": 8952
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://raffle.stardance.hackclub.com/dashboard?limit=10&page=1",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1784028555859,
+    "endTime": 1784028565059,
+    "duration": 9200
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://raffle.stardance.hackclub.com/dashboard?lb_week=6",
+    "title": "Dashboard · Stardance Raffle",
+    "domain": "raffle.stardance.hackclub.com",
+    "startTime": 1784028565079,
+    "endTime": 1784028572116,
+    "duration": 7037
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028577717,
+    "endTime": 1784028581214,
+    "duration": 3497
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028581225,
+    "endTime": 1784028593375,
+    "duration": 12150
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028593382,
+    "endTime": 1784028597343,
+    "duration": 3961
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028597354,
+    "endTime": 1784028600426,
+    "duration": 3072
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028600445,
+    "endTime": 1784028716547,
+    "duration": 116102
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784028723840,
+    "endTime": 1784028731770,
+    "duration": 7930
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/?interval=low_skies",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784028734060,
+    "endTime": 1784028737583,
+    "duration": 3523
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/?interval=stardance",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784028743052,
+    "endTime": 1784028747967,
+    "duration": 4915
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/?interval=this_year",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784028752730,
+    "endTime": 1784028755833,
+    "duration": 3103
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/?interval=this_month",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784028758246,
+    "endTime": 1784028763997,
+    "duration": 5751
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/?interval=last_12_months",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784028767449,
+    "endTime": 1784028771683,
+    "duration": 4234
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028772873,
+    "endTime": 1784028822344,
+    "duration": 49471
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028823233,
+    "endTime": 1784028827586,
+    "duration": 4353
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/28672",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028830479,
+    "endTime": 1784028836375,
+    "duration": 5896
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/28672?complete=true&editing=true",
+    "title": "Helpy - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028836382,
+    "endTime": 1784028841083,
+    "duration": 4701
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028841096,
+    "endTime": 1784028848473,
+    "duration": 7377
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028848484,
+    "endTime": 1784028889464,
+    "duration": 40980
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028889478,
+    "endTime": 1784028897776,
+    "duration": 8298
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784028897786,
+    "endTime": 1784029237769,
+    "duration": 339983
+  },
+  {
+    "tabId": 778735519,
+    "url": "https://www.google.com/search?q=when+is+nasa+space+apps+challenge+2026&rlz=1C1GCEA_enIN1140IN1143&oq=when+will+nasa+space+apps+&gs_lcrp=EgZjaHJvbWUqCAgCEAAYFhgeMgYIABBFGDkyCAgBEAAYFhgeMggIAhAAGBYYHjIICAMQABgWGB4yCAgEEAAYFhgeMg0IBRAAGIYDGIAEGIoFMg0IBhAAGIYDGIAEGIoFMg0IBxAAGIYDGIAEGIoFMg0ICBAAGIYDGIAEGIoFMgcICRAAGO8F0gEJMTQ4OTBqMGo3qAIAsAIA&sourceid=chrome&source=chrome.ob&ie=UTF-8",
+    "title": "when is nasa space apps challenge 2026 - Google Search",
+    "domain": "google.com",
+    "startTime": 1784029258072,
+    "endTime": 1784029264063,
+    "duration": 5991
+  },
+  {
+    "tabId": 778735522,
+    "url": "https://www.spaceappschallenge.org/",
+    "title": "NASA Space Apps Challenge",
+    "domain": "spaceappschallenge.org",
+    "startTime": 1784029270326,
+    "endTime": 1784029273551,
+    "duration": 3225
+  },
+  {
+    "tabId": 778735464,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784029274703,
+    "endTime": 1784029279567,
+    "duration": 4864
+  },
+  {
+    "tabId": 778735527,
+    "url": "https://www.google.com/search?q=hack+club&rlz=1C1GCEA_enIN1140IN1143&oq=hack+club&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTINCAEQABiRAhiABBiKBTIHCAIQABiABDIHCAMQABiABDIHCAQQABiABDIGCAUQRRg8MgYIBhBFGDwyBggHEEUYPNIBCDcyMDFqMGo3qAIAsAIA&sourceid=chrome&source=chrome.ob&ie=UTF-8",
+    "title": "hack club - Google Search",
+    "domain": "google.com",
+    "startTime": 1784029291920,
+    "endTime": 1784029299213,
+    "duration": 7293
+  },
+  {
+    "tabId": 778735527,
+    "url": "https://hackclub.com/",
+    "title": "Hack Club — Where teens make cool stuff.",
+    "domain": "hackclub.com",
+    "startTime": 1784029299443,
+    "endTime": 1784029486961,
+    "duration": 187518
+  },
+  {
+    "tabId": 778735530,
+    "url": "https://arivu-pallakad.netlify.app/",
+    "title": "Arivu · അറിവ് - Science Career Literacy, Palakkad",
+    "domain": "arivu-pallakad.netlify.app",
+    "startTime": 1784029496659,
+    "endTime": 1784029523315,
+    "duration": 26656
+  },
+  {
+    "tabId": 778735530,
+    "url": "https://chat.z.ai/",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1784029523321,
+    "endTime": 1784029575037,
+    "duration": 51716
+  },
+  {
+    "tabId": 778735530,
+    "url": "https://chat.z.ai/",
+    "title": "Z.ai - Advanced AI Chatbot & Agent powered by GLM-5.2",
+    "domain": "chat.z.ai",
+    "startTime": 1784029583290,
+    "endTime": 1784029586566,
+    "duration": 3276
+  },
+  {
+    "tabId": 778735519,
+    "url": "https://www.google.com/search?q=nasa+space+apps+challenge+2026+registration&sca_esv=8082f2bccaaa0413&rlz=1C1GCEA_enIN1140IN1143&sxsrf=APpeQnvxTlnIScjYBp7a83IoHx4sS5MxwA%3A1784029252967&ei=RCBWapHWOpvvseMPxsvTuAg&biw=1920&bih=991&oq=when+is+nasa+space+apps+challenge+2026+&gs_lp=Egxnd3Mtd2l6LXNlcnAiJ3doZW4gaXMgbmFzYSBzcGFjZSBhcHBzIGNoYWxsZW5nZSAyMDI2ICoCCAEyBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjILEAAYgAQYigUYhgMyCxAAGIAEGIoFGIYDMgUQABjvBTIFEAAY7wUyBRAAGO8FMgUQABjvBUiVJ1DSBVjSBXAAeAKQAQCYAfMBoAHzAaoBAzItMbgBA8gBAPgBAZgCAqACmALCAgQQABhHmAMAiAYBkAYIkgcFMS4wLjGgB98GsgcDMi0xuAeJAsIHAzMtMsgHHIAIAQ&sclient=gws-wiz-serp",
+    "title": "nasa space apps challenge 2026 registration - Google Search",
+    "domain": "google.com",
+    "startTime": 1784029586662,
+    "endTime": 1784029624452,
+    "duration": 37790
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784029624466,
+    "endTime": 1784029813453,
+    "duration": 188987
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784029813461,
+    "endTime": 1784029817663,
+    "duration": 4202
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784029835628,
+    "endTime": 1784029841772,
+    "duration": 6144
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/20780",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784029841781,
+    "endTime": 1784029849349,
+    "duration": 7568
+  },
+  {
+    "tabId": 778735453,
+    "url": "https://stardance.hackclub.com/projects/20780",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784029852278,
+    "endTime": 1784030104055,
+    "duration": 251777
+  },
+  {
+    "tabId": 778735519,
+    "url": "https://www.google.com/search?q=nasa+space+apps+challenge+2026+registration&sca_esv=8082f2bccaaa0413&rlz=1C1GCEA_enIN1140IN1143&sxsrf=APpeQnvxTlnIScjYBp7a83IoHx4sS5MxwA%3A1784029252967&ei=RCBWapHWOpvvseMPxsvTuAg&biw=1920&bih=991&oq=when+is+nasa+space+apps+challenge+2026+&gs_lp=Egxnd3Mtd2l6LXNlcnAiJ3doZW4gaXMgbmFzYSBzcGFjZSBhcHBzIGNoYWxsZW5nZSAyMDI2ICoCCAEyBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjILEAAYgAQYigUYhgMyCxAAGIAEGIoFGIYDMgUQABjvBTIFEAAY7wUyBRAAGO8FMgUQABjvBUiVJ1DSBVjSBXAAeAKQAQCYAfMBoAHzAaoBAzItMbgBA8gBAPgBAZgCAqACmALCAgQQABhHmAMAiAYBkAYIkgcFMS4wLjGgB98GsgcDMi0xuAeJAsIHAzMtMsgHHIAIAQ&sclient=gws-wiz-serp",
+    "title": "nasa space apps challenge 2026 registration - Google Search",
+    "domain": "google.com",
+    "startTime": 1784030104083,
+    "endTime": 1784030110528,
+    "duration": 6445
+  },
+  {
+    "tabId": 778735519,
+    "url": "https://www.google.com/search?q=temp+mail&rlz=1C1GCEA_enIN1140IN1143&oq=temp&gs_lcrp=EgZjaHJvbWUqCAgAEEUYJxg7MggIABBFGCcYOzIGCAEQRRg5MggIAhBFGCcYOzINCAMQABiRAhiABBiKBTIGCAQQRRg8MgYIBRBFGDwyBggGEEUYPDIGCAcQRRg80gEIMTk5OGowajmoAgawAgHxBTEGEHhD4Ljw&sourceid=chrome&source=chrome.ob&ie=UTF-8",
+    "title": "temp mail - Google Search",
+    "domain": "google.com",
+    "startTime": 1784030110539,
+    "endTime": 1784030128785,
+    "duration": 18246
+  },
+  {
+    "tabId": 778735519,
+    "url": "https://temp-mail.org/en/",
+    "title": "Temp Mail - Disposable Temporary Email",
+    "domain": "temp-mail.org",
+    "startTime": 1784030128796,
+    "endTime": 1784030214865,
+    "duration": 86069
+  },
+  {
+    "tabId": 778735720,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784033926644,
+    "endTime": 1784033942842,
+    "duration": 16198
+  },
+  {
+    "tabId": 778735720,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784033942842,
+    "endTime": 1784033945879,
+    "duration": 3037
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784114627860,
+    "endTime": 1784115160996,
+    "duration": 533136
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115161007,
+    "endTime": 1784115164532,
+    "duration": 3525
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115164536,
+    "endTime": 1784115173004,
+    "duration": 8468
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/projects/20780",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115173006,
+    "endTime": 1784115178600,
+    "duration": 5594
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/daily_roll/reroll_status",
+    "title": "Arivu - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115178603,
+    "endTime": 1784115182685,
+    "duration": 4082
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/daily_roll/reroll_status",
+    "title": "stardance.hackclub.com",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115185137,
+    "endTime": 1784115191415,
+    "duration": 6278
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115195649,
+    "endTime": 1784115199150,
+    "duration": 3500
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115199153,
+    "endTime": 1784115206191,
+    "duration": 7038
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/projects/24652",
+    "title": "Portfolio - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115206235,
+    "endTime": 1784115213588,
+    "duration": 7353
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115214154,
+    "endTime": 1784115221047,
+    "duration": 6893
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115221052,
+    "endTime": 1784115227881,
+    "duration": 6829
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115227896,
+    "endTime": 1784115681738,
+    "duration": 453842
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115681861,
+    "endTime": 1784115701109,
+    "duration": 19248
+  },
+  {
+    "tabId": 778736157,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Hackatime - Track your coding time",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784115707609,
+    "endTime": 1784115711039,
+    "duration": 3430
+  },
+  {
+    "tabId": 778736157,
+    "url": "https://hackatime.hackclub.com/",
+    "title": "Dashboard - Hackatime",
+    "domain": "hackatime.hackclub.com",
+    "startTime": 1784115713721,
+    "endTime": 1784115905886,
+    "duration": 192165
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115905899,
+    "endTime": 1784115912829,
+    "duration": 6930
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Home - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115912836,
+    "endTime": 1784115931523,
+    "duration": 18687
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115931525,
+    "endTime": 1784115960237,
+    "duration": 28712
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784115980458,
+    "endTime": 1784116214384,
+    "duration": 233926
+  },
+  {
+    "tabId": 778736172,
+    "url": "https://discord.com/login",
+    "title": "Discord",
+    "domain": "discord.com",
+    "startTime": 1784116227985,
+    "endTime": 1784116234194,
+    "duration": 6209
+  },
+  {
+    "tabId": 778736172,
+    "url": "https://discord.com/login",
+    "title": "Discord",
+    "domain": "discord.com",
+    "startTime": 1784116234198,
+    "endTime": 1784116243251,
+    "duration": 9053
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116247116,
+    "endTime": 1784116251134,
+    "duration": 4018
+  },
+  {
+    "tabId": 778736172,
+    "url": "https://discord.com/app",
+    "title": "Discord",
+    "domain": "discord.com",
+    "startTime": 1784116252739,
+    "endTime": 1784116256913,
+    "duration": 4174
+  },
+  {
+    "tabId": 778736172,
+    "url": "https://discord.com/channels/@me",
+    "title": "Discord",
+    "domain": "discord.com",
+    "startTime": 1784116256915,
+    "endTime": 1784116272803,
+    "duration": 15888
+  },
+  {
+    "tabId": 778736172,
+    "url": "https://discord.com/channels/@me/1422559533053644884",
+    "title": "(1417) Discord | Friends",
+    "domain": "discord.com",
+    "startTime": 1784116272809,
+    "endTime": 1784116281902,
+    "duration": 9093
+  },
+  {
+    "tabId": 778736172,
+    "url": "https://discord.com/channels/@me/1422559533053644884",
+    "title": "(1417) Discord",
+    "domain": "discord.com",
+    "startTime": 1784116281918,
+    "endTime": 1784116301578,
+    "duration": 19660
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116303235,
+    "endTime": 1784116306517,
+    "duration": 3282
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/new",
+    "title": "New chat - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116306534,
+    "endTime": 1784116313326,
+    "duration": 6792
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "New chat - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116313328,
+    "endTime": 1784116407585,
+    "duration": 94257
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116408210,
+    "endTime": 1784116420186,
+    "duration": 11976
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116420765,
+    "endTime": 1784116428507,
+    "duration": 7742
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116431442,
+    "endTime": 1784116444213,
+    "duration": 12771
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116448780,
+    "endTime": 1784116452995,
+    "duration": 4215
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116453224,
+    "endTime": 1784116457748,
+    "duration": 4524
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116458988,
+    "endTime": 1784116491935,
+    "duration": 32947
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116494205,
+    "endTime": 1784116512725,
+    "duration": 18520
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116512737,
+    "endTime": 1784116521931,
+    "duration": 9194
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116525881,
+    "endTime": 1784116538299,
+    "duration": 12418
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "fireentity (DM) - Hack Club - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116538301,
+    "endTime": 1784116547953,
+    "duration": 9652
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116547956,
+    "endTime": 1784116552200,
+    "duration": 4244
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/home",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116552210,
+    "endTime": 1784116565195,
+    "duration": 12985
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "fireentity (DM) - Hack Club - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116565197,
+    "endTime": 1784116570240,
+    "duration": 5043
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/C0AUZ1LAMH6?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "fireentity (DM) - Hack Club - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116570241,
+    "endTime": 1784116576094,
+    "duration": 5853
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/C0AR3JDCE8L?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "macondo (Channel) - Hack Club - 17 new items - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116576097,
+    "endTime": 1784116588776,
+    "duration": 12679
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/C0B96454ZHR?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "stardance-monitor (Channel) - Hack Club - 17 new items - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116588780,
+    "endTime": 1784116597440,
+    "duration": 8660
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/D0BD31W6NDN?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "bot-demo (Channel) - Hack Club - 1 new item - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116597442,
+    "endTime": 1784116649470,
+    "duration": 52028
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116649478,
+    "endTime": 1784116663929,
+    "duration": 14451
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/D0BD31W6NDN?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Starpheus (DM) - Hack Club - 1 new item - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116663932,
+    "endTime": 1784116667787,
+    "duration": 3855
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/D0BD31W6NDN?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Starpheus (DM) - Hack Club - 1 new item - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116668596,
+    "endTime": 1784116680403,
+    "duration": 11807
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116680411,
+    "endTime": 1784116689076,
+    "duration": 8665
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/D0BD31W6NDN?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Starpheus (DM) - Hack Club - 1 new item - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116689086,
+    "endTime": 1784116693313,
+    "duration": 4227
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116694115,
+    "endTime": 1784116722543,
+    "duration": 28428
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Starpheus (DM) - Hack Club - 1 new item - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116724747,
+    "endTime": 1784116728210,
+    "duration": 3463
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/rng",
+    "title": "daily random number - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784116728212,
+    "endTime": 1784116731500,
+    "duration": 3288
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/dms?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "fireentity (DM) - Hack Club - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116731501,
+    "endTime": 1784116759869,
+    "duration": 28368
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/D0BD31W6NDN?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "fireentity (DM) - Hack Club - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116759874,
+    "endTime": 1784116768768,
+    "duration": 8894
+  },
+  {
+    "tabId": 778736175,
+    "url": "https://app.slack.com/client/E09V59WQY1E/C0AR3JDCE8L?_gl=1*zkn9fb*_gcl_au*MTg0MDI5NzcwLjE3ODI2NDY5MDA.",
+    "title": "Starpheus (DM) - Hack Club - Slack",
+    "domain": "app.slack.com",
+    "startTime": 1784116768774,
+    "endTime": 1784116773418,
+    "duration": 4644
+  },
+  {
+    "tabId": 778736180,
+    "url": "https://mail.google.com/mail/u/0/#inbox",
+    "title": "Inbox (895) - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1784116800092,
+    "endTime": 1784116807629,
+    "duration": 7537
+  },
+  {
+    "tabId": 778736180,
+    "url": "https://mail.google.com/mail/u/0/#inbox",
+    "title": "Inbox (895) - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1784116807631,
+    "endTime": 1784116811334,
+    "duration": 3703
+  },
+  {
+    "tabId": 778736180,
+    "url": "https://mail.google.com/mail/u/0/#sent",
+    "title": "Inbox (895) - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1784116811343,
+    "endTime": 1784116821944,
+    "duration": 10601
+  },
+  {
+    "tabId": 778736180,
+    "url": "https://mail.google.com/mail/u/0/#sent/FMfcgzQgMVfvtzcljPWhVkMPbwJqCMhL",
+    "title": "Sent Mail - akshithsurya1@gmail.com - Gmail",
+    "domain": "mail.google.com",
+    "startTime": 1784116821961,
+    "endTime": 1784116832191,
+    "duration": 10230
+  },
+  {
+    "tabId": 778736183,
+    "url": "https://www.google.com/search?q=hackclub+help+mail&rlz=1C1GCEA_enIN1140IN1143&oq=hackclub+help+mail&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIHCAEQIRigATIHCAIQIRigATIHCAMQIRiPAtIBCDcwMTBqMGo3qAIAsAIA&sourceid=chrome&source=chrome.ob&ie=UTF-8",
+    "title": "hackclub help mail - Google Search",
+    "domain": "google.com",
+    "startTime": 1784116846382,
+    "endTime": 1784116871831,
+    "duration": 25449
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784116871839,
+    "endTime": 1784116888085,
+    "duration": 16246
+  },
+  {
+    "tabId": 778736204,
+    "url": "https://www.google.com/search?sca_esv=b95d1611b6ab2c1b&rlz=1C1GCEA_enIN1140IN1143&sxsrf=APpeQnv4Uhegz7oxL-fcjadGJhRaYQ_NSg:1784117654118&udm=2&fbs=ABfTbFVyMZGZf1hfvX9uKjN_-G8c4u0nXx4bEIpwm1lnNH832SMIiTl3t-JZ4hGJOxPbHYS0UkvKdZAJprgUu75aBO7-5vrlVc7yEsfLdhPSHeGAC4PKjUkA1HmdN88rp1aV53ETensF5VWiigUuwhT17eVy3Zve07Hul7sTGlD95C4cRTJDOXSTz4tvYzm6Po2kzWMo1GcP4-S8DEPVIys2AfBUTShTIA&q=vinfast+sports+car&sa=X&ved=2ahUKEwjooIqY1NSVAxUIUGwGHf3KFIkQtKgLegQIGhAB&biw=1920&bih=991&dpr=1#sv=CAMSURoyKhBlLW40bjdjUHJHZXhMa0xNMg5uNG43Y1ByR2V4TGtMTToOY1JmeVktSUQwTEd3eE0gBCoXCgFzEhBlLW40bjdjUHJHZXhMa0xNGAEwARgHIMr_iLEGSggQARgBIAEoAQ",
+    "title": "vinfast sports car - Google Search",
+    "domain": "google.com",
+    "startTime": 1784117673583,
+    "endTime": 1784117686478,
+    "duration": 12895
+  },
+  {
+    "tabId": 778736204,
+    "url": "https://www.google.com/search?q=suzuki+sports+car&sca_esv=b95d1611b6ab2c1b&rlz=1C1GCEA_enIN1140IN1143&udm=2&biw=1920&bih=991&sxsrf=APpeQntaJLM5wQ6bZ4LQL_F__0FEIEMCkg%3A1784117657323&ei=mXlXasWoE8nI5_EPnKvioAY&ved=0ahUKEwiF2c6Z1NSVAxVJ5DkIHZyVGGQQ4dUDCBM&uact=5&oq=suzuki+sports+car&gs_lp=Egtnd3Mtd2l6LWltZyIRc3V6dWtpIHNwb3J0cyBjYXIyBRAAGIAEMggQABgHGB4YCjIGEAAYBxgeMgYQABgHGB4yBRAAGIAEMgYQABgHGB4yBhAAGAcYHjIGEAAYBxgeMgYQABgHGB4yBhAAGAcYHkjcNlDqEVi7NHADeACQAQCYAbABoAH1CaoBAzAuObgBA8gBAPgBAZgCC6ACzwrCAgcQIxjJAhgnwgIGEAAYCBgewgINEAAYgAQYigUYQxixA5gDAIgGAZIHAzMuOKAHkCyyBwMwLji4B64KwgcHMi0yLjYuM8gHmgGACAE&sclient=gws-wiz-img#sv=CAMSURoyKhBlLS1NLVgzY0hvUmRmcUxNMg4tTS1YM2NIb1JkZnFMTToOazBxS2NRUkowV1hORk0gBCoXCgFzEhBlLS1NLVgzY0hvUmRmcUxNGAEwARgHIPuh7AVKCBABGAEgASgB",
+    "title": "suzuki sports car - Google Search",
+    "domain": "google.com",
+    "startTime": 1784117686487,
+    "endTime": 1784117698715,
+    "duration": 12228
+  },
+  {
+    "tabId": 778736169,
+    "url": "https://claude.ai/chat/aa9788cc-4d41-4c11-b019-af40ae1498fc",
+    "title": "Now what I'm number one - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784117700655,
+    "endTime": 1784117723028,
+    "duration": 22373
+  },
+  {
+    "tabId": 778736203,
+    "url": "https://www.google.com/search?sca_esv=b95d1611b6ab2c1b&rlz=1C1GCEA_enIN1140IN1143&sxsrf=APpeQnsmPupxLOtXC1834xwqd-Ob5cCTTw:1784117727248&udm=2&fbs=ABfTbFVyMZGZf1hfvX9uKjN_-G8c4u0nXx4bEIpwm1lnNH832SMIiTl3t-JZ4hGJOxPbHYRQDtz5om-6srRFNP4UK_6edrYqFyYjVoLL0-Wmdmyc0hkgxMS8vWcGvu6KGvPN2l4wvP4g0XnoJ6nWvZ2U3Ex8MWzMGzxb4X-MeI_n9Uj6GJh43nDEDAsiemFtIfr_YyfAhnXFtEoOCBzzv6hb1IY7Cne_6g&q=suzuki+esteem&sa=X&sqi=2&ved=2ahUKEwi31Pq61NSVAxU0bWwGHXZUAjYQtKgLegQIGRAB&biw=1920&bih=991&dpr=1",
+    "title": "suzuki esteem - Google Search",
+    "domain": "google.com",
+    "startTime": 1784117736262,
+    "endTime": 1784117757183,
+    "duration": 20921
+  },
+  {
+    "tabId": 778736203,
+    "url": "https://www.google.com/search?sca_esv=b95d1611b6ab2c1b&rlz=1C1GCEA_enIN1140IN1143&sxsrf=APpeQnsmPupxLOtXC1834xwqd-Ob5cCTTw:1784117727248&udm=2&fbs=ABfTbFVyMZGZf1hfvX9uKjN_-G8c4u0nXx4bEIpwm1lnNH832SMIiTl3t-JZ4hGJOxPbHYRQDtz5om-6srRFNP4UK_6edrYqFyYjVoLL0-Wmdmyc0hkgxMS8vWcGvu6KGvPN2l4wvP4g0XnoJ6nWvZ2U3Ex8MWzMGzxb4X-MeI_n9Uj6GJh43nDEDAsiemFtIfr_YyfAhnXFtEoOCBzzv6hb1IY7Cne_6g&q=suzuki+esteem&sa=X&sqi=2&ved=2ahUKEwi31Pq61NSVAxU0bWwGHXZUAjYQtKgLegQIGRAB&biw=1920&bih=991&dpr=1#sv=CAMSURoyKhBlLUN3N2NLajVQSFpUMV9NMg5DdzdjS2o1UEhaVDFfTToOQ1FTSkJPaDR1TXZSc00gBCoXCgFzEhBlLUN3N2NLajVQSFpUMV9NGAEwARgHIO2_3PUGSggQARgBIAEoAQ",
+    "title": "suzuki esteem - Google Search",
+    "domain": "google.com",
+    "startTime": 1784117757185,
+    "endTime": 1784117762604,
+    "duration": 5419
+  },
+  {
+    "tabId": 778736054,
+    "url": "https://stardance.hackclub.com/@Ak_45/projects",
+    "title": "Ak_45 - Stardance",
+    "domain": "stardance.hackclub.com",
+    "startTime": 1784119001352,
+    "endTime": 1784119010602,
+    "duration": 9246
+  },
+  {
+    "tabId": 778736226,
+    "url": "https://claude.ai/new",
+    "title": "New chat - Claude",
+    "domain": "claude.ai",
+    "startTime": 1784119025633,
+    "endTime": 1784119298261,
+    "duration": 272628
+  }
+]

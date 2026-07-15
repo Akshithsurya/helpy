@@ -1,0 +1,74 @@
+[
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690224,
+    "value": 1,
+    "metadata": {
+      "task": "Task 1"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690226,
+    "value": 1,
+    "metadata": {
+      "task": "Task 2"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690228,
+    "value": 1,
+    "metadata": {
+      "task": "Task 3"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690242,
+    "value": 1,
+    "metadata": {
+      "task": "Task 1"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690244,
+    "value": 1,
+    "metadata": {
+      "task": "Task 2"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690246,
+    "value": 1,
+    "metadata": {
+      "task": "Task 3"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690254,
+    "value": 1,
+    "metadata": {
+      "task": "Task 1"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690256,
+    "value": 1,
+    "metadata": {
+      "task": "Task 2"
+    }
+  },
+  {
+    "trackingItemId": "task_completion",
+    "timestamp": 1783428690259,
+    "value": 1,
+    "metadata": {
+      "task": "Task 3"
+    }
+  }
+]

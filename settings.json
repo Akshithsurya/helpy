@@ -1,0 +1,23 @@
+{
+  "displayName": "Test User",
+  "theme": "light",
+  "accentColor": "purple",
+  "motionLevel": "normal",
+  "highContrast": false,
+  "uiScale": 200,
+  "contrastLevel": 100,
+  "focusModeEnabled": false,
+  "focusSessionDuration": 25,
+  "breakDuration": 5,
+  "longBreakDuration": 15,
+  "sessionsBeforeLongBreak": 4,
+  "ambientSound": "forest",
+  "ambientSoundVolume": 95,
+  "taskSortOrder": "priority",
+  "autoArchiveCompleted": false,
+  "autoArchiveDays": 7,
+  "reminderIntensity": "medium",
+  "autoStart": false,
+  "dailySummaryEnabled": true,
+  "dailySummaryTime": "18:00"
+}

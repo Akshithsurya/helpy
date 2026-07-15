@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Helpy - Your all-in-one productivity assistant for focus, tasks, and habits." />
+    <meta name="theme-color" content="#4a90e2" />
+    <title>Helpy - Productivity Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="main-app" class="container">
+      <header class="app-header">
+        <h1>Helpy</h1>
+      </header>
+
+      <!-- Tab Navigation -->
+      <nav class="tabs" role="tablist" aria-label="Main Navigation">
+        <button class="tab-button active" role="tab" aria-selected="true" aria-controls="focus-tab" id="tab-focus" data-tab="focus">Focus</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="tasks-tab" id="tab-tasks" data-tab="tasks">Tasks</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="habits-tab" id="tab-habits" data-tab="habits">Habits</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="notifications-tab" id="tab-notifications" data-tab="notifications">Notifications</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="stats-tab" id="tab-stats" data-tab="stats">Stats</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="account-tab" id="tab-account" data-tab="account">Account</button>
+      </nav>
+
+      <main class="tab-contents">
+        <!-- Focus Tab -->
+        <section id="focus-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-focus">
+          <div class="section">
+            <h2>Quick Commands</h2>
+            <label for="commandInput" class="visually-hidden">Quick Command Input</label>
+            <input type="text" id="commandInput" placeholder="Type /plan work 60 or /help" autocomplete="off" />
+            <div id="commandResult" class="command-result" aria-live="polite"></div>
+          </div>
+
+          <div class="section">
+            <h2>Focus Timer (Pomodoro Mode)</h2>
+            <div id="timer-mode-indicator" class="timer-mode-indicator">Work Mode</div>
+            <div id="timer-display" class="timer-display" aria-live="off">00:00</div>
+            <div class="timer-mode-controls">
+              <button id="timer-mode-work" class="mode-btn primary-btn">Work</button>
+              <button id="timer-mode-short-break" class="mode-btn secondary-btn">Short Break</button>
+              <button id="timer-mode-long-break" class="mode-btn secondary-btn">Long Break</button>
+            </div>
+            <div class="timer-controls">
+              <button id="start-timer-btn" class="primary-btn">Start</button>
+              <button id="pause-timer-btn" class="secondary-btn is-hidden">Pause</button>
+              <button id="resume-timer-btn" class="secondary-btn is-hidden">Resume</button>
+              <button id="stop-timer-btn" class="danger-btn is-hidden">Stop</button>
+            </div>
+            <div class="timer-duration-input">
+              <label for="timer-duration">Duration (minutes)</label>
+              <input type="number" id="timer-duration" min="5" max="240" value="25" />
+            </div>
+          </div>
+
+          <div class="section">
+    <h2>Create Focus Plan</h2>
+    <form id="planForm">
+      <div class="form-group">
+        <label for="planTitle">Plan Title</label>
+        <input type="text" id="planTitle" placeholder="e.g., Deep Work Session" required autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="planGoal">Goal (optional)</label>
+        <textarea id="planGoal" placeholder="What do you want to achieve?"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="planDuration">Duration (minutes)</label>
+        <input type="number" id="planDuration" min="5" max="240" value="30" required />
+      </div>
+      <div class="form-group">
+        <label for="planChunkSize">Task Chunk Size (minutes)</label>
+        <select id="planChunkSize">
+          <option value="5">5 minutes</option>
+          <option value="10">10 minutes</option>
+          <option value="15" selected>15 minutes</option>
+          <option value="20">20 minutes</option>
+          <option value="30">30 minutes</option>
+        </select>
+      </div>
+      <button type="submit" class="primary-btn">Create Plan</button>
+    </form>
+  </div>
+
+  <!-- New: Current Plan Section -->
+  <div class="section" id="currentPlanSection" style="display: none;">
+    <h2>Current Plan</h2>
+    <div id="currentPlanContainer"></div>
+    <div class="adhd-controls" style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+      <button id="startCurrentPlanBtn" class="primary-btn">Start Plan</button>
+      <button id="clearCurrentPlanBtn" class="secondary-btn">Clear Plan</button>
+    </div>
+  </div>
+
+          <div class="section" id="recentPlansSection">
+            <h2>Recent Plans</h2>
+            <div id="recentPlansList" class="history-list" aria-live="polite"></div>
+          </div>
+          <div class="section">
+            <h2>Focus Plan History</h2>
+            <div id="planHistoryList" class="history-list" aria-live="polite"></div>
+            <button id="clearHistoryBtn" class="secondary-btn">Clear History</button>
+          </div>
+        </section>
+
+        <!-- Tasks Tab -->
+        <section id="tasks-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-tasks" hidden>
+          <div class="section">
+            <h2>Add New Task</h2>
+            <form id="taskForm">
+              <div class="form-group">
+                <label for="taskTitle">Task Title</label>
+                <input type="text" id="taskTitle" placeholder="e.g., Review project proposal" required autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="taskDescription">Description (optional)</label>
+                <textarea id="taskDescription" placeholder="Add details..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="taskPriority">Priority</label>
+                <select id="taskPriority">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="taskTags">Tags (comma-separated)</label>
+                <input type="text" id="taskTags" placeholder="e.g., work, urgent" />
+              </div>
+              <div class="form-group">
+                <label for="taskDeadline">Deadline</label>
+                <input type="datetime-local" id="taskDeadline" />
+              </div>
+              <button type="submit" class="primary-btn">Add Task</button>
+            </form>
+          </div>
+          <div class="section">
+            <h2>Your Tasks</h2>
+            <div id="taskList" class="task-list" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- Habits Tab -->
+        <section id="habits-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-habits" hidden>
+          <div class="section">
+            <h2>Add New Habit</h2>
+            <form id="habitForm">
+              <div class="form-group">
+                <label for="habitName">Habit Name</label>
+                <input type="text" id="habitName" placeholder="e.g., Read 30 mins" required autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="habitDescription">Description (optional)</label>
+                <textarea id="habitDescription" placeholder="Why is this habit important?"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="habitFrequency">Frequency</label>
+                <select id="habitFrequency">
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="habitTargetCount">Target per period</label>
+                <input type="number" id="habitTargetCount" min="1" value="1" required />
+              </div>
+              <button type="submit" class="primary-btn">Add Habit</button>
+            </form>
+          </div>
+          <div class="section">
+            <h2>Your Habits</h2>
+            <div id="habitsSummary" class="habits-summary"></div>
+            <div id="habitList" class="habit-list" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- Notifications Tab -->
+        <section id="notifications-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-notifications" hidden>
+          <div class="section">
+            <h2>Notification Settings</h2>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="desktopNotificationsToggle" />
+              <label for="desktopNotificationsToggle">Enable Desktop Notifications</label>
+            </div>
+          </div>
+          <div class="section">
+            <header class="section-header">
+              <h2>Your Notifications</h2>
+              <div class="notification-actions">
+                <button id="markAllReadBtn" class="secondary-btn">Mark All as Read</button>
+                <button id="clearAllNotificationsBtn" class="danger-btn">Clear All</button>
+              </div>
+            </header>
+            <div id="notificationsStats" class="notifications-stats"></div>
+            <div id="notificationList" class="notification-list" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- Stats Tab -->
+        <section id="stats-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-stats" hidden>
+          <div class="section">
+            <h2>Focus Statistics</h2>
+            <div id="statisticsData" class="statistics-data" aria-live="polite"></div>
+          </div>
+          <div class="section">
+            <h2>Weekly Focus Chart</h2>
+            <canvas id="focusChart" width="600" height="300"></canvas>
+          </div>
+          <div class="section">
+            <h2>Browser Bridge</h2>
+            <div id="bridgeStatusCard" class="bridge-status"></div>
+            <div id="bridgeTabsData" class="bridge-tabs-data" aria-live="polite"></div>
+          </div>
+          <div class="section">
+            <h2>System Monitor</h2>
+            <div id="systemMonitorData" class="system-monitor-data" aria-live="polite"></div>
+          </div>
+          
+          <div class="section">
+            <h2>Activity Tracking</h2>
+            <div id="activityHistory" class="activity-history" aria-live="polite"></div>
+            <h3>App Usage Stats</h3>
+            <div id="appUsageStats" class="app-usage-stats" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- Account Tab -->
+        <section id="account-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-account" hidden>
+          <!-- Logged Out Container -->
+          <div id="auth-logged-out" class="section">
+            <div id="login-container">
+              <h2>Sign In to Helpy</h2>
+              <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                  <label for="loginEmail">Email</label>
+                  <input type="email" id="loginEmail" required placeholder="Enter your email" autocomplete="email" />
+                </div>
+                <div class="form-group">
+                  <label for="loginPassword">Password</label>
+                  <input type="password" id="loginPassword" required placeholder="Enter your password" autocomplete="current-password" />
+                </div>
+                <button type="submit" class="primary-btn">Sign In</button>
+              </form>
+              <p class="auth-toggle-text">Don't have an account? <a href="#" id="showRegisterBtn">Register here</a></p>
+            </div>
+
+            <div id="register-container" class="is-hidden">
+              <h2>Create Helpy Account</h2>
+              <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                  <label for="registerName">Display Name</label>
+                  <input type="text" id="registerName" required placeholder="Enter your name" autocomplete="name" />
+                </div>
+                <div class="form-group">
+                  <label for="registerEmail">Email</label>
+                  <input type="email" id="registerEmail" required placeholder="Enter your email" autocomplete="email" />
+                </div>
+                <div class="form-group">
+                  <label for="registerPassword">Password</label>
+                  <input type="password" id="registerPassword" required placeholder="Enter your password (min 6 chars)" minlength="6" autocomplete="new-password" />
+                </div>
+                <button type="submit" class="primary-btn">Register</button>
+              </form>
+              <p class="auth-toggle-text">Already have an account? <a href="#" id="showLoginBtn">Sign in here</a></p>
+            </div>
+
+            <hr class="auth-divider" />
+
+            <div class="oauth-buttons">
+              <button id="googleAppLoginBtn" type="button" class="oauth-btn google-btn">Sign in with Google</button>
+              <button id="githubAppLoginBtn" type="button" class="oauth-btn github-btn">Sign in with GitHub</button>
+            </div>
+            <div id="authErrorMsg" class="error-message" role="alert" aria-live="assertive"></div>
+          </div>
+
+          <!-- Logged In Container -->
+          <div id="auth-logged-in" class="section is-hidden">
+            <h2>My Account</h2>
+            <div class="profile-card">
+              <img id="userAvatar" src="" alt="User Avatar" class="profile-avatar is-hidden" />
+              <div class="profile-info">
+                <div class="profile-name" id="profileName">User Name</div>
+                <div class="profile-email" id="profileEmail">user@example.com</div>
+                <div class="profile-provider" id="profileProvider">Method: email</div>
+              </div>
+            </div>
+            <button id="appLogoutBtn" class="danger-btn">Log Out</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
