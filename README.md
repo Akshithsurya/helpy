@@ -1,3 +1,11 @@
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1b2433,100:3e7050&height=200&section=header&text=Helpy&fontSize=70&fontColor=ffffff&animation=fadeIn&fontAlignY=38" width="100%"/>
+
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&pause=2000&color=3E7050&center=true&vCenter=true&width=600&lines=A+desktop+app+for+a+brain+that+won't+sit+still.;Built+by+one+student+who+needed+it.;Free%2C+for+anyone+who+needs+it+too." alt="Typing SVG" />
+
+</div>
+
 # Helpy
 
 A desktop app and Chrome extension for staying on task if your brain doesn't cooperate with normal productivity tools.
@@ -75,4 +83,8 @@ GPL-3.0 — see [LICENSE](LICENSE). Fork it, take whatever's useful for your own
 
 ---
 
+<div align="center">
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:3e7050,100:1b2433&height=120&section=footer&animation=fadeIn" width="100%"/>
+
 Helpy · Palakkad, Kerala · 2026
+</div>
