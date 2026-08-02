@@ -148,5 +148,8 @@
     "jest": "^26.6.3",
     "prettier": "^3.3.3",
     "typescript": "^5.7.2"
+  },
+  "overrides": {
+    "builder-util-runtime": "9.7.0"
   }
 }
