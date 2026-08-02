@@ -153,15 +153,7 @@ shared/, src/                        shared code between the pieces
 - **N-API / node-addon-api** — for making the C++ boundary survivable
 - **Everyone who's opened an issue** — that's usually enough to track a bug down
 
----
 
-## Author
-
-<img src="https://github-readme-stats.shion.dev/api?username=Akshithsurya&theme=tokyonight&hide_border=false&include_all_commits=true&count_private=true" height="165"/> <img src="https://github-readme-stats.shion.dev/api/top-langs/?username=Akshithsurya&theme=tokyonight&hide_border=false&include_all_commits=true&count_private=true" height="165"/>
-
-![](https://streak-stats.demolab.com/?user=Akshithsurya&theme=tokyonight&hide_border=false)
-
----
 
 ## Contact
 
