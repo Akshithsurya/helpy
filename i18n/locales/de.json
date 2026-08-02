@@ -1,0 +1,301 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "ok": "OK",
+    "yes": "Ja",
+    "no": "Nein",
+    "loading": "Laden...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "confirm": "Bestätigen"
+  },
+  "app": {
+    "title": "Helpy",
+    "description": "Dein All-in-One-Produktivitätsassistent für Konzentration, Aufgaben und Gewohnheiten"
+  },
+  "tabs": {
+    "focus": "Konzentration",
+    "tasks": "Aufgaben",
+    "habits": "Gewohnheiten",
+    "notifications": "Benachrichtigungen",
+    "stats": "Statistiken",
+    "account": "Konto"
+  },
+  "plan": {
+    "title": "Fokusplan erstellen",
+    "planTitle": "Plantitel",
+    "planTitlePlaceholder": "z.B.: Tiefenarbeitssitzung",
+    "planGoal": "Ziel (optional)",
+    "planGoalPlaceholder": "Was möchtest du erreichen?",
+    "planDuration": "Dauer (Minuten)",
+    "planChunkSize": "Aufgabenblockgröße (Minuten)",
+    "planTemplate": "Als Vorlage speichern",
+    "planTemplateOptions": {
+      "dontSave": "Nicht speichern",
+      "saveAsNew": "Als neue Vorlage speichern"
+    },
+    "createPlan": "Plan erstellen",
+    "currentPlan": "Aktueller Plan",
+    "startPlan": "Plan starten",
+    "editPlan": "Plan bearbeiten",
+    "exportPlan": "Plan exportieren",
+    "saveAsTemplate": "Als Vorlage speichern",
+    "clearPlan": "Plan löschen",
+    "confirmClearPlan": "Möchtest du diesen Plan wirklich löschen?",
+    "planCleared": "Plan gelöscht",
+    "planCreated": "Fokusplan erfolgreich erstellt!",
+    "planUpdated": "Plan erfolgreich aktualisiert!",
+    "planExported": "Plan erfolgreich exportiert!",
+    "templateSaved": "Vorlage erfolgreich gespeichert!",
+    "templateNamePrompt": "Gib einen Namen für diese Vorlage ein:",
+    "noRecentPlans": "Noch keine kürzlichen Pläne. Erstelle einen oben!",
+    "recentPlans": "Kürzliche Pläne",
+    "planHistory": "Fokusplan-Verlauf",
+    "clearHistory": "Verlauf löschen",
+    "quickCommands": "Schnellbefehle",
+    "commandPlaceholder": "Gib /plan work 60 oder /help ein",
+    "searchPresets": "Vorlagen durchsuchen...",
+    "presetFilterAll": "Alle",
+    "presetFilterWork": "Arbeit",
+    "presetFilterStudy": "Lernen",
+    "presetFilterFocus": "Konzentration",
+    "presetFilterSpace": "Raum",
+    "presetFilterCreative": "Kreativ",
+    "noPresetsFound": "Keine passenden Vorlagen gefunden.",
+    "presets": "Erweiterte Planvorlagen"
+  },
+  "tasks": {
+    "addNewTask": "Neue Aufgabe hinzufügen",
+    "taskTitle": "Aufgabentitel",
+    "taskTitlePlaceholder": "z.B.: Projektvorschlag prüfen",
+    "taskDescription": "Beschreibung (optional)",
+    "taskDescriptionPlaceholder": "Details hinzufügen...",
+    "taskPriority": "Priorität",
+    "taskPriorityLow": "Niedrig",
+    "taskPriorityMedium": "Mittel",
+    "taskPriorityHigh": "Hoch",
+    "taskPriorityUrgent": "Dringend",
+    "taskTags": "Tags (kommagetrennt)",
+    "taskTagsPlaceholder": "z.B.: Arbeit, dringend",
+    "taskDeadline": "Termin",
+    "addTask": "Aufgabe hinzufügen",
+    "yourTasks": "Deine Aufgaben",
+    "noTasks": "Noch keine Aufgaben. Füge eine oben hinzu!",
+    "complete": "Erledigen",
+    "undo": "Rückgängig machen",
+    "deadline": "Termin:",
+    "noDeadline": "Kein Termin"
+  },
+  "timer": {
+    "title": "Fokustimer (Pomodoro-Modus)",
+    "workMode": "Arbeitsmodus",
+    "shortBreakMode": "Kurze Pause",
+    "longBreakMode": "Lange Pause",
+    "start": "Starten",
+    "pause": "Pausieren",
+    "resume": "Fortfahren",
+    "stop": "Stoppen",
+    "duration": "Dauer (Minuten)",
+    "focusSessionComplete": "Fokussitzung abgeschlossen!",
+    "greatJob": "Gute Arbeit, bleib konzentriert!"
+  },
+  "habits": {
+    "addNewHabit": "Neue Gewohnheit hinzufügen",
+    "habitName": "Gewohnheitsname",
+    "habitNamePlaceholder": "z.B.: 30 Minuten lesen",
+    "habitDescription": "Beschreibung (optional)",
+    "habitDescriptionPlaceholder": "Warum ist diese Gewohnheit wichtig?",
+    "habitFrequency": "Häufigkeit",
+    "habitFrequencyDaily": "Täglich",
+    "habitFrequencyWeekly": "Wöchentlich",
+    "habitFrequencyMonthly": "Monatlich",
+    "habitTargetCount": "Ziel pro Periode",
+    "addHabit": "Gewohnheit hinzufügen",
+    "yourHabits": "Deine Gewohnheiten",
+    "habitsSummary": "Gewohnheitsübersicht"
+  },
+  "notifications": {
+    "settings": "Benachrichtigungseinstellungen",
+    "enableDesktopNotifications": "Desktop-Benachrichtigungen aktivieren",
+    "yourNotifications": "Deine Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "clearAll": "Alle löschen",
+    "notificationsStats": "Benachrichtigungsstatistiken"
+  },
+  "stats": {
+    "focusStatistics": "Fokusstatistiken",
+    "weeklyFocusChart": "Wöchentliches Fokusdiagramm",
+    "browserBridge": "Browser-Brücke",
+    "systemMonitor": "Systemmonitor",
+    "activityTracking": "Aktivitätsverfolgung",
+    "appUsageStats": "App-Nutzungsstatistiken",
+    "trackedTabs": "Verfolgte Tabs:",
+    "activeTabs": "Aktive Tabs:",
+    "historyEntries": "Verlaufseinträge:",
+    "pomodoroSync": "Pomodoro-Synchronisation:",
+    "lastCollected": "Letztes Sammeln:",
+    "activeWindows": "Aktive Fenster:",
+    "noData": "Noch keine Daten gesammelt.",
+    "noTabs": "Noch keine Browser-Tabs von der Erweiterung empfangen."
+  },
+  "auth": {
+    "signIn": "Bei Helpy anmelden",
+    "createAccount": "Helpy-Konto erstellen",
+    "email": "E-Mail",
+    "emailPlaceholder": "Deine E-Mail eingeben",
+    "password": "Passwort",
+    "passwordPlaceholder": "Dein Passwort eingeben",
+    "confirmPasswordPlaceholder": "Passwort erneut eingeben",
+    "displayName": "Anzeigename",
+    "displayNamePlaceholder": "Deinen Namen eingeben",
+    "register": "Registrieren",
+    "signInButton": "Anmelden",
+    "dontHaveAccount": "Kein Konto?",
+    "alreadyHaveAccount": "Bereits ein Konto?",
+    "registerHere": "Hier registrieren",
+    "signInHere": "Hier anmelden",
+    "signInWithGoogle": "Mit Google anmelden",
+    "signInWithGitHub": "Mit GitHub anmelden",
+    "myAccount": "Mein Konto",
+    "signedInWith": "Angemeldet mit",
+    "logOut": "Abmelden"
+  },
+  "presets": {
+    "work": {
+      "title": "Arbeitssitzung",
+      "goal": "Konzentriert auf Arbeitsaufgaben"
+    },
+    "study": {
+      "title": "Lernsitzung",
+      "goal": "Konzentriert auf das Lernen"
+    },
+    "focus": {
+      "title": "Tiefe Konzentration",
+      "goal": "Tiefe Konzentrationssitzung"
+    },
+    "focus session": {
+      "title": "Tiefe Konzentration",
+      "goal": "Tiefe Konzentrationssitzung"
+    },
+    "code": {
+      "title": "Programmiersitzung",
+      "goal": "Code schreiben und Probleme lösen"
+    },
+    "design": {
+      "title": "Designsitzung",
+      "goal": "Designs erstellen und verfeinern"
+    },
+    "write": {
+      "title": "Schreibsitzung",
+      "goal": "Artikel, Dokumentation oder Inhalt schreiben"
+    },
+    "read": {
+      "title": "Lesesitzung",
+      "goal": "Lesen und neue Dinge lernen"
+    },
+    "exercise": {
+      "title": "Übungs-sitzung",
+      "goal": "Körperliche Aktivität oder Training"
+    },
+    "meditate": {
+      "title": "Meditations-sitzung",
+      "goal": "Achtsamkeit und Meditation üben"
+    },
+    "clean": {
+      "title": "Putzzitzung",
+      "goal": "Raum säubern und organisieren"
+    },
+    "review": {
+      "title": "Überprüfungs-sitzung",
+      "goal": "Arbeit oder Materialien prüfen"
+    },
+    "plan": {
+      "title": "Planungs-sitzung",
+      "goal": "Aufgaben planen und organisieren"
+    },
+    "sprint": {
+      "title": "Schneller Fokus-Sprint",
+      "goal": "Kurzes, konzentriertes Arbeiten"
+    },
+    "blitz": {
+      "title": "Aufgaben-Blitz",
+      "goal": "Kleine Aufgaben schnell erledigen"
+    },
+    "micro": {
+      "title": "Mikro-Fokus",
+      "goal": "Ultrakurze Konzentrationssitzung"
+    },
+    "deep": {
+      "title": "Tiefe Einheit",
+      "goal": "Langes, konzentriertes Arbeiten"
+    },
+    "quick task": {
+      "title": "Schneller Aufgaben-Blitz",
+      "goal": "Eine kleine Aufgabe angehen"
+    },
+    "space-research": {
+      "title": "Raumforschungs-sitzung",
+      "goal": "Weltraumwissenschaftsthemen erforschen"
+    },
+    "satellite-design": {
+      "title": "Satelliten-designsitzung",
+      "goal": "Satelliten oder Raumfahrthardware entwerfen"
+    },
+    "data-analysis": {
+      "title": "Raumdaten-analyse",
+      "goal": "Raummissionsdaten analysieren"
+    },
+    "mission-planning": {
+      "title": "Raummissions-planung",
+      "goal": "Raummissionsziele planen"
+    },
+    "space-adventure": {
+      "title": "Raumabenteuer-Minigame",
+      "goal": "Ein schnelles, raumthematisches Minispiel spielen (Oster-Ei!)"
+    }
+  },
+  "tasksDescriptors": {
+    "startStrong": "Stark anfangen",
+    "keepGoing": "Weitermachen",
+    "makingProgress": "Fortschritte machen",
+    "almostThere": "Fast da",
+    "finalPush": "Letzter Schub"
+  },
+  "language": {
+    "selectLanguage": "Sprache auswählen",
+    "english": "English",
+    "chinese": "中文 (简体)",
+    "spanish": "Español",
+    "french": "Français",
+    "german": "Deutsch",
+    "japanese": "日本語"
+  },
+  "ui": {
+    "calmMode": "Ruhiger Modus",
+    "normalMode": "Normaler Modus",
+    "darkMode": "Dunkelmodus",
+    "lightMode": "Hellmodus"
+  },
+  "status": {
+    "loadingFocusPlans": "Fokuspläne werden geladen...",
+    "loadingSelectedPlan": "Ausgewählter Plan wird geladen...",
+    "failedLoadRecent": "Kürzliche Pläne konnten nicht geladen werden. Bitte versuche es erneut.",
+    "failedCreatePlan": "Fokusplan konnte nicht erstellt werden. Bitte versuche es erneut.",
+    "planTitleEmpty": "Plantitel ist leer",
+    "planTitleTooLong": "Plantitel ist zu lang (max. 100 Zeichen)",
+    "planGoalTooLong": "Planziel ist zu lang (max. 500 Zeichen)"
+  },
+  "editPlan": {
+    "title": "Plan bearbeiten",
+    "taskTitle": "Aufgabentitel",
+    "taskDuration": "Dauer",
+    "taskPriority": "Priorität",
+    "addTask": "+ Aufgabe hinzufügen",
+    "saveChanges": "Änderungen speichern"
+  }
+}

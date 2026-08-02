@@ -1,0 +1,301 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "create": "作成",
+    "ok": "OK",
+    "yes": "はい",
+    "no": "いいえ",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "warning": "警告",
+    "confirm": "確認"
+  },
+  "app": {
+    "title": "Helpy",
+    "description": "集中力、タスク、習慣のためのオールインワン生産性アシスタント"
+  },
+  "tabs": {
+    "focus": "集中",
+    "tasks": "タスク",
+    "habits": "習慣",
+    "notifications": "通知",
+    "stats": "統計",
+    "account": "アカウント"
+  },
+  "plan": {
+    "title": "集中計画を作成",
+    "planTitle": "計画タイトル",
+    "planTitlePlaceholder": "例：ディープワークセッション",
+    "planGoal": "目標（任意）",
+    "planGoalPlaceholder": "何を達成したいですか？",
+    "planDuration": "時間（分）",
+    "planChunkSize": "タスクブロックサイズ（分）",
+    "planTemplate": "テンプレートとして保存",
+    "planTemplateOptions": {
+      "dontSave": "保存しない",
+      "saveAsNew": "新しいテンプレートとして保存"
+    },
+    "createPlan": "計画を作成",
+    "currentPlan": "現在の計画",
+    "startPlan": "計画を開始",
+    "editPlan": "計画を編集",
+    "exportPlan": "計画をエクスポート",
+    "saveAsTemplate": "テンプレートとして保存",
+    "clearPlan": "計画をクリア",
+    "confirmClearPlan": "この計画をクリアしてもよろしいですか？",
+    "planCleared": "計画がクリアされました",
+    "planCreated": "集中計画が正常に作成されました！",
+    "planUpdated": "計画が正常に更新されました！",
+    "planExported": "計画が正常にエクスポートされました！",
+    "templateSaved": "テンプレートが正常に保存されました！",
+    "templateNamePrompt": "このテンプレートの名前を入力してください：",
+    "noRecentPlans": "最近の計画はまだありません。上から作成してください！",
+    "recentPlans": "最近の計画",
+    "planHistory": "集中計画履歴",
+    "clearHistory": "履歴をクリア",
+    "quickCommands": "クイックコマンド",
+    "commandPlaceholder": "/plan work 60 または /help と入力してください",
+    "searchPresets": "プリセットを検索...",
+    "presetFilterAll": "すべて",
+    "presetFilterWork": "仕事",
+    "presetFilterStudy": "勉強",
+    "presetFilterFocus": "集中",
+    "presetFilterSpace": "宇宙",
+    "presetFilterCreative": "クリエイティブ",
+    "noPresetsFound": "条件に一致するプリセットが見つかりません。",
+    "presets": "強化された計画プリセット"
+  },
+  "tasks": {
+    "addNewTask": "新しいタスクを追加",
+    "taskTitle": "タスクタイトル",
+    "taskTitlePlaceholder": "例：プロジェクト提案の確認",
+    "taskDescription": "説明（任意）",
+    "taskDescriptionPlaceholder": "詳細を追加...",
+    "taskPriority": "優先度",
+    "taskPriorityLow": "低",
+    "taskPriorityMedium": "中",
+    "taskPriorityHigh": "高",
+    "taskPriorityUrgent": "緊急",
+    "taskTags": "タグ（カンマ区切り）",
+    "taskTagsPlaceholder": "例：仕事、緊急",
+    "taskDeadline": "締め切り",
+    "addTask": "タスクを追加",
+    "yourTasks": "あなたのタスク",
+    "noTasks": "まだタスクがありません。上から追加してください！",
+    "complete": "完了",
+    "undo": "元に戻す",
+    "deadline": "締め切り：",
+    "noDeadline": "締め切りなし"
+  },
+  "timer": {
+    "title": "集中タイマー（ポモドーロモード）",
+    "workMode": "作業モード",
+    "shortBreakMode": "短い休憩",
+    "longBreakMode": "長い休憩",
+    "start": "開始",
+    "pause": "一時停止",
+    "resume": "再開",
+    "stop": "停止",
+    "duration": "時間（分）",
+    "focusSessionComplete": "集中セッション完了！",
+    "greatJob": "集中し続けて、よくできました！"
+  },
+  "habits": {
+    "addNewHabit": "新しい習慣を追加",
+    "habitName": "習慣の名前",
+    "habitNamePlaceholder": "例：30分読書",
+    "habitDescription": "説明（任意）",
+    "habitDescriptionPlaceholder": "なぜこの習慣が重要ですか？",
+    "habitFrequency": "頻度",
+    "habitFrequencyDaily": "毎日",
+    "habitFrequencyWeekly": "毎週",
+    "habitFrequencyMonthly": "毎月",
+    "habitTargetCount": "期間ごとの目標",
+    "addHabit": "習慣を追加",
+    "yourHabits": "あなたの習慣",
+    "habitsSummary": "習慣の要約"
+  },
+  "notifications": {
+    "settings": "通知設定",
+    "enableDesktopNotifications": "デスクトップ通知を有効にする",
+    "yourNotifications": "あなたの通知",
+    "markAllRead": "すべて既読にする",
+    "clearAll": "すべてクリア",
+    "notificationsStats": "通知統計"
+  },
+  "stats": {
+    "focusStatistics": "集中統計",
+    "weeklyFocusChart": "週間集中チャート",
+    "browserBridge": "ブラウザブリッジ",
+    "systemMonitor": "システムモニター",
+    "activityTracking": "アクティビティトラッキング",
+    "appUsageStats": "アプリ使用統計",
+    "trackedTabs": "追跡中のタブ：",
+    "activeTabs": "アクティブなタブ：",
+    "historyEntries": "履歴エントリ：",
+    "pomodoroSync": "ポモドーロ同期：",
+    "lastCollected": "最終収集：",
+    "activeWindows": "アクティブなウィンドウ：",
+    "noData": "まだデータが収集されていません。",
+    "noTabs": "拡張機能からブラウザタブをまだ受信していません。"
+  },
+  "auth": {
+    "signIn": "Helpyにサインイン",
+    "createAccount": "Helpyアカウントを作成",
+    "email": "メールアドレス",
+    "emailPlaceholder": "メールアドレスを入力してください",
+    "password": "パスワード",
+    "passwordPlaceholder": "パスワードを入力してください",
+    "confirmPasswordPlaceholder": "もう一度パスワードを入力してください",
+    "displayName": "表示名",
+    "displayNamePlaceholder": "名前を入力してください",
+    "register": "登録",
+    "signInButton": "サインイン",
+    "dontHaveAccount": "アカウントをお持ちでない方",
+    "alreadyHaveAccount": "すでにアカウントをお持ちの方",
+    "registerHere": "こちらから登録",
+    "signInHere": "こちらからサインイン",
+    "signInWithGoogle": "Googleでサインイン",
+    "signInWithGitHub": "GitHubでサインイン",
+    "myAccount": "マイアカウント",
+    "signedInWith": "ログイン方法",
+    "logOut": "ログアウト"
+  },
+  "presets": {
+    "work": {
+      "title": "作業セッション",
+      "goal": "仕事のタスクに集中"
+    },
+    "study": {
+      "title": "勉強セッション",
+      "goal": "勉強に集中"
+    },
+    "focus": {
+      "title": "ディープフォーカス",
+      "goal": "深い集中セッション"
+    },
+    "focus session": {
+      "title": "ディープフォーカス",
+      "goal": "深い集中セッション"
+    },
+    "code": {
+      "title": "コーディングセッション",
+      "goal": "コードを書いて問題を解決"
+    },
+    "design": {
+      "title": "デザインセッション",
+      "goal": "デザインを作成・洗練"
+    },
+    "write": {
+      "title": "執筆セッション",
+      "goal": "記事、ドキュメント、コンテンツを書く"
+    },
+    "read": {
+      "title": "読書セッション",
+      "goal": "読んで新しいことを学ぶ"
+    },
+    "exercise": {
+      "title": "エクササイズセッション",
+      "goal": "身体活動またはトレーニング"
+    },
+    "meditate": {
+      "title": "瞑想セッション",
+      "goal": "マインドフルネスと瞑想を練習"
+    },
+    "clean": {
+      "title": "掃除セッション",
+      "goal": "スペースを清掃・整理"
+    },
+    "review": {
+      "title": "レビューセッション",
+      "goal": "仕事や資料を確認"
+    },
+    "plan": {
+      "title": "計画セッション",
+      "goal": "タスクを計画・整理"
+    },
+    "sprint": {
+      "title": "クイック集中スプリント",
+      "goal": "短い集中作業"
+    },
+    "blitz": {
+      "title": "タスクブリッツ",
+      "goal": "小さなタスクをすばやく完了"
+    },
+    "micro": {
+      "title": "マイクロフォーカス",
+      "goal": "超短い集中セッション"
+    },
+    "deep": {
+      "title": "ディープダイブ",
+      "goal": "長時間の集中作業"
+    },
+    "quick task": {
+      "title": "クイックタスクブリッツ",
+      "goal": "1つの小さなタスクに取り組む"
+    },
+    "space-research": {
+      "title": "宇宙研究セッション",
+      "goal": "宇宙科学トピックを研究"
+    },
+    "satellite-design": {
+      "title": "衛星設計セッション",
+      "goal": "衛星または宇宙ハードウェアを設計"
+    },
+    "data-analysis": {
+      "title": "宇宙データ分析",
+      "goal": "宇宙ミッションデータを分析"
+    },
+    "mission-planning": {
+      "title": "宇宙ミッション計画",
+      "goal": "宇宙ミッション目標を計画"
+    },
+    "space-adventure": {
+      "title": "宇宙アドベンチャーミニゲーム",
+      "goal": "クイック宇宙テーマのミニゲームをプレイ（イースターエッグ！）"
+    }
+  },
+  "tasksDescriptors": {
+    "startStrong": "良いスタート",
+    "keepGoing": "続ける",
+    "makingProgress": "進捗中",
+    "almostThere": "もう少し",
+    "finalPush": "最後の一押し"
+  },
+  "language": {
+    "selectLanguage": "言語を選択",
+    "english": "English",
+    "chinese": "中文 (简体)",
+    "spanish": "Español",
+    "french": "Français",
+    "german": "Deutsch",
+    "japanese": "日本語"
+  },
+  "ui": {
+    "calmMode": "穏やかモード",
+    "normalMode": "通常モード",
+    "darkMode": "ダークモード",
+    "lightMode": "ライトモード"
+  },
+  "status": {
+    "loadingFocusPlans": "集中計画を読み込み中...",
+    "loadingSelectedPlan": "選択した計画を読み込み中...",
+    "failedLoadRecent": "最近の計画を読み込めませんでした。もう一度お試しください。",
+    "failedCreatePlan": "集中計画を作成できませんでした。もう一度お試しください。",
+    "planTitleEmpty": "計画タイトルが空です",
+    "planTitleTooLong": "計画タイトルが長すぎます（最大100文字）",
+    "planGoalTooLong": "計画目標が長すぎます（最大500文字）"
+  },
+  "editPlan": {
+    "title": "計画を編集",
+    "taskTitle": "タスクタイトル",
+    "taskDuration": "時間",
+    "taskPriority": "優先度",
+    "addTask": "+ タスクを追加",
+    "saveChanges": "変更を保存"
+  }
+}

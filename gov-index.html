@@ -1,0 +1,575 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Government-grade Task Management System - Secure, Reliable, Efficient">
+  <title>Government-grade Task Management System</title>
+  <link rel="stylesheet" href="gov-styles.css">
+</head>
+<body>
+  <div class="gov-container">
+    <!-- Top Navigation -->
+    <header class="gov-header">
+      <div class="gov-header-left">
+        <div class="gov-logo">
+          <div class="gov-logo-icon">G</div>
+          <span>Government-grade Task Management System</span>
+        </div>
+      </div>
+      <div class="gov-header-right">
+        <button class="gov-header-btn" id="refreshBtn">Refresh</button>
+        <div class="gov-user-info">
+          <div class="gov-user-avatar" id="userAvatar">A</div>
+          <div>
+            <div id="userName">Admin</div>
+            <div style="font-size: 12px; opacity: 0.8;">System Administrator</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Area -->
+    <div class="gov-main">
+      <!-- Sidebar Navigation -->
+      <aside class="gov-sidebar">
+        <nav>
+          <ul class="gov-nav-list">
+            <li class="gov-nav-item">
+              <a class="gov-nav-link active" data-page="dashboard">
+                <span class="gov-nav-icon">📊</span>
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li class="gov-nav-item">
+              <a class="gov-nav-link" data-page="tasks">
+                <span class="gov-nav-icon">✅</span>
+                <span>Task Management</span>
+              </a>
+            </li>
+            <li class="gov-nav-item">
+              <a class="gov-nav-link" data-page="plans">
+                <span class="gov-nav-icon">📋</span>
+                <span>Plan Management</span>
+              </a>
+            </li>
+            <li class="gov-nav-item">
+              <a class="gov-nav-link" data-page="audit">
+                <span class="gov-nav-icon">📝</span>
+                <span>Audit Logs</span>
+              </a>
+            </li>
+            <li class="gov-nav-item">
+              <a class="gov-nav-link" data-page="users">
+                <span class="gov-nav-icon">👥</span>
+                <span>User Management</span>
+              </a>
+            </li>
+            <li class="gov-nav-item">
+              <a class="gov-nav-link" data-page="monitor">
+                <span class="gov-nav-icon">📡</span>
+                <span>System Monitoring</span>
+              </a>
+            </li>
+            <li class="gov-nav-item">
+              <a class="gov-nav-link" data-page="settings">
+                <span class="gov-nav-icon">⚙️</span>
+                <span>System Settings</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="gov-content">
+        <!-- Dashboard Page -->
+        <div id="page-dashboard" class="gov-page">
+          <h1 class="gov-page-title">Dashboard</h1>
+
+          <!-- Stats Cards -->
+          <div class="gov-stats-grid">
+            <div class="gov-stat-card">
+              <div class="gov-stat-value">128</div>
+              <div class="gov-stat-label">Active Tasks</div>
+              <div class="gov-stat-trend up">↑ 12% from last week</div>
+            </div>
+            <div class="gov-stat-card">
+              <div class="gov-stat-value">356</div>
+              <div class="gov-stat-label">Completed Tasks</div>
+              <div class="gov-stat-trend up">↑ 8% from last week</div>
+            </div>
+            <div class="gov-stat-card">
+              <div class="gov-stat-value">24</div>
+              <div class="gov-stat-label">Active Users</div>
+              <div class="gov-stat-trend up">↑ 5% from last week</div>
+            </div>
+            <div class="gov-stat-card">
+              <div class="gov-stat-value">99.9%</div>
+              <div class="gov-stat-label">System Availability</div>
+              <div class="gov-stat-trend up">↑ Stable</div>
+            </div>
+          </div>
+
+          <!-- System Status Card -->
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">System Status</h2>
+            </div>
+            <div id="systemStatus">
+              <div class="gov-alert gov-alert-success">
+                <div>
+                  <strong>System Running Normally</strong><br>
+                  All modules are functioning properly, last check: <span id="lastCheckTime">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Recent Activity</h2>
+            </div>
+            <div id="recentActivity">
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">John Doe</span>
+                  <span class="gov-audit-time">2026-07-22 14:30:25</span>
+                </div>
+                <div class="gov-audit-content">
+                  <span class="gov-tag gov-tag-success">Task Completed</span>
+                  Completed task "Quarterly Report Writing"
+                </div>
+              </div>
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">Jane Smith</span>
+                  <span class="gov-audit-time">2026-07-22 13:45:12</span>
+                </div>
+                <div class="gov-audit-content">
+                  <span class="gov-tag gov-tag-info">Plan Created</span>
+                  Created new work plan "Project Progress Tracking"
+                </div>
+              </div>
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">Bob Johnson</span>
+                  <span class="gov-audit-time">2026-07-22 12:20:05</span>
+                </div>
+                <div class="gov-audit-content">
+                  <span class="gov-tag gov-tag-warning">Task Overdue</span>
+                  Task "System Security Scan" is 1 day overdue
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Management Page -->
+        <div id="page-tasks" class="gov-page" style="display: none;">
+          <h1 class="gov-page-title">Task Management</h1>
+
+          <!-- Action Area -->
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Create New Task</h2>
+            </div>
+            <form id="taskFormGov">
+              <div class="gov-form-row">
+                <div class="gov-form-group">
+                  <label class="gov-form-label">Task Title</label>
+                  <input type="text" class="gov-form-input" id="govTaskTitle" placeholder="Enter task title">
+                </div>
+                <div class="gov-form-group">
+                  <label class="gov-form-label">Priority</label>
+                  <select class="gov-form-select" id="govTaskPriority">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+              <div class="gov-form-group">
+                <label class="gov-form-label">Task Description</label>
+                <textarea class="gov-form-textarea" id="govTaskDesc" placeholder="Enter task description"></textarea>
+              </div>
+              <div class="gov-form-row">
+                <div class="gov-form-group">
+                  <label class="gov-form-label">Owner</label>
+                  <input type="text" class="gov-form-input" id="govTaskOwner" placeholder="Enter owner name">
+                </div>
+                <div class="gov-form-group">
+                  <label class="gov-form-label">Deadline</label>
+                  <input type="date" class="gov-form-input" id="govTaskDeadline">
+                </div>
+              </div>
+              <button type="submit" class="gov-btn gov-btn-primary">Create Task</button>
+            </form>
+          </div>
+
+          <!-- Task List -->
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Task List</h2>
+              <button class="gov-btn gov-btn-secondary gov-btn-sm">Refresh</button>
+            </div>
+            <table class="gov-table">
+              <thead>
+                <tr>
+                  <th>Task ID</th>
+                  <th>Title</th>
+                  <th>Priority</th>
+                  <th>Owner</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>T001</td>
+                  <td>Quarterly Report Writing</td>
+                  <td><span class="gov-tag gov-tag-warning">High</span></td>
+                  <td>John Doe</td>
+                  <td>2026-07-25</td>
+                  <td><span class="gov-tag gov-tag-info">In Progress</span></td>
+                  <td>
+                    <button class="gov-btn gov-btn-secondary gov-btn-sm">Edit</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>T002</td>
+                  <td>System Security Scan</td>
+                  <td><span class="gov-tag gov-tag-danger">Urgent</span></td>
+                  <td>Jane Smith</td>
+                  <td>2026-07-21</td>
+                  <td><span class="gov-tag gov-tag-danger">Overdue</span></td>
+                  <td>
+                    <button class="gov-btn gov-btn-secondary gov-btn-sm">Edit</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>T003</td>
+                  <td>User Training Materials</td>
+                  <td><span class="gov-tag gov-tag-success">Medium</span></td>
+                  <td>Bob Johnson</td>
+                  <td>2026-07-28</td>
+                  <td><span class="gov-tag gov-tag-success">Completed</span></td>
+                  <td>
+                    <button class="gov-btn gov-btn-secondary gov-btn-sm">View</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Plan Management Page -->
+        <div id="page-plans" class="gov-page" style="display: none;">
+          <h1 class="gov-page-title">Plan Management</h1>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Create Plan</h2>
+            </div>
+            <form id="planFormGov">
+              <div class="gov-form-row">
+                <div class="gov-form-group">
+                  <label class="gov-form-label">Plan Title</label>
+                  <input type="text" class="gov-form-input" id="govPlanTitle" placeholder="Enter plan title">
+                </div>
+                <div class="gov-form-group">
+                  <label class="gov-form-label">Estimated Duration (minutes)</label>
+                  <input type="number" class="gov-form-input" id="govPlanDuration" value="60">
+                </div>
+              </div>
+              <div class="gov-form-group">
+                <label class="gov-form-label">Plan Goal</label>
+                <textarea class="gov-form-textarea" id="govPlanGoal" placeholder="Enter plan goal"></textarea>
+              </div>
+              <button type="submit" class="gov-btn gov-btn-primary">Create Plan</button>
+            </form>
+          </div>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Plan List</h2>
+            </div>
+            <div id="planListGov">
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">Project Progress Tracking</span>
+                  <span class="gov-tag gov-tag-info">In Progress</span>
+                </div>
+                <div class="gov-audit-content">
+                  Estimated duration: 60 minutes | Created: 2026-07-22
+                </div>
+              </div>
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">Weekly Work Summary</span>
+                  <span class="gov-tag gov-tag-success">Completed</span>
+                </div>
+                <div class="gov-audit-content">
+                  Estimated duration: 30 minutes | Created: 2026-07-21
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Logs Page -->
+        <div id="page-audit" class="gov-page" style="display: none;">
+          <h1 class="gov-page-title">Audit Logs</h1>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Log Search</h2>
+            </div>
+            <div class="gov-form-row">
+              <div class="gov-form-group">
+                <label class="gov-form-label">Start Date</label>
+                <input type="date" class="gov-form-input" id="auditStartDate">
+              </div>
+              <div class="gov-form-group">
+                <label class="gov-form-label">End Date</label>
+                <input type="date" class="gov-form-input" id="auditEndDate">
+              </div>
+              <div class="gov-form-group">
+                <label class="gov-form-label">Log Level</label>
+                <select class="gov-form-select" id="auditLevel">
+                  <option value="">All</option>
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="error">Error</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+            </div>
+            <button class="gov-btn gov-btn-primary" id="auditSearchBtn">Search</button>
+            <button class="gov-btn gov-btn-secondary" id="auditExportBtn">Export Logs</button>
+          </div>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Audit Records</h2>
+            </div>
+            <div id="auditLogList">
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">System</span>
+                  <span class="gov-audit-time">2026-07-22 14:35:00</span>
+                  <span class="gov-tag gov-tag-info">INFO</span>
+                </div>
+                <div class="gov-audit-content">
+                  User login successful: John Doe
+                </div>
+              </div>
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">John Doe</span>
+                  <span class="gov-audit-time">2026-07-22 14:34:00</span>
+                  <span class="gov-tag gov-tag-success">INFO</span>
+                </div>
+                <div class="gov-audit-content">
+                  Accessed Task Management module
+                </div>
+              </div>
+              <div class="gov-audit-item">
+                <div class="gov-audit-header">
+                  <span class="gov-audit-user">System</span>
+                  <span class="gov-audit-time">2026-07-22 14:33:00</span>
+                  <span class="gov-tag gov-tag-warning">WARNING</span>
+                </div>
+                <div class="gov-audit-content">
+                  Failed login attempt detected: IP 192.168.1.100
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Management Page -->
+        <div id="page-users" class="gov-page" style="display: none;">
+          <h1 class="gov-page-title">User Management</h1>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">User List</h2>
+              <button class="gov-btn gov-btn-primary gov-btn-sm">+ Add User</button>
+            </div>
+            <table class="gov-table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>U001</td>
+                  <td>John Doe</td>
+                  <td>john.doe@gov.com</td>
+                  <td><span class="gov-tag gov-tag-info">Administrator</span></td>
+                  <td><span class="gov-tag gov-tag-success">Active</span></td>
+                  <td>2026-07-22 14:30</td>
+                  <td>
+                    <button class="gov-btn gov-btn-secondary gov-btn-sm">Edit</button>
+                    <button class="gov-btn gov-btn-danger gov-btn-sm">Disable</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>U002</td>
+                  <td>Jane Smith</td>
+                  <td>jane.smith@gov.com</td>
+                  <td><span class="gov-tag gov-tag-info">Regular User</span></td>
+                  <td><span class="gov-tag gov-tag-success">Active</span></td>
+                  <td>2026-07-22 10:15</td>
+                  <td>
+                    <button class="gov-btn gov-btn-secondary gov-btn-sm">Edit</button>
+                    <button class="gov-btn gov-btn-danger gov-btn-sm">Disable</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>U003</td>
+                  <td>Bob Johnson</td>
+                  <td>bob.johnson@gov.com</td>
+                  <td><span class="gov-tag gov-tag-info">Auditor</span></td>
+                  <td><span class="gov-tag gov-tag-warning">Disabled</span></td>
+                  <td>2026-07-20 09:00</td>
+                  <td>
+                    <button class="gov-btn gov-btn-secondary gov-btn-sm">Edit</button>
+                    <button class="gov-btn gov-btn-success gov-btn-sm">Enable</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- System Monitoring Page -->
+        <div id="page-monitor" class="gov-page" style="display: none;">
+          <h1 class="gov-page-title">System Monitoring</h1>
+
+          <div class="gov-stats-grid">
+            <div class="gov-stat-card">
+              <div class="gov-stat-value" id="cpuUsage">35%</div>
+              <div class="gov-stat-label">CPU Usage</div>
+            </div>
+            <div class="gov-stat-card">
+              <div class="gov-stat-value" id="memoryUsage">62%</div>
+              <div class="gov-stat-label">Memory Usage</div>
+            </div>
+            <div class="gov-stat-card">
+              <div class="gov-stat-value" id="diskUsage">45%</div>
+              <div class="gov-stat-label">Disk Usage</div>
+            </div>
+            <div class="gov-stat-card">
+              <div class="gov-stat-value" id="uptime">15d 8h</div>
+              <div class="gov-stat-label">System Uptime</div>
+            </div>
+          </div>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">System Health Status</h2>
+            </div>
+            <div id="healthCheckList">
+              <div class="gov-alert gov-alert-success">
+                <div>
+                  <strong>✅ Authentication Service</strong><br>
+                  Running normally
+                </div>
+              </div>
+              <div class="gov-alert gov-alert-success">
+                <div>
+                  <strong>✅ Data Storage</strong><br>
+                  Running normally
+                </div>
+              </div>
+              <div class="gov-alert gov-alert-success">
+                <div>
+                  <strong>✅ Log Service</strong><br>
+                  Running normally
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Active Alerts</h2>
+            </div>
+            <div id="alertList">
+              <div class="gov-alert gov-alert-warning">
+                <div>
+                  <strong>⚠️ Disk Space Warning</strong><br>
+                  /data partition usage has reached 85%, please clean up in time
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Settings Page -->
+        <div id="page-settings" class="gov-page" style="display: none;">
+          <h1 class="gov-page-title">System Settings</h1>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Security Settings</h2>
+            </div>
+            <div class="gov-form-group">
+              <label class="gov-form-label">Password Policy</label>
+              <select class="gov-form-select">
+                <option value="low">Low (min 6 chars)</option>
+                <option value="medium" selected>Medium (min 8 chars, includes letters and numbers)</option>
+                <option value="high">High (min 12 chars, includes uppercase, lowercase, numbers, and special characters)</option>
+              </select>
+            </div>
+            <div class="gov-form-group">
+              <label class="gov-form-label">Session Timeout (minutes)</label>
+              <input type="number" class="gov-form-input" value="30">
+            </div>
+            <div class="gov-form-group checkbox-group">
+              <input type="checkbox" id="mfaEnabled" checked>
+              <label for="mfaEnabled">Enable Multi-Factor Authentication</label>
+            </div>
+            <div class="gov-form-group checkbox-group">
+              <input type="checkbox" id="loginAlertEnabled" checked>
+              <label for="loginAlertEnabled">Abnormal Login Alerts</label>
+            </div>
+            <button class="gov-btn gov-btn-primary">Save Settings</button>
+          </div>
+
+          <div class="gov-card">
+            <div class="gov-card-header">
+              <h2 class="gov-card-title">Data Backup</h2>
+            </div>
+            <div class="gov-form-group">
+              <label class="gov-form-label">Automatic Backup Frequency</label>
+              <select class="gov-form-select">
+                <option value="daily" selected>Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <button class="gov-btn gov-btn-secondary">Backup Now</button>
+            <button class="gov-btn gov-btn-primary">Restore Backup</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="gov-renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "confirm": "Confirm"
+  },
+  "app": {
+    "title": "Helpy",
+    "description": "Your all-in-one productivity assistant for focus, tasks, and habits"
+  },
+  "tabs": {
+    "focus": "Focus",
+    "tasks": "Tasks",
+    "habits": "Habits",
+    "notifications": "Notifications",
+    "stats": "Stats",
+    "account": "Account"
+  },
+  "plan": {
+    "title": "Create Focus Plan",
+    "planTitle": "Plan Title",
+    "planTitlePlaceholder": "e.g., Deep Work Session",
+    "planGoal": "Goal (optional)",
+    "planGoalPlaceholder": "What do you want to achieve?",
+    "planDuration": "Duration (minutes)",
+    "planChunkSize": "Task Chunk Size (minutes)",
+    "planTemplate": "Save as Template",
+    "planTemplateOptions": {
+      "dontSave": "Don't save",
+      "saveAsNew": "Save as new template"
+    },
+    "createPlan": "Create Plan",
+    "currentPlan": "Current Plan",
+    "startPlan": "Start Plan",
+    "editPlan": "Edit Plan",
+    "exportPlan": "Export Plan",
+    "saveAsTemplate": "Save as Template",
+    "clearPlan": "Clear Plan",
+    "confirmClearPlan": "Are you sure you want to clear this plan?",
+    "planCleared": "Plan cleared",
+    "planCreated": "Focus plan created successfully!",
+    "planUpdated": "Plan updated successfully!",
+    "planExported": "Plan exported successfully!",
+    "templateSaved": "Template saved successfully!",
+    "templateNamePrompt": "Enter a name for this template:",
+    "noRecentPlans": "No recent plans yet. Create one above!",
+    "recentPlans": "Recent Plans",
+    "planHistory": "Focus Plan History",
+    "clearHistory": "Clear History",
+    "quickCommands": "Quick Commands",
+    "commandPlaceholder": "Type /plan work 60 or /help",
+    "searchPresets": "Search presets...",
+    "presetFilterAll": "All",
+    "presetFilterWork": "Work",
+    "presetFilterStudy": "Study",
+    "presetFilterFocus": "Focus",
+    "presetFilterSpace": "Space",
+    "presetFilterCreative": "Creative",
+    "noPresetsFound": "No presets found matching your criteria.",
+    "presets": "Enhanced Plan Presets"
+  },
+  "planBuilder": {
+    "title": "Create New Plan",
+    "hidePreview": "Hide Preview",
+    "showPreview": "Show Preview",
+    "saveAsShortcut": "Save as Shortcut",
+    "enterShortcutName": "Enter shortcut name:",
+    "enterShortcutDesc": "Enter description (optional):",
+    "shortcutSaved": "Shortcut saved!",
+    "quickCommand": "Quick Command",
+    "quickCommandHelp": "(Enter presets like \"work\" or \"study\")",
+    "commandPlaceholder": "Enter a command, e.g.: work 60 --goal 'Finish project' --tags 'work,urgent'",
+    "smartRecommendation": "Smart Plan Recommendation",
+    "applyRecommendation": "Apply Recommendation",
+    "energyLevel": "Energy Level",
+    "workIntensity": "Work Intensity",
+    "recommended": "Recommended",
+    "productivityGain": "productivity gain",
+    "maxChars": "Max 100 characters",
+    "maxGoalChars": "Max 500 characters",
+    "duration": "Duration (minutes)",
+    "chunkSize": "Chunk Size (minutes)",
+    "tags": "Tags",
+    "addTag": "Add Tag",
+    "addTagPlaceholder": "Add a tag and press Enter...",
+    "creating": "Creating Plan..."
+  },
+  "planPreview": {
+    "totalTasks": "Total tasks",
+    "completed": "Completed",
+    "completion": "Completion",
+    "focusTime": "Focus time",
+    "noTasksScheduled": "No tasks scheduled yet, start planning your focus time!",
+    "taskTimeline": "Task timeline",
+    "workBlocks": "Work blocks",
+    "breaks": "Breaks",
+    "createdAt": "Created at",
+    "unknownTime": "Unknown time"
+  },
+  "planPresets": {
+    "title": "Quick Plan Presets",
+    "loading": "Loading presets...",
+    "error": "Error",
+    "minutes": "minutes"
+  },
+  "planDashboard": {
+    "title": "Plan Manager",
+    "analyticsEnabled": "Analytics Enabled",
+    "analyticsDisabled": "Analytics Disabled",
+    "usageStatistics": "Usage Statistics",
+    "totalEvents": "Total Events",
+    "planActions": "Plan Actions",
+    "sessions": "Sessions",
+    "activeTimes": "Active Times",
+    "personalizedSuggestions": "Personalized Suggestions",
+    "planOptimization": "Plan Optimization",
+    "totalDuration": "Total duration (minutes)",
+    "generateOptimized": "Generate Optimized Plan",
+    "securitySettings": "Security Settings",
+    "dataEncryption": "Data Encryption is Enabled",
+    "tokenStatus": "Token Status: Valid",
+    "footer": "Multi-language Technology Integration - JSX + CoffeeScript + C++ + PHP"
+  },
+  "tasks": {
+    "addNewTask": "Add New Task",
+    "taskTitle": "Task Title",
+    "taskTitlePlaceholder": "e.g., Review project proposal",
+    "taskDescription": "Description (optional)",
+    "taskDescriptionPlaceholder": "Add details...",
+    "taskPriority": "Priority",
+    "taskPriorityLow": "Low",
+    "taskPriorityMedium": "Medium",
+    "taskPriorityHigh": "High",
+    "taskPriorityUrgent": "Urgent",
+    "taskTags": "Tags (comma-separated)",
+    "taskTagsPlaceholder": "e.g., work,urgent",
+    "taskDeadline": "Deadline",
+    "addTask": "Add Task",
+    "yourTasks": "Your Tasks",
+    "noTasks": "No tasks yet. Add one above!",
+    "complete": "Complete",
+    "undo": "Undo",
+    "deadline": "Deadline:",
+    "noDeadline": "No deadline"
+  },
+  "timer": {
+    "title": "Focus Timer (Pomodoro Mode)",
+    "workMode": "Work Mode",
+    "shortBreakMode": "Short Break",
+    "longBreakMode": "Long Break",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "stop": "Stop",
+    "duration": "Duration (minutes)",
+    "focusSessionComplete": "Focus Session Complete!",
+    "greatJob": "Great job staying focused!"
+  },
+  "habits": {
+    "addNewHabit": "Add New Habit",
+    "habitName": "Habit Name",
+    "habitNamePlaceholder": "e.g., Read 30 mins",
+    "habitDescription": "Description (optional)",
+    "habitDescriptionPlaceholder": "Why is this habit important?",
+    "habitFrequency": "Frequency",
+    "habitFrequencyDaily": "Daily",
+    "habitFrequencyWeekly": "Weekly",
+    "habitFrequencyMonthly": "Monthly",
+    "habitTargetCount": "Target per period",
+    "addHabit": "Add Habit",
+    "yourHabits": "Your Habits",
+    "habitsSummary": "Habits Summary"
+  },
+  "notifications": {
+    "settings": "Notification Settings",
+    "enableDesktopNotifications": "Enable Desktop Notifications",
+    "yourNotifications": "Your Notifications",
+    "markAllRead": "Mark All as Read",
+    "clearAll": "Clear All",
+    "notificationsStats": "Notifications Statistics"
+  },
+  "stats": {
+    "focusStatistics": "Focus Statistics",
+    "weeklyFocusChart": "Weekly Focus Chart",
+    "browserBridge": "Browser Bridge",
+    "systemMonitor": "System Monitor",
+    "activityTracking": "Activity Tracking",
+    "appUsageStats": "App Usage Stats",
+    "trackedTabs": "Tracked tabs:",
+    "activeTabs": "Active tabs:",
+    "historyEntries": "History entries:",
+    "pomodoroSync": "Pomodoro sync:",
+    "lastCollected": "Last collected:",
+    "activeWindows": "Active Windows:",
+    "noData": "No data collected yet.",
+    "noTabs": "No browser tabs received from the extension yet."
+  },
+  "auth": {
+    "signIn": "Sign In to Helpy",
+    "createAccount": "Create Helpy Account",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "confirmPasswordPlaceholder": "Enter your password again",
+    "displayName": "Display Name",
+    "displayNamePlaceholder": "Enter your name",
+    "register": "Register",
+    "signInButton": "Sign In",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "registerHere": "Register here",
+    "signInHere": "Sign In here",
+    "signInWithGoogle": "Sign In with Google",
+    "signInWithGitHub": "Sign In with GitHub",
+    "myAccount": "My Account",
+    "signedInWith": "Signed in with",
+    "logOut": "Log Out"
+  },
+  "presets": {
+    "work": {
+      "title": "Work Session",
+      "goal": "Focus on work tasks"
+    },
+    "study": {
+      "title": "Study Session",
+      "goal": "Focus on studying"
+    },
+    "focus": {
+      "title": "Deep Focus",
+      "goal": "Deep focus session"
+    },
+    "focus session": {
+      "title": "Deep Focus",
+      "goal": "Deep focus session"
+    },
+    "code": {
+      "title": "Coding Session",
+      "goal": "Write code and solve problems"
+    },
+    "design": {
+      "title": "Design Session",
+      "goal": "Create and refine designs"
+    },
+    "write": {
+      "title": "Writing Session",
+      "goal": "Write articles, docs, or content"
+    },
+    "read": {
+      "title": "Reading Session",
+      "goal": "Read and learn new things"
+    },
+    "exercise": {
+      "title": "Exercise Session",
+      "goal": "Physical activity or workout"
+    },
+    "meditate": {
+      "title": "Meditation Session",
+      "goal": "Practice mindfulness and meditation"
+    },
+    "clean": {
+      "title": "Cleaning Session",
+      "goal": "Clean and organize space"
+    },
+    "review": {
+      "title": "Review Session",
+      "goal": "Review work or materials"
+    },
+    "plan": {
+      "title": "Planning Session",
+      "goal": "Plan and organize tasks"
+    },
+    "sprint": {
+      "title": "Quick Focus Sprint",
+      "goal": "Short, focused burst of work"
+    },
+    "blitz": {
+      "title": "Task Blitz",
+      "goal": "Knock out small tasks quickly"
+    },
+    "micro": {
+      "title": "Micro Focus",
+      "goal": "Ultra-short focus session"
+    },
+    "deep": {
+      "title": "Deep Dive",
+      "goal": "Extended focused work"
+    },
+    "quick task": {
+      "title": "Quick Task Blitz",
+      "goal": "Tackle one small task"
+    },
+    "space-research": {
+      "title": "Space Research Session",
+      "goal": "Research space science topics"
+    },
+    "satellite-design": {
+      "title": "Satellite Design Session",
+      "goal": "Design satellite or space hardware"
+    },
+    "data-analysis": {
+      "title": "Space Data Analysis",
+      "goal": "Analyze space mission data"
+    },
+    "mission-planning": {
+      "title": "Space Mission Planning",
+      "goal": "Plan space mission objectives"
+    },
+    "space-adventure": {
+      "title": "Space Adventure Mini-Game",
+      "goal": "Play a quick space-themed mini-game (Easter egg!)"
+    }
+  },
+  "tasksDescriptors": {
+    "startStrong": "Start strong",
+    "keepGoing": "Keep going",
+    "makingProgress": "Making progress",
+    "almostThere": "Almost there",
+    "finalPush": "Final push"
+  },
+  "language": {
+    "selectLanguage": "Select Language",
+    "english": "English",
+    "chinese": "中文 (简体)",
+    "spanish": "Español",
+    "french": "Français",
+    "german": "Deutsch",
+    "japanese": "日本語"
+  },
+  "ui": {
+    "calmMode": "Calm Mode",
+    "normalMode": "Normal Mode",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
+  },
+  "music": {
+    "title": "Music Player",
+    "play": "Play",
+    "pause": "Pause",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "status": {
+    "loadingFocusPlans": "Loading focus plans...",
+    "loadingSelectedPlan": "Loading selected plan...",
+    "failedLoadRecent": "Failed to load recent plans. Please try again.",
+    "failedCreatePlan": "Failed to create focus plan. Please try again.",
+    "planTitleEmpty": "Plan title is empty",
+    "planTitleTooLong": "Plan title is too long (max 100 characters)",
+    "planGoalTooLong": "Plan goal is too long (max 500 characters)"
+  },
+  "editPlan": {
+    "title": "Edit Plan",
+    "taskTitle": "Task title",
+    "taskDuration": "Duration",
+    "taskPriority": "Priority",
+    "addTask": "+ Add Task",
+    "saveChanges": "Save Changes"
+  }
+}

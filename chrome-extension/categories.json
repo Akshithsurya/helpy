@@ -1,0 +1,149 @@
+{
+  "categories": [
+    {
+      "id": "work",
+      "name": "工作",
+      "color": "#3b82f6",
+      "patterns": [
+        "github.com",
+        "gitlab.com",
+        "bitbucket.org",
+        "stackoverflow.com",
+        "developer.mozilla.org",
+        "docs.github.com",
+        "code.visualstudio.com",
+        "codepen.io",
+        "codesandbox.io",
+        "repl.it",
+        "atlassian.com",
+        "jira.com",
+        "trello.com",
+        "asana.com",
+        "notion.so",
+        "linear.app",
+        "slack.com",
+        "discord.com",
+        "microsoft.com/teams",
+        "zoom.us",
+        "google.com/calendar",
+        "office.com",
+        "sharepoint.com",
+        "figma.com",
+        "canva.com",
+        "adobe.com",
+        "aws.amazon.com",
+        "console.cloud.google.com",
+        "portal.azure.com",
+        "heroku.com",
+        "vercel.com",
+        "netlify.com",
+        "digitalocean.com"
+      ]
+    },
+    {
+      "id": "study",
+      "name": "学习",
+      "color": "#10b981",
+      "patterns": [
+        "coursera.org",
+        "udemy.com",
+        "edx.org",
+        "khanacademy.org",
+        "codecademy.com",
+        "freecodecamp.org",
+        "pluralsight.com",
+        "linkedin.com/learning",
+        "youtube.com/watch",
+        "medium.com",
+        "dev.to",
+        "hashnode.com",
+        "wikipedia.org",
+        "quizlet.com",
+        "chegg.com"
+      ]
+    },
+    {
+      "id": "social",
+      "name": "社交媒体",
+      "color": "#ec4899",
+      "patterns": [
+        "facebook.com",
+        "twitter.com",
+        "x.com",
+        "instagram.com",
+        "linkedin.com",
+        "tiktok.com",
+        "reddit.com",
+        "pinterest.com",
+        "snapchat.com",
+        "tumblr.com",
+        "twitch.tv",
+        "youtube.com",
+        "discord.com",
+        "telegram.org",
+        "whatsapp.com"
+      ]
+    },
+    {
+      "id": "entertainment",
+      "name": "娱乐",
+      "color": "#f59e0b",
+      "patterns": [
+        "netflix.com",
+        "hulu.com",
+        "disneyplus.com",
+        "amazon.com/prime-video",
+        "hbo.com",
+        "spotify.com",
+        "apple.com/apple-music",
+        "pandora.com",
+        "soundcloud.com",
+        "steamcommunity.com",
+        "store.steampowered.com",
+        "epicgames.com",
+        "playstation.com",
+        "xbox.com",
+        "nintendo.com",
+        "roblox.com",
+        "pokemon.com"
+      ]
+    },
+    {
+      "id": "shopping",
+      "name": "购物",
+      "color": "#8b5cf6",
+      "patterns": [
+        "amazon.com",
+        "ebay.com",
+        "alibaba.com",
+        "taobao.com",
+        "tmall.com",
+        "jd.com",
+        "walmart.com",
+        "target.com",
+        "bestbuy.com",
+        "etsy.com",
+        "shopify.com"
+      ]
+    },
+    {
+      "id": "news",
+      "name": "新闻",
+      "color": "#64748b",
+      "patterns": [
+        "bbc.com",
+        "cnn.com",
+        "nytimes.com",
+        "washingtonpost.com",
+        "theguardian.com",
+        "reuters.com",
+        "bloomberg.com",
+        "finance.yahoo.com",
+        "cnbc.com",
+        "techcrunch.com",
+        "theverge.com",
+        "arstechnica.com"
+      ]
+    }
+  ]
+}

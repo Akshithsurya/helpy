@@ -1,0 +1,425 @@
+
+# ==========================================
+# Plan Presets Configuration
+# Version: 2.0.0
+# ==========================================
+
+version: "2.0.0"
+last_updated: "2026-01-01"
+
+# Configuration schema (for validation)
+schema:
+  required_fields: ["name", "title", "goal", "durationMinutes"]
+  optional_fields: ["chunkSizeMinutes", "breakMinutes", "difficulty", "tags", "theme", "timerMode", "category"]
+  validation_rules:
+    durationMinutes: { min: 5, max: 480 }
+    chunkSizeMinutes: { min: 5, max: 120 }
+    breakMinutes: { min: 0, max: 60 }
+
+# Preset categories for better organization
+categories:
+  - name: "Work"
+    description: "For professional work tasks"
+  - name: "Study"
+    description: "For learning and studying"
+  - name: "Focus"
+    description: "Deep work sessions"
+  - name: "Health"
+    description: "Wellness and exercise"
+  - name: "Creative"
+    description: "Creative tasks and design"
+  - name: "Space"
+    description: "Space science themed presets"
+  - name: "Timer"
+    description: "Timer mode presets (Pomodoro, etc.)"
+  - name: "Ruby"
+    description: "Ruby and Rails development tasks"
+  - name: "C++"
+    description: "C++ development and system programming"
+
+# The actual presets
+presets:
+  # Work Category
+  - name: "work"
+    title: "Work Session"
+    goal: "Focus on work tasks"
+    durationMinutes: 60
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["work", "productivity"]
+    theme: "professional"
+    category: "Work"
+  
+  - name: "deep-work"
+    title: "Deep Work Session"
+    goal: "Extended focused work without interruptions"
+    durationMinutes: 90
+    chunkSizeMinutes: 45
+    breakMinutes: 15
+    difficulty: "high"
+    tags: ["work", "focus", "deep-work"]
+    theme: "minimal"
+    category: "Work"
+
+  # Study Category
+  - name: "study"
+    title: "Study Session"
+    goal: "Focus on studying"
+    durationMinutes: 45
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["study", "learning"]
+    theme: "academic"
+    category: "Study"
+  
+  - name: "exam-prep"
+    title: "Exam Preparation"
+    goal: "Intensive study for upcoming exam"
+    durationMinutes: 120
+    chunkSizeMinutes: 25
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["study", "exam", "intensive"]
+    theme: "academic"
+    category: "Study"
+
+  # Focus Category
+  - name: "focus"
+    title: "Deep Focus"
+    goal: "Deep focus session"
+    durationMinutes: 25
+    chunkSizeMinutes: 10
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["focus", "deep-work"]
+    theme: "minimal"
+    category: "Focus"
+  
+  - name: "quick-sprint"
+    title: "Quick Focus Sprint"
+    goal: "Short, focused burst of work"
+    durationMinutes: 25
+    chunkSizeMinutes: 10
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["sprint", "quick-task"]
+    theme: "energetic"
+    category: "Focus"
+
+  # Creative Category
+  - name: "code"
+    title: "Coding Session"
+    goal: "Write code and solve problems"
+    durationMinutes: 90
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["coding", "development"]
+    theme: "hacker"
+    category: "Creative"
+  
+  - name: "design"
+    title: "Design Session"
+    goal: "Create and refine designs"
+    durationMinutes: 60
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["design", "creativity"]
+    theme: "creative"
+    category: "Creative"
+  
+  - name: "write"
+    title: "Writing Session"
+    goal: "Write articles, docs, or content"
+    durationMinutes: 45
+    chunkSizeMinutes: 10
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["writing", "content"]
+    theme: "cozy"
+    category: "Creative"
+
+  # Health Category
+  - name: "read"
+    title: "Reading Session"
+    goal: "Read and learn new things"
+    durationMinutes: 30
+    chunkSizeMinutes: 10
+    breakMinutes: 5
+    difficulty: "low"
+    tags: ["reading", "learning"]
+    theme: "cozy"
+    category: "Health"
+  
+  - name: "exercise"
+    title: "Exercise Session"
+    goal: "Physical activity or workout"
+    durationMinutes: 45
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["exercise", "health"]
+    theme: "energetic"
+    category: "Health"
+  
+  - name: "meditate"
+    title: "Meditation Session"
+    goal: "Practice mindfulness and meditation"
+    durationMinutes: 15
+    chunkSizeMinutes: 5
+    breakMinutes: 0
+    difficulty: "low"
+    tags: ["meditation", "mindfulness"]
+    theme: "zen"
+    category: "Health"
+
+  # Quick Tasks
+  - name: "clean"
+    title: "Cleaning Session"
+    goal: "Clean and organize space"
+    durationMinutes: 30
+    chunkSizeMinutes: 10
+    breakMinutes: 5
+    difficulty: "low"
+    tags: ["cleaning", "organization"]
+    theme: "fresh"
+    category: "Health"
+  
+  - name: "review"
+    title: "Review Session"
+    goal: "Review work or materials"
+    durationMinutes: 45
+    chunkSizeMinutes: 10
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["review", "planning"]
+    theme: "academic"
+    category: "Work"
+  
+  - name: "plan"
+    title: "Planning Session"
+    goal: "Plan and organize tasks"
+    durationMinutes: 30
+    chunkSizeMinutes: 10
+    breakMinutes: 0
+    difficulty: "low"
+    tags: ["planning", "organization"]
+    theme: "organized"
+    category: "Work"
+
+  # Quick Focus
+  - name: "blitz"
+    title: "Task Blitz"
+    goal: "Knock out small tasks quickly"
+    durationMinutes: 15
+    chunkSizeMinutes: 5
+    breakMinutes: 0
+    difficulty: "low"
+    tags: ["blitz", "quick-task"]
+    theme: "energetic"
+    category: "Focus"
+  
+  - name: "micro"
+    title: "Micro Focus"
+    goal: "Ultra-short focus session"
+    durationMinutes: 10
+    chunkSizeMinutes: 5
+    breakMinutes: 0
+    difficulty: "low"
+    tags: ["micro", "quick-task"]
+    theme: "minimal"
+    category: "Focus"
+  
+  - name: "deep"
+    title: "Deep Dive"
+    goal: "Extended focused work"
+    durationMinutes: 45
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["deep-work", "focus"]
+    theme: "minimal"
+    category: "Focus"
+
+  # Space Science Themed Presets
+  - name: "space-research"
+    title: "Space Research Session"
+    goal: "Research space science topics"
+    durationMinutes: 60
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["space", "research", "science"]
+    theme: "space"
+    category: "Space"
+  
+  - name: "satellite-design"
+    title: "Satellite Design Session"
+    goal: "Design satellite or space hardware"
+    durationMinutes: 90
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["space", "hardware", "design"]
+    theme: "space"
+    category: "Space"
+  
+  - name: "data-analysis"
+    title: "Space Data Analysis"
+    goal: "Analyze space mission data"
+    durationMinutes: 45
+    chunkSizeMinutes: 15
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["space", "data", "analysis"]
+    theme: "space"
+    category: "Space"
+  
+  - name: "mission-planning"
+    title: "Space Mission Planning"
+    goal: "Plan space mission objectives"
+    durationMinutes: 30
+    chunkSizeMinutes: 10
+    breakMinutes: 0
+    difficulty: "medium"
+    tags: ["space", "planning", "mission"]
+    theme: "space"
+    category: "Space"
+  
+  # Easter Egg: Mini-Game Preset
+  - name: "space-adventure"
+    title: "Space Adventure Mini-Game"
+    goal: "Play a quick space-themed mini-game (Easter egg!)"
+    durationMinutes: 20
+    chunkSizeMinutes: 5
+    breakMinutes: 0
+    difficulty: "fun"
+    tags: ["game", "easter-egg", "space"]
+    theme: "space"
+    category: "Space"
+
+  # ==========================================
+  # NEW: Timer Mode Presets
+  # ==========================================
+  - name: "pomodoro"
+    title: "Pomodoro Technique"
+    goal: "Work in focused sprints with regular breaks"
+    durationMinutes: 120
+    chunkSizeMinutes: 25
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["pomodoro", "timer", "focus"]
+    theme: "energetic"
+    category: "Timer"
+    timerMode: "pomodoro"
+    longBreakMinutes: 15
+    longBreakInterval: 4
+  
+  - name: "ultradian"
+    title: "Ultradian Rhythm"
+    goal: "Work with your natural focus cycles"
+    durationMinutes: 180
+    chunkSizeMinutes: 90
+    breakMinutes: 20
+    difficulty: "high"
+    tags: ["ultradian", "timer", "deep-work"]
+    theme: "minimal"
+    category: "Timer"
+    timerMode: "ultradian"
+    longBreakMinutes: 30
+    longBreakInterval: 1
+  
+  - name: "90minute"
+    title: "90-Minute Focus Cycle"
+    goal: "Extended focus with proper rest"
+    durationMinutes: 90
+    chunkSizeMinutes: 90
+    breakMinutes: 20
+    difficulty: "high"
+    tags: ["timer", "focus", "deep-work"]
+    theme: "minimal"
+    category: "Timer"
+    timerMode: "90minute"
+  
+  - name: "custom-timer"
+    title: "Custom Timer Setup"
+    goal: "Create your own timing pattern"
+    durationMinutes: 60
+    chunkSizeMinutes: 25
+    breakMinutes: 5
+    difficulty: "medium"
+    tags: ["timer", "custom"]
+    theme: "professional"
+    category: "Timer"
+    timerMode: "custom"
+
+  # Ruby Development Category
+  - name: "ruby-coding"
+    title: "Ruby Coding Session"
+    goal: "Focus on writing clean Ruby code"
+    durationMinutes: 90
+    chunkSizeMinutes: 25
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["ruby", "coding", "development"]
+    theme: "professional"
+    category: "Ruby"
+  
+  - name: "ruby-testing"
+    title: "Ruby Testing & Debugging"
+    goal: "Write tests and debug Ruby code"
+    durationMinutes: 60
+    chunkSizeMinutes: 20
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["ruby", "testing", "debugging"]
+    theme: "professional"
+    category: "Ruby"
+  
+  - name: "rails-development"
+    title: "Rails Full Stack Development"
+    goal: "Work on Ruby on Rails application"
+    durationMinutes: 120
+    chunkSizeMinutes: 30
+    breakMinutes: 10
+    difficulty: "high"
+    tags: ["ruby", "rails", "fullstack"]
+    theme: "professional"
+    category: "Ruby"
+
+  # C++ Development Category
+  - name: "cpp-coding"
+    title: "C++ Core Coding"
+    goal: "Develop high performance C++ modules"
+    durationMinutes: 120
+    chunkSizeMinutes: 30
+    breakMinutes: 10
+    difficulty: "high"
+    tags: ["cpp", "coding", "high-performance"]
+    theme: "professional"
+    category: "C++"
+  
+  - name: "cpp-debugging"
+    title: "C++ Debugging & Profiling"
+    goal: "Debug and optimize C++ code performance"
+    durationMinutes: 90
+    chunkSizeMinutes: 25
+    breakMinutes: 5
+    difficulty: "high"
+    tags: ["cpp", "debugging", "profiling"]
+    theme: "professional"
+    category: "C++"
+  
+  - name: "cpp-integration"
+    title: "C++ System Integration"
+    goal: "Integrate C++ modules with other systems"
+    durationMinutes: 120
+    chunkSizeMinutes: 30
+    breakMinutes: 10
+    difficulty: "high"
+    tags: ["cpp", "integration", "system"]
+    theme: "professional"
+    category: "C++"

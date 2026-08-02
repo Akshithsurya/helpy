@@ -1,0 +1,931 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Helpy - Your all-in-one productivity assistant for focus, tasks, and habits." />
+    <meta name="theme-color" content="#4a90e2" />
+    <title>Helpy - Productivity Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- SVG Icon Sprite Definitions -->
+    <svg aria-hidden="true" style="display:none; position:absolute; width:0; height:0;" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Music Note -->
+        <symbol id="icon-music" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+        </symbol>
+        <!-- Music Playing (waves) -->
+        <symbol id="icon-music-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18V5l12-2v13"/>
+          <circle cx="6" cy="18" r="3"/>
+          <circle cx="18" cy="16" r="3"/>
+          <path d="M21 7V3l-8 1.5"/>
+        </symbol>
+        <!-- Shield -->
+        <symbol id="icon-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </symbol>
+        <!-- Sun (light mode) -->
+        <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </symbol>
+        <!-- Moon (dark mode) -->
+        <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </symbol>
+        <!-- Wind (calm) -->
+        <symbol id="icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+        </symbol>
+        <!-- Zap (animation toggle) -->
+        <symbol id="icon-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </symbol>
+        <!-- Type (font) -->
+        <symbol id="icon-type" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 7 4 4 20 4 20 7"/>
+          <line x1="9" y1="20" x2="15" y2="20"/>
+          <line x1="12" y1="4" x2="12" y2="20"/>
+        </symbol>
+        <!-- Globe (language) -->
+        <symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </symbol>
+        <!-- Play -->
+        <symbol id="icon-play" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </symbol>
+        <!-- Pause -->
+        <symbol id="icon-pause" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <rect x="6" y="4" width="4" height="16"/>
+          <rect x="14" y="4" width="4" height="16"/>
+        </symbol>
+        <!-- Skip Back -->
+        <symbol id="icon-skip-back" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="19 20 9 12 19 4 19 20"/>
+          <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </symbol>
+        <!-- Skip Forward -->
+        <symbol id="icon-skip-forward" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <polygon points="5 4 15 12 5 20 5 4"/>
+          <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </symbol>
+        <!-- Volume -->
+        <symbol id="icon-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </symbol>
+        <!-- Check Circle -->
+        <symbol id="icon-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </symbol>
+        <!-- X (close) -->
+        <symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </symbol>
+        <!-- Brown Noise / Waves -->
+        <symbol id="icon-wave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M2 12c1.5-3 3-4.5 5-4.5s3.5 3 5 3 3.5-3 5-3 3.5 1.5 5 4.5"/>
+          <path d="M2 17c1.5-3 3-4.5 5-4.5s3.5 3 5 3 3.5-3 5-3 3.5 1.5 5 4.5"/>
+        </symbol>
+        <!-- Headphones (binaural) -->
+        <symbol id="icon-headphones" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+        </symbol>
+        <!-- Rain / Cloud -->
+        <symbol id="icon-cloud-rain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="16" y1="13" x2="16" y2="21"/>
+          <line x1="8" y1="13" x2="8" y2="21"/>
+          <line x1="12" y1="15" x2="12" y2="23"/>
+          <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
+        </symbol>
+        <!-- Preset Icons -->
+        <symbol id="icon-briefcase" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+        </symbol>
+        <symbol id="icon-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </symbol>
+        <symbol id="icon-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2"/>
+        </symbol>
+        <symbol id="icon-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </symbol>
+        <symbol id="icon-pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </symbol>
+        <symbol id="icon-dumbbell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 4V20M18 4V20M3 9H7M17 9H21M3 15H7M17 15H21M7 4H17"/>
+        </symbol>
+        <symbol id="icon-feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+          <line x1="16" y1="8" x2="2" y2="22"/>
+          <line x1="17.5" y1="15" x2="9" y2="15"/>
+        </symbol>
+        <symbol id="icon-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </symbol>
+        <symbol id="icon-zap-preset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </symbol>
+        <symbol id="icon-rocket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+          <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+          <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+          <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+        </symbol>
+        <symbol id="icon-satellite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3"/>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+        </symbol>
+        <symbol id="icon-bar-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="20" x2="12" y2="10"/>
+          <line x1="18" y1="20" x2="18" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="16"/>
+        </symbol>
+        <symbol id="icon-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+          <line x1="8" y1="2" x2="8" y2="18"/>
+          <line x1="16" y1="6" x2="16" y2="22"/>
+        </symbol>
+        <symbol id="icon-gamepad" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="6" y1="12" x2="10" y2="12"/>
+          <line x1="8" y1="10" x2="8" y2="14"/>
+          <line x1="15" y1="13" x2="15.01" y2="13"/>
+          <line x1="18" y1="11" x2="18.01" y2="11"/>
+          <rect x="2" y="6" width="20" height="12" rx="2"/>
+        </symbol>
+        <symbol id="icon-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+        </symbol>
+        <symbol id="icon-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+          <polyline points="2 17 12 22 22 17"/>
+          <polyline points="2 12 12 17 22 12"/>
+        </symbol>
+        <symbol id="icon-palette" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="13.5" cy="6.5" r="0.5" fill="currentColor"/>
+          <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor"/>
+          <circle cx="8.5" cy="7.5" r="0.5" fill="currentColor"/>
+          <circle cx="6.5" cy="12.5" r="0.5" fill="currentColor"/>
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+        </symbol>
+        <!-- Search for command palette -->
+        <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </symbol>
+        <!-- Bot (bot-companion) -->
+        <symbol id="icon-bot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="10" rx="2"/>
+          <circle cx="12" cy="5" r="2"/>
+          <path d="M12 7v4"/>
+          <line x1="8" y1="16" x2="8.01" y2="16"/>
+          <line x1="16" y1="16" x2="16.01" y2="16"/>
+        </symbol>
+        <!-- Broom (clean) -->
+        <symbol id="icon-broom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m9 3 6 6-3 3L6 6z"/>
+          <path d="M6 12 3 21h18l-3-9"/>
+          <path d="m12 12-3 9"/>
+          <path d="m12 12 3 9"/>
+        </symbol>
+      </defs>
+    </svg>
+    <div id="main-app" class="container">
+      <header class="app-header">
+        <div class="brand-block">
+          <span class="brand-kicker">Your focus companion</span>
+          <h1>Helpy</h1>
+        </div>
+        <div class="header-controls" aria-label="Workspace controls">
+          <select id="languageSelector" class="secondary-btn" aria-label="Language">
+          </select>
+          <button id="darkModeToggle" class="icon-btn secondary-btn" title="Switch between light and dark mode" aria-pressed="false">
+            <svg class="btn-icon" aria-hidden="true" id="darkModeIcon"><use href="#icon-moon"/></svg>
+            <span class="btn-label">Dark Mode</span>
+          </button>
+          <button id="shieldToggle" class="icon-btn shield-btn" title="Distraction Shield — Single-Task Focus Mode" aria-pressed="false">
+            <svg class="btn-icon" aria-hidden="true"><use href="#icon-shield"/></svg>
+            <span class="btn-label">Focus Shield</span>
+          </button>
+          <button id="music-toggle" class="icon-btn secondary-btn" title="Toggle Music / Soundscape">
+            <svg class="btn-icon" aria-hidden="true"><use href="#icon-music"/></svg>
+            <span class="btn-label">Sound</span>
+          </button>
+          <details class="header-preferences" id="appearancePreferences">
+            <summary aria-label="Open appearance preferences">Appearance</summary>
+            <div class="preference-menu">
+              <button id="fontToggle" class="icon-btn secondary-btn" title="Toggle Dyslexia-Friendly Font">
+                <svg class="btn-icon" aria-hidden="true"><use href="#icon-type"/></svg>
+                <span class="btn-label">Font: Inter</span>
+              </button>
+              <button id="calmModeToggle" class="icon-btn secondary-btn" title="Toggle Calm Mode">
+                <svg class="btn-icon" aria-hidden="true"><use href="#icon-wind"/></svg>
+                <span class="btn-label">Calm Mode</span>
+              </button>
+              <button id="noAnimationToggle" class="icon-btn secondary-btn" title="Toggle Animations">
+                <svg class="btn-icon" aria-hidden="true"><use href="#icon-zap"/></svg>
+                <span class="btn-label">No Animation</span>
+              </button>
+            </div>
+          </details>
+          <button id="openProfileSettingsBtn" class="icon-btn secondary-btn" type="button" title="Open Profile & Settings">
+            <svg class="btn-icon" aria-hidden="true"><use href="#icon-clipboard"/></svg>
+            <span class="btn-label">Profile</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Tab Navigation -->
+      <nav class="tabs" role="tablist" aria-label="Main Navigation">
+        <button class="tab-button active" role="tab" aria-selected="true" aria-controls="focus-tab" id="tab-focus" data-tab="focus">Focus</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="tasks-tab" id="tab-tasks" data-tab="tasks">Tasks</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="notifications-tab" id="tab-notifications" data-tab="notifications">Notifications</button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="more-tab" id="tab-more" data-tab="more">More</button>
+      </nav>
+
+      <main class="tab-contents">
+        <!-- Focus Tab -->
+        <section id="focus-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-focus">
+          <div class="focus-primary-grid">
+            <div class="section focus-hero-section">
+              <header class="section-header">
+                <div>
+                  <h2>Focus Workspace</h2>
+                  <p class="section-helper">Start from the essentials, then reveal supporting tools only when you need them.</p>
+                </div>
+              </header>
+              <label for="commandInput" class="visually-hidden">Quick Command Input</label>
+              <input type="text" id="commandInput" placeholder="Type /plan work 60 or /help" autocomplete="off" />
+              <div id="commandAutocomplete" class="command-autocomplete" role="listbox" aria-hidden="true"></div>
+              <div id="commandResult" class="command-result" aria-live="polite"></div>
+              <div id="planPreviewCard" class="plan-preview-card" style="display:none;" aria-live="polite">
+                <div class="plan-preview-header">
+                  <span class="plan-preview-badge" id="planPreviewBadge">PREVIEW</span>
+                  <span class="plan-preview-preset" id="planPreviewPreset"></span>
+                </div>
+                <div class="plan-preview-title" id="planPreviewTitle">—</div>
+                <div class="plan-preview-goal" id="planPreviewGoal"></div>
+                <div class="plan-preview-meta">
+                  <div class="plan-preview-meta-item">
+                    <div class="plan-preview-meta-label">Duration</div>
+                    <div class="plan-preview-meta-value" id="planPreviewDuration">30 min</div>
+                  </div>
+                  <div class="plan-preview-meta-item">
+                    <div class="plan-preview-meta-label">Chunks</div>
+                    <div class="plan-preview-meta-value" id="planPreviewChunks">2 × 15m</div>
+                  </div>
+                  <div class="plan-preview-meta-item">
+                    <div class="plan-preview-meta-label">Break</div>
+                    <div class="plan-preview-meta-value" id="planPreviewBreak">5 min</div>
+                  </div>
+                </div>
+                <div class="plan-preview-tags" id="planPreviewTags"></div>
+                <div class="plan-preview-music" id="planPreviewMusic" style="display:none;">
+                  <span class="plan-preview-music-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                  </span>
+                  <span id="planPreviewMusicText"></span>
+                </div>
+                <div class="plan-preview-hint">Press <kbd>Enter</kbd> to create · <kbd>Esc</kbd> to cancel</div>
+              </div>
+            </div>
+
+            <div class="section" id="focus-session-panel">
+              <header class="section-header">
+                <div>
+                  <h2>Active Session</h2>
+                  <p class="section-helper">Keep the live session state close, and tuck configuration behind calmer controls.</p>
+                </div>
+              </header>
+              <div id="focus-session-status" class="timer-mode-indicator">No active session</div>
+              <div id="focus-session-display" class="timer-display">00:00</div>
+              <div class="form-row">
+                <div class="form-group"><label for="session-work-minutes">Work minutes</label><input id="session-work-minutes" type="number" min="1" max="240" value="25"></div>
+                <div class="form-group"><label for="session-break-minutes">Break minutes</label><input id="session-break-minutes" type="number" min="1" max="120" value="5"></div>
+              </div>
+              <label><input id="session-strict" type="checkbox"> Lock blocklist changes for this session</label>
+              <div class="timer-controls">
+                <button id="start-focus-session" class="primary-btn">Start focus session</button>
+                <button id="pause-focus-session" class="secondary-btn">Pause</button>
+                <button id="resume-focus-session" class="secondary-btn">Resume</button>
+                <button id="stop-focus-session" class="danger-btn">Stop</button>
+              </div>
+              <h3>Focus report</h3>
+              <div id="focus-report" class="command-result">Loading local focus report...</div>
+            </div>
+
+            <div class="section" id="currentPlanSection" style="display: none;">
+              <header class="section-header">
+                <div>
+                  <h2>Current Plan</h2>
+                  <p class="section-helper">Keep the primary next step visible and move maintenance actions into a compact menu.</p>
+                </div>
+              </header>
+              <div id="currentPlanContainer"></div>
+              <div class="adhd-controls plan-primary-actions">
+                <button id="startCurrentPlanBtn" class="primary-btn">Start Plan</button>
+                <details class="inline-disclosure compact-action-menu">
+                  <summary>Plan actions</summary>
+                  <div class="compact-action-list">
+                    <button id="editCurrentPlanBtn" class="secondary-btn">Edit Plan</button>
+                    <button id="exportCurrentPlanBtn" class="secondary-btn">Export Plan</button>
+                    <button id="saveAsTemplateBtn" class="secondary-btn">Save as Template</button>
+                    <button id="clearCurrentPlanBtn" class="danger-btn">Clear Plan</button>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <div class="section" id="focus-timer-section">
+            <h2>Focus Timer (Pomodoro Mode)</h2>
+            <div id="timer-mode-indicator" class="timer-mode-indicator">Work Mode</div>
+            <div id="timer-display" class="timer-display" aria-live="off">00:00</div>
+            <div class="timer-mode-controls">
+              <button id="timer-mode-work" class="mode-btn primary-btn">Work</button>
+              <button id="timer-mode-short-break" class="mode-btn secondary-btn">Short Break</button>
+              <button id="timer-mode-long-break" class="mode-btn secondary-btn">Long Break</button>
+            </div>
+            <div class="timer-controls">
+              <button id="start-timer-btn" class="primary-btn">Start</button>
+              <button id="pause-timer-btn" class="secondary-btn is-hidden">Pause</button>
+              <button id="resume-timer-btn" class="secondary-btn is-hidden">Resume</button>
+              <button id="stop-timer-btn" class="danger-btn is-hidden">Stop</button>
+            </div>
+            <div class="timer-duration-input">
+              <label for="timer-duration">Duration (minutes)</label>
+              <input type="number" id="timer-duration" min="5" max="240" value="25" />
+            </div>
+          </div>
+
+          <details class="section section-disclosure" id="focus-plan-builder" open>
+            <summary>Create Focus Plan</summary>
+            
+            <!-- Preset Filter and Search -->
+    <div class="preset-filter-container">
+      <input type="text" id="presetSearch" class="preset-search" placeholder="Search presets..." autocomplete="off" />
+      <div class="preset-filter-tags" id="presetFilterTags">
+        <button class="preset-filter-tag active" data-tag="all">All</button>
+        <button class="preset-filter-tag" data-tag="work">Work</button>
+        <button class="preset-filter-tag" data-tag="study">Study</button>
+        <button class="preset-filter-tag" data-tag="focus">Focus</button>
+        <button class="preset-filter-tag" data-tag="space">Space</button>
+        <button class="preset-filter-tag" data-tag="creative">Creative</button>
+      </div>
+    </div>
+    
+    <!-- Enhanced Plan Presets -->
+    <div class="plan-presets" id="planPresetsContainer">
+      <!-- Presets will be dynamically loaded here -->
+    </div>
+    
+    <!-- Plan Creation Form -->
+    <form id="planForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="planTitle">Plan Title</label>
+          <input type="text" id="planTitle" placeholder="e.g., Deep Work Session" required autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="planDuration">Duration (minutes)</label>
+          <input type="number" id="planDuration" min="5" max="240" value="30" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="planGoal">Goal (optional)</label>
+        <textarea id="planGoal" placeholder="What do you want to achieve?"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="planChunkSize">Task Chunk Size (minutes)</label>
+          <select id="planChunkSize">
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15" selected>15 minutes</option>
+            <option value="20">20 minutes</option>
+            <option value="30">30 minutes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="planTemplate">Save as Template</label>
+          <select id="planTemplate">
+            <option value="">Don't save</option>
+            <option value="new">Save as new template</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="primary-btn">Create Plan</button>
+    </form>
+          </details>
+
+          <details class="section section-disclosure" id="focus-soundscape-panel">
+            <summary>Soundscapes & Music</summary>
+            <div id="music-track-name" class="supporting-label">Brown Noise (ADHD Focus Synth)</div>
+
+            <div class="soundscape-selector">
+              <button class="soundscape-btn active" data-type="brown">
+                <svg class="soundscape-icon" aria-hidden="true"><use href="#icon-wave"/></svg>
+                <span>Brown Noise</span>
+              </button>
+              <button class="soundscape-btn" data-type="pink">
+                <svg class="soundscape-icon" aria-hidden="true"><use href="#icon-wave"/></svg>
+                <span>Pink Noise</span>
+              </button>
+              <button class="soundscape-btn" data-type="rain">
+                <svg class="soundscape-icon" aria-hidden="true"><use href="#icon-cloud-rain"/></svg>
+                <span>Soft Rain</span>
+              </button>
+              <button class="soundscape-btn" data-type="binaural">
+                <svg class="soundscape-icon" aria-hidden="true"><use href="#icon-headphones"/></svg>
+                <span>40Hz Binaural</span>
+              </button>
+              <button class="soundscape-btn" data-type="music">
+                <svg class="soundscape-icon" aria-hidden="true"><use href="#icon-music"/></svg>
+                <span>Music Tracks</span>
+              </button>
+            </div>
+
+            <div class="music-controls">
+              <button id="music-prev" class="icon-btn secondary-btn" title="Previous Track" aria-label="Previous Track">
+                <svg class="btn-icon" aria-hidden="true"><use href="#icon-skip-back"/></svg>
+              </button>
+              <button id="music-play-pause" class="icon-btn primary-btn" title="Play / Pause" aria-label="Play Soundscape">
+                <svg class="btn-icon" aria-hidden="true" id="playPauseIcon"><use href="#icon-play"/></svg>
+                <span id="playPauseLabel">Play Soundscape</span>
+              </button>
+              <button id="music-next" class="icon-btn secondary-btn" title="Next Track" aria-label="Next Track">
+                <svg class="btn-icon" aria-hidden="true"><use href="#icon-skip-forward"/></svg>
+              </button>
+              <div class="volume-control">
+                <svg class="volume-icon" aria-hidden="true"><use href="#icon-volume"/></svg>
+                <input type="range" id="music-volume" min="0" max="100" value="50" title="Volume" aria-label="Volume">
+              </div>
+            </div>
+            <audio id="music-audio"></audio>
+          </details>
+
+  <!-- Edit Plan Modal -->
+  <div id="editPlanModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+    <div class="section" style="max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0;">Edit Plan</h2>
+        <button id="closeEditModalBtn" class="icon-btn secondary-btn" style="padding: 0.5rem;" aria-label="Close">
+          <svg aria-hidden="true" width="20" height="20"><use href="#icon-x"/></svg>
+        </button>
+      </div>
+      <form id="editPlanForm">
+        <div class="form-group">
+          <label for="editPlanTitle">Plan Title</label>
+          <input type="text" id="editPlanTitle" required autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="editPlanGoal">Goal (optional)</label>
+          <textarea id="editPlanGoal"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Tasks</label>
+          <div id="editPlanTasksContainer"></div>
+          <button type="button" id="addEditTaskBtn" class="secondary-btn" style="margin-top: 0.5rem;">+ Add Task</button>
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button type="submit" class="primary-btn">Save Changes</button>
+          <button type="button" id="cancelEditBtn" class="secondary-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Focus Shield Immersive Overlay -->
+  <div id="focusShieldOverlay" class="focus-shield-overlay" style="display: none;" aria-hidden="true">
+    <div class="shield-backdrop-glow"></div>
+    <div class="shield-container">
+      <div class="shield-header-badge">
+        <svg aria-hidden="true" width="22" height="22" class="shield-badge-icon"><use href="#icon-shield"/></svg>
+        <span>FOCUS SHIELD ACTIVE</span>
+      </div>
+
+      <h1 id="shieldActiveTask" class="shield-title">Deep Focus Session</h1>
+      <p id="shieldActiveGoal" class="shield-goal">Eliminate all distractions and achieve single-task flow state.</p>
+
+      <div class="shield-timer-wrap">
+        <div id="shieldTimerDisplay" class="shield-timer-display">25:00</div>
+        <div id="shieldModeBadge" class="shield-mode-tag">WORK MODE</div>
+      </div>
+
+      <div class="shield-info-row">
+        <div class="shield-info-card">
+          <span class="info-label">Distraction Shielding</span>
+          <span class="info-value green-text">ENFORCED</span>
+        </div>
+        <div class="shield-info-card">
+          <span class="info-label">Ambient Soundscape</span>
+          <span id="shieldSoundName" class="info-value">Brown Noise</span>
+        </div>
+        <div class="shield-info-card">
+          <span class="info-label">Session Streak</span>
+          <span id="shieldStreakCount" class="info-value">1 Completed</span>
+        </div>
+      </div>
+
+      <div class="shield-actions">
+        <button id="shieldCompleteBtn" class="primary-btn shield-btn-large">Complete Task</button>
+        <button id="shieldPauseBtn" class="secondary-btn shield-btn-sub">Pause Timer</button>
+        <button id="shieldExitBtn" class="danger-btn shield-btn-sub">Exit Shield Mode</button>
+      </div>
+
+      <div class="shield-interruption-box">
+        <input type="text" id="shieldQuickNote" placeholder="Quick capture distraction thought (Press Enter)..." autocomplete="off" />
+        <div id="shieldNotesList" class="shield-notes-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+          <details class="section section-disclosure" id="recentPlansSection">
+            <summary>Recent Plans</summary>
+            <div id="recentPlansList" class="history-list" aria-live="polite"></div>
+          </details>
+          <details class="section section-disclosure" id="planHistorySection">
+            <summary>Focus Plan History</summary>
+            <div id="planHistoryList" class="history-list" aria-live="polite"></div>
+            <button id="clearHistoryBtn" class="secondary-btn">Clear History</button>
+          </details>
+        </section>
+
+        <!-- Tasks Tab -->
+        <section id="tasks-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-tasks" hidden>
+          <div class="section">
+            <header class="section-header">
+              <div>
+                <h2>Add New Task</h2>
+                <p class="section-helper">Capture the essentials first, then expand for tags and priorities only when needed.</p>
+              </div>
+            </header>
+            <form id="taskForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="taskTitle">Task Title</label>
+                  <input type="text" id="taskTitle" placeholder="e.g., Review project proposal" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="taskDeadline">Deadline</label>
+                  <input type="datetime-local" id="taskDeadline" />
+                </div>
+              </div>
+              <details class="form-disclosure" id="taskMoreDetails">
+                <summary>More details</summary>
+                <div class="form-group">
+                  <label for="taskDescription">Description (optional)</label>
+                  <textarea id="taskDescription" placeholder="Add details..."></textarea>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="taskPriority">Priority</label>
+                    <select id="taskPriority">
+                      <option value="low">Low</option>
+                      <option value="medium" selected>Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="taskTags">Tags (comma-separated)</label>
+                    <input type="text" id="taskTags" placeholder="e.g., work, urgent" />
+                  </div>
+                </div>
+              </details>
+              <button type="submit" class="primary-btn">Add Task</button>
+            </form>
+          </div>
+          <div class="section">
+            <header class="section-header">
+              <div>
+                <h2>Your Tasks</h2>
+                <p class="section-helper">Open filters only when you need to refine or sort the queue.</p>
+              </div>
+            </header>
+            <details class="inline-disclosure task-filter-disclosure" id="taskFiltersPanel">
+              <summary>Filters</summary>
+              <div class="compact-filter-row">
+                <input type="text" id="taskFilterSearch" placeholder="Search or filter by #tag..." />
+                <select id="taskFilterPriority">
+                  <option value="all">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+                <select id="taskFilterStatus" aria-label="Filter tasks by status">
+                  <option value="open">Open tasks</option>
+                  <option value="all">All statuses</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <select id="taskSortOrder" aria-label="Sort tasks">
+                  <option value="priority">Priority</option>
+                  <option value="deadline">Due date</option>
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                </select>
+              </div>
+            </details>
+            <div id="taskList" class="task-list" aria-live="polite"></div>
+          </div>
+          <details class="section section-disclosure" id="routinesPanel">
+            <summary>Routines</summary>
+            <form id="habitForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="habitName">Habit Name</label>
+                  <input type="text" id="habitName" placeholder="e.g., Read 30 mins" required autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="habitFrequency">Frequency</label>
+                  <select id="habitFrequency">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              </div>
+              <details class="form-disclosure" id="habitMoreDetails">
+                <summary>More details</summary>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="habitDescription">Description (optional)</label>
+                    <textarea id="habitDescription" placeholder="Why is this habit important?"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="habitTargetCount">Target per period</label>
+                    <input type="number" id="habitTargetCount" min="1" value="1" required />
+                  </div>
+                </div>
+              </details>
+              <button type="submit" class="primary-btn">Add Habit</button>
+            </form>
+            <div id="habitsSummary" class="habits-summary"></div>
+            <div id="habitList" class="habit-list" aria-live="polite"></div>
+          </details>
+        </section>
+
+        <!-- Notifications Tab -->
+        <section id="notifications-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-notifications" hidden>
+          <div class="section">
+            <header class="section-header">
+              <h2>Your Notifications</h2>
+              <div class="notification-actions">
+                <button id="markAllReadBtn" class="secondary-btn">Mark All as Read</button>
+                <button id="clearAllNotificationsBtn" class="danger-btn">Clear All</button>
+              </div>
+            </header>
+            <div id="notificationsStats" class="notifications-stats"></div>
+            <div id="notificationList" class="notification-list" aria-live="polite"></div>
+          </div>
+          <details class="section section-disclosure" id="notificationPreferencesPanel">
+            <summary>Preferences</summary>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="desktopNotificationsToggle" />
+              <label for="desktopNotificationsToggle">Enable Desktop Notifications</label>
+            </div>
+            <div class="form-group">
+              <label for="notificationFrequency">Notification Frequency</label>
+              <select id="notificationFrequency">
+                <option value="quiet">Quiet - Minimum notifications</option>
+                <option value="normal" selected>Normal - Default notifications</option>
+                <option value="frequent">Frequent - More frequent reminders</option>
+              </select>
+            </div>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="silentDuringFocusToggle" />
+              <label for="silentDuringFocusToggle">Silence notifications during focus sessions</label>
+            </div>
+          </details>
+        </section>
+
+        <!-- More Tab -->
+        <section id="more-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-more" hidden>
+          <div class="section more-overview">
+            <header class="section-header">
+              <div>
+                <h2>More Tools</h2>
+                <p class="section-helper">Assistant, insights, and profile tools live here so the main workspace stays focused.</p>
+              </div>
+            </header>
+            <div class="more-actions-grid">
+              <button id="openBotFromMoreBtn" class="primary-btn" type="button" aria-controls="bot-drawer" aria-expanded="false">Open AI Assistant</button>
+              <button id="openInsightsFromMoreBtn" class="secondary-btn" type="button">Open Insights</button>
+              <button id="openProfileFromMoreBtn" class="secondary-btn" type="button">Open Profile & Settings</button>
+            </div>
+          </div>
+
+          <details class="section section-disclosure" id="moreInsightsPanel" open>
+            <summary>Insights</summary>
+            <div class="section nested-section">
+              <div class="section-header compact-header">
+                <h2>Focus Statistics</h2>
+                <div class="notification-actions">
+                  <button id="exportCsvBtn" class="secondary-btn">Export CSV</button>
+                  <button id="exportJsonBtn" class="secondary-btn">Export JSON</button>
+                </div>
+              </div>
+              <div id="statisticsData" class="statistics-data" aria-live="polite"></div>
+            </div>
+            <div class="section nested-section">
+              <h2>Weekly Focus Chart</h2>
+              <canvas id="focusChart" width="600" height="300" role="img" aria-label="Weekly focus chart"></canvas>
+            </div>
+            <div class="section nested-section">
+              <h2>Clipped Web Notes & Highlights</h2>
+              <div id="desktopWebNotesList" class="history-list" aria-live="polite">
+                <p style="color: var(--text-muted);">No clipped notes yet. Clip pages from the Helpy Chrome extension!</p>
+              </div>
+            </div>
+            <div class="section nested-section">
+              <h2>Browser Bridge</h2>
+              <div id="bridgeStatusCard" class="bridge-status"></div>
+              <div id="bridgeTabsData" class="bridge-tabs-data" aria-live="polite"></div>
+            </div>
+            <div class="section nested-section">
+              <h2>System Monitor</h2>
+              <div id="systemMonitorData" class="system-monitor-data" aria-live="polite"></div>
+            </div>
+            <div class="section nested-section">
+              <h2>Activity Tracking</h2>
+              <div id="activityHistory" class="activity-history" aria-live="polite"></div>
+              <h3>App Usage Stats</h3>
+              <div id="appUsageStats" class="app-usage-stats" aria-live="polite"></div>
+            </div>
+          </details>
+
+          <details class="section section-disclosure" id="moreProfilePanel">
+            <summary>Profile & Settings</summary>
+            <div id="auth-logged-out" class="section nested-section">
+              <div id="login-container">
+                <h2>Sign In to Helpy</h2>
+                <form id="loginForm" class="auth-form">
+                  <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="Enter your email" autocomplete="email" />
+                  </div>
+                  <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password" autocomplete="current-password" />
+                  </div>
+                  <button type="submit" class="primary-btn">Sign In</button>
+                </form>
+                <p class="auth-toggle-text">Don't have an account? <a href="#" id="showRegisterBtn">Register here</a></p>
+              </div>
+
+              <div id="register-container" class="is-hidden">
+                <h2>Create Helpy Account</h2>
+                <form id="registerForm" class="auth-form">
+                  <div class="form-group">
+                    <label for="registerName">Display Name</label>
+                    <input type="text" id="registerName" required placeholder="Enter your name" autocomplete="name" />
+                  </div>
+                  <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input type="email" id="registerEmail" required placeholder="Enter your email" autocomplete="email" />
+                  </div>
+                  <div class="form-group">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" required placeholder="Enter your password (min 6 chars)" minlength="6" autocomplete="new-password" />
+                  </div>
+                  <button type="submit" class="primary-btn">Register</button>
+                </form>
+                <p class="auth-toggle-text">Already have an account? <a href="#" id="showLoginBtn">Sign in here</a></p>
+              </div>
+
+              <hr class="auth-divider" />
+
+              <div class="oauth-buttons">
+                <button id="googleAppLoginBtn" type="button" class="oauth-btn google-btn">Sign in with Google</button>
+                <button id="githubAppLoginBtn" type="button" class="oauth-btn github-btn">Sign in with GitHub</button>
+              </div>
+              <div id="authErrorMsg" class="error-message" role="alert" aria-live="assertive"></div>
+            </div>
+
+            <div id="auth-logged-in" class="section nested-section is-hidden">
+              <h2>My Account</h2>
+              <div class="profile-card">
+                <img id="userAvatar" src="" alt="User Avatar" class="profile-avatar is-hidden" />
+                <div class="profile-info">
+                  <div class="profile-name" id="profileName">User Name</div>
+                  <div class="profile-email" id="profileEmail">user@example.com</div>
+                  <div class="profile-provider" id="profileProvider">Method: email</div>
+                  <label class="profile-photo-action" for="profilePhotoInput">Upload a profile photo</label>
+                  <input id="profilePhotoInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="visually-hidden" />
+                  <p id="profilePhotoStatus" class="profile-photo-status" aria-live="polite"></p>
+                </div>
+              </div>
+              <button id="appLogoutBtn" class="danger-btn">Log Out</button>
+            </div>
+          </details>
+        </section>
+      </main>
+    </div>
+
+    <!-- Command Palette Overlay Modal -->
+    <div id="command-palette-modal" class="modal-backdrop is-hidden" aria-hidden="true">
+      <div class="command-palette-container">
+        <div class="command-palette-header">
+          <svg class="search-icon" aria-hidden="true" width="18" height="18"><use href="#icon-search"/></svg>
+          <input type="text" id="command-palette-input" placeholder="Type a command or search (e.g. Focus, Dark Theme, Task)..." autocomplete="off" />
+          <kbd class="kbd-shortcut">ESC</kbd>
+        </div>
+        <div id="command-palette-results" class="command-palette-results" role="listbox">
+          <!-- Dynamically populated options -->
+        </div>
+        <div class="command-palette-footer">
+          <span><kbd>↑</kbd> <kbd>↓</kbd> to navigate</span>
+          <span><kbd>↵</kbd> to select</span>
+          <span><kbd>ESC</kbd> to close</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Helpy AI Companion Chatbot Drawer Widget -->
+    <aside id="bot-drawer" class="bot-drawer-panel is-hidden" aria-label="Helpy AI Assistant" aria-hidden="true">
+      <div class="bot-drawer-header">
+        <div class="bot-drawer-title">
+          <div class="bot-status-dot"></div>
+          <div>
+            <h3>Helpy AI Assistant</h3>
+            <span class="bot-subtitle">Erlang OTP + Ruby Powered · Productivity &amp; Motivation</span>
+          </div>
+        </div>
+        <button id="bot-close-btn" class="bot-icon-btn" aria-label="Close Chatbot">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="bot-chips-row">
+        <button class="bot-chip-btn" data-prompt="tell me a cool fact">Cool Fact</button>
+        <button class="bot-chip-btn" data-prompt="give me motivation">Motivation</button>
+        <button class="bot-chip-btn" data-prompt="what do you remember?">My Memory</button>
+        <button class="bot-chip-btn" data-prompt="how do I focus better?">Focus Tip</button>
+        <button class="bot-chip-btn" data-prompt="tell me about erlang">Erlang Facts</button>
+      </div>
+
+      <div id="bot-drawer-chat-history" class="bot-chat-history">
+        <div class="bot-msg bot-msg-assistant">
+          <div class="bot-msg-bubble">
+            Hello! I'm your Helpy AI Assistant — powered by Ruby and Erlang OTP. I remember your accomplishments, offer motivational boosts, and provide high-efficiency productivity insights. How can I help you today?
+          </div>
+          <div class="bot-msg-time">Just now</div>
+        </div>
+      </div>
+
+      <div class="bot-chat-input-row">
+        <input type="text" id="bot-chat-input" placeholder="Ask Helpy Assistant..." autocomplete="off" />
+        <button id="bot-chat-send-btn" class="bot-send-btn" aria-label="Send message">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- React and React DOM (for future use) -->
+    <script crossorigin src="https://unpkg.com/react@19/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"></script>
+    <script src="src/command-palette.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>

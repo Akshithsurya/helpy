@@ -1,0 +1,301 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "创建",
+    "ok": "确定",
+    "yes": "是",
+    "no": "否",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "confirm": "确认"
+  },
+  "app": {
+    "title": "Helpy",
+    "description": "您的一体化生产力助手，专注于注意力管理、任务和习惯培养"
+  },
+  "tabs": {
+    "focus": "专注",
+    "tasks": "任务",
+    "habits": "习惯",
+    "notifications": "通知",
+    "stats": "统计",
+    "account": "账户"
+  },
+  "plan": {
+    "title": "创建专注计划",
+    "planTitle": "计划标题",
+    "planTitlePlaceholder": "例如：深度工作会话",
+    "planGoal": "目标（可选）",
+    "planGoalPlaceholder": "您想要实现什么？",
+    "planDuration": "持续时间（分钟）",
+    "planChunkSize": "任务块大小（分钟）",
+    "planTemplate": "另存为模板",
+    "planTemplateOptions": {
+      "dontSave": "不保存",
+      "saveAsNew": "另存为新模板"
+    },
+    "createPlan": "创建计划",
+    "currentPlan": "当前计划",
+    "startPlan": "开始计划",
+    "editPlan": "编辑计划",
+    "exportPlan": "导出计划",
+    "saveAsTemplate": "另存为模板",
+    "clearPlan": "清除计划",
+    "confirmClearPlan": "您确定要清除此计划吗？",
+    "planCleared": "计划已清除",
+    "planCreated": "专注计划创建成功！",
+    "planUpdated": "计划更新成功！",
+    "planExported": "计划导出成功！",
+    "templateSaved": "模板保存成功！",
+    "templateNamePrompt": "请输入此模板的名称：",
+    "noRecentPlans": "暂无最近计划。请在上方创建一个！",
+    "recentPlans": "最近计划",
+    "planHistory": "专注计划历史",
+    "clearHistory": "清除历史",
+    "quickCommands": "快捷命令",
+    "commandPlaceholder": "输入 /plan work 60 或 /help",
+    "searchPresets": "搜索预设...",
+    "presetFilterAll": "全部",
+    "presetFilterWork": "工作",
+    "presetFilterStudy": "学习",
+    "presetFilterFocus": "专注",
+    "presetFilterSpace": "太空",
+    "presetFilterCreative": "创意",
+    "noPresetsFound": "未找到匹配您条件的预设。",
+    "presets": "增强计划预设"
+  },
+  "tasks": {
+    "addNewTask": "添加新任务",
+    "taskTitle": "任务标题",
+    "taskTitlePlaceholder": "例如：审查项目提案",
+    "taskDescription": "描述（可选）",
+    "taskDescriptionPlaceholder": "添加详细信息...",
+    "taskPriority": "优先级",
+    "taskPriorityLow": "低",
+    "taskPriorityMedium": "中",
+    "taskPriorityHigh": "高",
+    "taskPriorityUrgent": "紧急",
+    "taskTags": "标签（用逗号分隔）",
+    "taskTagsPlaceholder": "例如：工作，紧急",
+    "taskDeadline": "截止日期",
+    "addTask": "添加任务",
+    "yourTasks": "您的任务",
+    "noTasks": "暂无任务。请在上方添加一个！",
+    "complete": "完成",
+    "undo": "撤销",
+    "deadline": "截止日期：",
+    "noDeadline": "无截止日期"
+  },
+  "timer": {
+    "title": "专注计时器（番茄工作法模式）",
+    "workMode": "工作模式",
+    "shortBreakMode": "短休息",
+    "longBreakMode": "长休息",
+    "start": "开始",
+    "pause": "暂停",
+    "resume": "继续",
+    "stop": "停止",
+    "duration": "持续时间（分钟）",
+    "focusSessionComplete": "专注会话完成！",
+    "greatJob": "做得很好，继续保持专注！"
+  },
+  "habits": {
+    "addNewHabit": "添加新习惯",
+    "habitName": "习惯名称",
+    "habitNamePlaceholder": "例如：阅读30分钟",
+    "habitDescription": "描述（可选）",
+    "habitDescriptionPlaceholder": "为什么这个习惯很重要？",
+    "habitFrequency": "频率",
+    "habitFrequencyDaily": "每天",
+    "habitFrequencyWeekly": "每周",
+    "habitFrequencyMonthly": "每月",
+    "habitTargetCount": "每期目标次数",
+    "addHabit": "添加习惯",
+    "yourHabits": "您的习惯",
+    "habitsSummary": "习惯总结"
+  },
+  "notifications": {
+    "settings": "通知设置",
+    "enableDesktopNotifications": "启用桌面通知",
+    "yourNotifications": "您的通知",
+    "markAllRead": "全部标记为已读",
+    "clearAll": "全部清除",
+    "notificationsStats": "通知统计"
+  },
+  "stats": {
+    "focusStatistics": "专注统计",
+    "weeklyFocusChart": "每周专注图表",
+    "browserBridge": "浏览器桥接",
+    "systemMonitor": "系统监控",
+    "activityTracking": "活动追踪",
+    "appUsageStats": "应用使用统计",
+    "trackedTabs": "追踪的标签页：",
+    "activeTabs": "活动标签页：",
+    "historyEntries": "历史条目：",
+    "pomodoroSync": "番茄钟同步：",
+    "lastCollected": "最后收集：",
+    "activeWindows": "活动窗口：",
+    "noData": "尚未收集数据。",
+    "noTabs": "尚未从扩展程序收到浏览器标签页。"
+  },
+  "auth": {
+    "signIn": "登录 Helpy",
+    "createAccount": "创建 Helpy 账户",
+    "email": "邮箱",
+    "emailPlaceholder": "输入您的邮箱",
+    "password": "密码",
+    "passwordPlaceholder": "输入您的密码",
+    "confirmPasswordPlaceholder": "再次输入您的密码",
+    "displayName": "显示名称",
+    "displayNamePlaceholder": "输入您的姓名",
+    "register": "注册",
+    "signInButton": "登录",
+    "dontHaveAccount": "没有账户？",
+    "alreadyHaveAccount": "已有账户？",
+    "registerHere": "在此注册",
+    "signInHere": "在此登录",
+    "signInWithGoogle": "使用 Google 登录",
+    "signInWithGitHub": "使用 GitHub 登录",
+    "myAccount": "我的账户",
+    "signedInWith": "登录方式",
+    "logOut": "退出登录"
+  },
+  "presets": {
+    "work": {
+      "title": "工作会话",
+      "goal": "专注于工作任务"
+    },
+    "study": {
+      "title": "学习会话",
+      "goal": "专注于学习"
+    },
+    "focus": {
+      "title": "深度专注",
+      "goal": "深度专注会话"
+    },
+    "focus session": {
+      "title": "深度专注",
+      "goal": "深度专注会话"
+    },
+    "code": {
+      "title": "编程会话",
+      "goal": "编写代码并解决问题"
+    },
+    "design": {
+      "title": "设计会话",
+      "goal": "创建和完善设计"
+    },
+    "write": {
+      "title": "写作会话",
+      "goal": "撰写文章、文档或内容"
+    },
+    "read": {
+      "title": "阅读会话",
+      "goal": "阅读和学习新知识"
+    },
+    "exercise": {
+      "title": "锻炼会话",
+      "goal": "体育活动或锻炼"
+    },
+    "meditate": {
+      "title": "冥想会话",
+      "goal": "练习正念和冥想"
+    },
+    "clean": {
+      "title": "清洁会话",
+      "goal": "清洁和整理空间"
+    },
+    "review": {
+      "title": "审查会话",
+      "goal": "审查工作或材料"
+    },
+    "plan": {
+      "title": "规划会话",
+      "goal": "规划和整理任务"
+    },
+    "sprint": {
+      "title": "快速专注冲刺",
+      "goal": "短暂的专注工作"
+    },
+    "blitz": {
+      "title": "任务闪电战",
+      "goal": "快速完成小任务"
+    },
+    "micro": {
+      "title": "微型专注",
+      "goal": "超短的专注会话"
+    },
+    "deep": {
+      "title": "深度钻研",
+      "goal": "长时间专注工作"
+    },
+    "quick task": {
+      "title": "快速任务闪电战",
+      "goal": "处理一个小任务"
+    },
+    "space-research": {
+      "title": "太空研究会话",
+      "goal": "研究太空科学主题"
+    },
+    "satellite-design": {
+      "title": "卫星设计会话",
+      "goal": "设计卫星或太空硬件"
+    },
+    "data-analysis": {
+      "title": "太空数据分析",
+      "goal": "分析太空任务数据"
+    },
+    "mission-planning": {
+      "title": "太空任务规划",
+      "goal": "规划太空任务目标"
+    },
+    "space-adventure": {
+      "title": "太空冒险小游戏",
+      "goal": "玩一个快速的太空主题小游戏（彩蛋！）"
+    }
+  },
+  "tasksDescriptors": {
+    "startStrong": "良好开端",
+    "keepGoing": "继续前进",
+    "makingProgress": "取得进展",
+    "almostThere": "即将完成",
+    "finalPush": "最后冲刺"
+  },
+  "language": {
+    "selectLanguage": "选择语言",
+    "english": "English",
+    "chinese": "中文 (简体)",
+    "spanish": "Español",
+    "french": "Français",
+    "german": "Deutsch",
+    "japanese": "日本語"
+  },
+  "ui": {
+    "calmMode": "平静模式",
+    "normalMode": "普通模式",
+    "darkMode": "深色模式",
+    "lightMode": "浅色模式"
+  },
+  "status": {
+    "loadingFocusPlans": "正在加载专注计划...",
+    "loadingSelectedPlan": "正在加载所选计划...",
+    "failedLoadRecent": "无法加载最近的计划。请重试。",
+    "failedCreatePlan": "无法创建专注计划。请重试。",
+    "planTitleEmpty": "计划标题为空",
+    "planTitleTooLong": "计划标题过长（最多100个字符）",
+    "planGoalTooLong": "计划目标过长（最多500个字符）"
+  },
+  "editPlan": {
+    "title": "编辑计划",
+    "taskTitle": "任务标题",
+    "taskDuration": "持续时间",
+    "taskPriority": "优先级",
+    "addTask": "+ 添加任务",
+    "saveChanges": "保存更改"
+  }
+}

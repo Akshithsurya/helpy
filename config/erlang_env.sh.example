@@ -1,0 +1,11 @@
+#!/bin/bash
+# Example configuration for Helpy Plan Erlang service
+# Copy this file to erlang_env.sh and modify as needed
+
+# Node configuration
+export HTTP_PORT=8080
+export LOG_LEVEL=info
+
+# Performance tuning
+export ERL_MAX_PORTS=65536
+export ERL_MAX_ETS_TABLES=1400

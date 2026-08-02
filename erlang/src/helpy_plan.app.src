@@ -1,0 +1,26 @@
+{application, helpy_plan,
+ [{description, "Helpy Plan Service - Core planning and scheduling engine"},
+  {vsn, "1.0.0"},
+  {modules, [
+      helpy_plan_app,        % Application entry point
+      helpy_plan_sup,        % Root supervisor
+      helpy_plan_service,    % Main business logic service
+      helpy_plan_validator,  % Request/input validation
+      helpy_plan_parser,      % Plan data parser
+      helpy_plan_history,     % Plan history tracking server
+      helpy_plan_http_handler, % Cowboy HTTP request handlers
+      helpy_plan_config,      % Configuration management
+      helpy_plan_error,       % Error types and handling
+      helpy_plan_analytics,   % Plan usage analytics
+      helpy_plan_metrics,     % Prometheus metrics collection
+      helpy_plan_nif          % Native implementation wrapper
+  ]},
+  {registered, [helpy_plan_sup, helpy_plan_history]},
+  {applications, [kernel, stdlib, cowboy, jsx, crypto]},
+  {mod, {helpy_plan_app, []}},
+  {env, [
+      {http_port, 8080},
+      {max_history_size, 1000},
+      {validation_timeout, 5000},
+      {analytics_enabled, true}
+  ]}]}.
