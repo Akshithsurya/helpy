@@ -16,6 +16,8 @@ readonly PID_FILE="${LOG_DIR}/helpy_plan.pid"
 readonly LOG_FILE="${LOG_DIR}/helpy_plan.log"
 readonly REQUIRED_VARS=("NODE_NAME" "COOKIE" "ERLANG_DIR" "LOG_DIR")
 readonly MAX_LOG_SIZE=$((100 * 1024 * 1024)) # 100MB in bytes
+readonly RETAIN_OLD_LOGS_DAYS=30
+readonly TAIL_LOG_LINES_ON_FAILURE=20
 
 # Cleanup function to remove stale resources on exit
 cleanup_resources() {
@@ -73,7 +75,10 @@ fi
 
 # Compile if needed with verbose output capture
 log_info "Compiling application..."
-REBAR_OUTPUT=$(mktemp)
+REBAR_OUTPUT=$(mktemp) || {
+    log_error "Failed to create temporary file for build output"
+    exit 1
+}
 # Ensure temp file is cleaned up even if compilation fails
 # shellcheck disable=SC2064
 trap "rm -f '${REBAR_OUTPUT}'" EXIT
@@ -116,7 +121,7 @@ if [[ -f "${LOG_FILE}" ]]; then
             touch "${LOG_FILE}"
             chmod 644 "${LOG_FILE}"
             # Delete old logs older than 30 days to prevent disk bloat
-            find "${LOG_DIR}" -name "helpy_plan.log.*.old" -mtime +30 -delete 2>/dev/null || log_warn "Failed to clean up old logs"
+            find "${LOG_DIR}" -name "helpy_plan.log.*.old" -mtime +${RETAIN_OLD_LOGS_DAYS} -delete 2>/dev/null || log_warn "Failed to clean up old logs"
         fi
     else
         log_warn "Could not retrieve log file size, skipping rotation"
@@ -161,8 +166,8 @@ if is_node_running && [[ -f "${PID_FILE}" ]]; then
 else
     log_error "Failed to start service after ${STARTUP_TIMEOUT}s. Check logs at ${LOG_FILE}"
     # Collect and log last 20 lines of logs for immediate debugging
-    log_error "Last 20 log entries:"
-    tail -n 20 "${LOG_FILE}" | while IFS= read -r line || [[ -n "$line" ]]; do log_error "  $line"; done
+    log_error "Last ${TAIL_LOG_LINES_ON_FAILURE} log entries:"
+    tail -n ${TAIL_LOG_LINES_ON_FAILURE} "${LOG_FILE}" | while IFS= read -r line || [[ -n "$line" ]]; do log_error "  $line"; done
     cleanup_resources
     exit 1
 fi

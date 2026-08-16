@@ -14,6 +14,7 @@ set "CLEAN_BUILD_CACHE="
 set "INSTALL_AFTER_BUILD="
 set "RUN_TESTS="
 set "GENERATE_COMPILE_COMMANDS="
+set "LIST_GENERATORS="
 
 :: Project configuration
 set "BUILD_DIR=build"
@@ -26,6 +27,9 @@ set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 set "CMAKE_BUILD_TYPE=Release"
 :: Additional CMake flags
 set "CMAKE_EXTRA_FLAGS="
+
+:: Enable VT100 escape sequence processing for Windows 10+ to ensure ANSI colors work
+reg add HKCU\Console /v VirtualTerminalLevel /t REG_DWORD /d 1 /f >nul 2>&1
 
 :: ANSI color codes for better output visibility
 set "GREEN=[32m"
@@ -45,6 +49,7 @@ if /i "%~1"=="--help" (
     echo   --no-clean      Skip cleaning the build directory before building
     echo   --clean-cache   Clean CMake cache before configuration
     echo   -G GENERATOR    Specify CMake generator (default: MinGW Makefiles)
+    echo   --list-generators List available CMake generators and exit
     echo   --help          Show this help message and exit
     echo   --run           Run the target executable after successful build
     echo   --install       Install the project after successful build
@@ -73,6 +78,11 @@ if /i "%~1"=="--no-clean" (
 )
 if /i "%~1"=="--clean-cache" (
     set "CLEAN_BUILD_CACHE=1"
+    shift
+    goto arg_loop
+)
+if /i "%~1"=="--list-generators" (
+    set "LIST_GENERATORS=1"
     shift
     goto arg_loop
 )
@@ -156,6 +166,20 @@ if %FLAG_CONFLICT% equ 1 (
 :: Validate build directory path
 set "FULL_BUILD_PATH=%SCRIPT_DIR%\%BUILD_DIR%"
 
+:: Check CMake availability first
+where cmake >nul 2>&1
+if errorlevel 1 (
+    echo %RED%ERROR:%RESET% CMake executable not found in PATH. Please install CMake and add it to your system PATH.
+    exit /b 1
+)
+
+:: List generators if requested
+if defined LIST_GENERATORS (
+    echo %CYAN%Available CMake generators:%RESET%
+    cmake --help
+    exit /b 0
+)
+
 :: Print build configuration
 echo %CYAN%Building helpy_plan_nif test program...%RESET%
 echo.
@@ -208,6 +232,11 @@ if not defined NO_CLEAN (
             echo %YELLOW%Cleaning CMake cache...%RESET%
             del /f /q "%FULL_BUILD_PATH%\CMakeCache.txt" >nul 2>&1
             rmdir /s /q "%FULL_BUILD_PATH%\CMakeFiles" >nul 2>&1
+            if errorlevel 0 (
+                echo %GREEN%CMake cache cleaned successfully%RESET%
+            ) else (
+                echo %YELLOW%WARNING:%RESET% No CMake cache found to clean%RESET%
+            )
         )
     )
 )
@@ -215,14 +244,6 @@ if not defined NO_CLEAN (
 :: Enter build directory
 cd /d "%FULL_BUILD_PATH%" || (
     echo %RED%ERROR:%RESET% Failed to enter %BUILD_DIR% directory at %FULL_BUILD_PATH%
-    exit /b 1
-)
-
-:: Check if CMake is available
-where cmake >nul 2>&1
-if errorlevel 1 (
-    echo %RED%ERROR:%RESET% CMake executable not found in PATH. Please install CMake and add it to your system PATH.
-    cd /d "%SCRIPT_DIR%"
     exit /b 1
 )
 
@@ -246,6 +267,8 @@ if not defined BUILD_ONLY (
     if defined GENERATE_COMPILE_COMMANDS if exist "%FULL_BUILD_PATH%\compile_commands.json" (
         copy /y "%FULL_BUILD_PATH%\compile_commands.json" "%SCRIPT_DIR%" >nul
         echo %GREEN%compile_commands.json copied to project root%RESET%
+    ) else if defined GENERATE_COMPILE_COMMANDS (
+        echo %YELLOW%WARNING:%RESET% compile_commands.json was requested but not generated%RESET%
     )
 )
 
@@ -295,17 +318,30 @@ if defined RUN_AFTER_BUILD (
     echo.
     echo %YELLOW%Starting %TARGET%...%RESET%
     :: Handle both MinGW (root of build dir) and Visual Studio (subdir) output locations
+    set "TARGET_EXE="
     if exist "%FULL_BUILD_PATH%\%CMAKE_BUILD_TYPE%\%TARGET%.exe" (
         set "TARGET_EXE=%FULL_BUILD_PATH%\%CMAKE_BUILD_TYPE%\%TARGET%.exe"
     ) else if exist "%FULL_BUILD_PATH%\%TARGET%.exe" (
         set "TARGET_EXE=%FULL_BUILD_PATH%\%TARGET%.exe"
     ) else (
-        set "TARGET_EXE="
+        :: Fallback search for executable
+        for /f "delims=" %%f in ('dir /s /b "%FULL_BUILD_PATH%\%TARGET%.exe" 2^>nul') do (
+            set "TARGET_EXE=%%f"
+            goto found_exe
+        )
     )
+    :found_exe
     
     if defined TARGET_EXE if exist "!TARGET_EXE!" (
-        start "" "!TARGET_EXE!"
-        echo %GREEN%Successfully launched %TARGET%%RESET%
+        echo %GREEN%Found executable at: !TARGET_EXE!%RESET%
+        start "" /WAIT "!TARGET_EXE!"
+        set "EXIT_CODE=!errorlevel!"
+        if !EXIT_CODE! neq 0 (
+            echo %RED%ERROR:%RESET% Program exited with error code !EXIT_CODE!
+            cd /d "%SCRIPT_DIR%"
+            exit /b !EXIT_CODE!
+        )
+        echo %GREEN%Successfully ran %TARGET%%RESET%
     ) else (
         echo %RED%ERROR:%RESET% Could not find %TARGET% executable in any expected output directory
         cd /d "%SCRIPT_DIR%"
@@ -315,3 +351,4 @@ if defined RUN_AFTER_BUILD (
 
 :: Return to original directory
 cd /d "%SCRIPT_DIR%"
+

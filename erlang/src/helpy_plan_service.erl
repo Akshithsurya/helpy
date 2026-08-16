@@ -7,7 +7,8 @@
     break_down_into_tasks/6,
     start_plan/1, complete_plan/1, cancel_plan/1, complete_task/2,
     export_plan/2, calculate_session_stats/1,
-    enqueue_plan/2, dequeue_plan/0, list_queue/0, clear_queue/0,
+    enqueue_plan/2, dequeue_plan/0, peek_plan/0, list_queue/0,
+    clear_queue/0, queue_size/0,
     generate_smart_recommendation/3
 ]).
 
@@ -31,6 +32,7 @@
 -define(QUEUE_TABLE, helpy_plan_queue).
 
 %% Task descriptors — tuple for O(1) lookup via element/2.
+%% Cycled via rem when there are more tasks than descriptors.
 -define(DESCRIPTORS, {
     <<"Start strong">>,
     <<"Keep going">>,
@@ -52,6 +54,12 @@
 -define(MIN_BREAK_MINUTES,       3).
 -define(MAX_BREAK_MINUTES,      15).
 -define(BREAK_DIVISOR,           5).
+
+%% Availability caps — {ThresholdMinutes, CapMinutes}, first match wins.
+-define(AVAILABILITY_BANDS, [
+    {30, 20},
+    {60, 30}
+]).
 
 %% Work bands — first match wins. {MinEnergy, MinIntensity, WorkMin, Message}.
 -define(WORK_BANDS, [
@@ -181,16 +189,19 @@ create_plan(Args, Options) ->
 
 -spec build_plan(map()) -> plan().
 build_plan(Merged) ->
-    M       = maps:merge(plan_defaults(), Merged),
-    Title   = maps:get(title,              M),
-    Goal    = maps:get(goal,               M),
-    Dur     = maps:get(duration_minutes,   M),
-    Chunk   = maps:get(chunk_size_minutes, M),
-    Break   = maps:get(break_minutes,      M),
-    InclBrk = maps:get(include_breaks,     M),
-
+    #{
+        title              := Title,
+        goal               := Goal,
+        duration_minutes   := Dur,
+        chunk_size_minutes := Chunk,
+        break_minutes      := Break,
+        include_breaks     := InclBrk,
+        next_queue         := NextQueue,
+        source             := Source,
+        created_at         := CreatedAt,
+        tags               := Tags
+    } = maps:merge(plan_defaults(), Merged),
     Tasks = break_down_into_tasks(Title, Goal, Dur, Chunk, Break, InclBrk),
-
     #{
         id                 => generate_plan_id(),
         title              => Title,
@@ -199,11 +210,11 @@ build_plan(Merged) ->
         tasks              => Tasks,
         chunk_size_minutes => Chunk,
         break_minutes      => Break,
-        next_queue         => maps:get(next_queue, M),
-        source             => maps:get(source,     M),
-        created_at         => maps:get(created_at, M),
+        next_queue         => NextQueue,
+        source             => Source,
+        created_at         => CreatedAt,
         status             => ?STATUS_PENDING,
-        tags               => maps:get(tags,       M)
+        tags               => Tags
     }.
 
 -spec plan_defaults() -> map().
@@ -257,7 +268,7 @@ build_tasks(Goal, Remaining, ChunkSize, BreakMinutes, IncludeBreaks, Seed, Idx, 
     ChunkDur  = min(ChunkSize, Remaining),
     FocusTask = make_focus_task(Goal, Seed, Idx, ChunkDur),
     NewRem    = Remaining - ChunkDur,
-    case should_insert_break(IncludeBreaks, NewRem) of
+    case IncludeBreaks andalso NewRem > 0 of
         true ->
             BreakDur  = min(BreakMinutes, NewRem),
             BreakTask = make_break_task(Seed, Idx, BreakDur),
@@ -267,10 +278,6 @@ build_tasks(Goal, Remaining, ChunkSize, BreakMinutes, IncludeBreaks, Seed, Idx, 
             build_tasks(Goal, NewRem, ChunkSize, BreakMinutes,
                         IncludeBreaks, Seed, Idx + 1, [FocusTask | Acc])
     end.
-
--spec should_insert_break(boolean(), non_neg_integer()) -> boolean().
-should_insert_break(true,  NewRem) when NewRem > 0 -> true;
-should_insert_break(_,     _)                      -> false.
 
 -spec make_focus_task(binary(), binary(), non_neg_integer(), non_neg_integer()) -> task().
 make_focus_task(Goal, Seed, Idx, Duration) ->
@@ -301,9 +308,10 @@ make_break_task(Seed, Idx, Duration) ->
         is_break         => true
     }.
 
+%% Cycles through descriptors for plans with more than 5 tasks.
 -spec descriptor_for(non_neg_integer()) -> binary().
 descriptor_for(Idx) ->
-    element(min(Idx + 1, ?DESCRIPTOR_COUNT), ?DESCRIPTORS).
+    element((Idx rem ?DESCRIPTOR_COUNT) + 1, ?DESCRIPTORS).
 
 %%%===================================================================
 %%% ID & timestamp helpers
@@ -332,10 +340,17 @@ start_plan(#{status := S}) ->
 -spec complete_plan(plan()) -> lifecycle_result().
 complete_plan(#{status := ?STATUS_IN_PROGRESS} = Plan) ->
     Now     = now_ms(),
-    Updated = [mark_completed(T, Now) || T <- maps:get(tasks, Plan, [])],
+    Updated = [complete_if_pending(T, Now) || T <- maps:get(tasks, Plan, [])],
     {ok, Plan#{status => ?STATUS_COMPLETED, completed_at => Now, tasks => Updated}};
 complete_plan(#{status := S}) ->
     {error, {invalid_transition, S, ?STATUS_COMPLETED}}.
+
+%% Only marks incomplete tasks — preserves original completed_at timestamps.
+-spec complete_if_pending(task(), integer()) -> task().
+complete_if_pending(#{completed := false} = Task, Now) ->
+    Task#{completed => true, completed_at => Now};
+complete_if_pending(Task, _Now) ->
+    Task.
 
 -spec cancel_plan(plan()) -> lifecycle_result().
 cancel_plan(#{status := ?STATUS_COMPLETED}) ->
@@ -375,8 +390,7 @@ mark_completed(Task, Now) ->
 -spec calculate_session_stats(plan()) -> map().
 calculate_session_stats(Plan) ->
     Tasks = maps:get(tasks, Plan, []),
-    {Total, Done, Focus, Breaks} =
-        lists:foldl(fun stats_fold/2, {0, 0, 0, 0}, Tasks),
+    {Total, Done, Focus, Breaks} = lists:foldl(fun stats_fold/2, {0, 0, 0, 0}, Tasks),
     Pending = Total - Done,
     Pct = case Total of
         0 -> 0;
@@ -398,14 +412,12 @@ calculate_session_stats(Plan) ->
          Done   :: non_neg_integer(),
          Focus  :: non_neg_integer(),
          Breaks :: non_neg_integer().
-stats_fold(Task, {Total, Done, Focus, Breaks}) ->
-    Dur     = maps:get(duration_minutes, Task, 0),
-    IsBreak = maps:get(is_break,         Task, false),
-    IsDone  = maps:get(completed,        Task, false),
-    NewDone = case IsDone of true -> Done + 1; false -> Done end,
+stats_fold(#{duration_minutes := Dur, is_break := IsBreak, completed := IsDone},
+           {Total, Done, Focus, Breaks}) ->
+    Done1 = Done + case IsDone of true -> 1; false -> 0 end,
     case IsBreak of
-        true  -> {Total + 1, NewDone, Focus,        Breaks + Dur};
-        false -> {Total + 1, NewDone, Focus + Dur,  Breaks}
+        true  -> {Total + 1, Done1, Focus, Breaks + Dur};
+        false -> {Total + 1, Done1, Focus + Dur, Breaks}
     end.
 
 %%%===================================================================
@@ -419,18 +431,17 @@ export_plan(Plan, Options) ->
     IncludeMetadata = maps:get(include_metadata, Options, true),
     case Format of
         json     -> export_json(filter_plan(Plan, IncludeTasks, IncludeMetadata));
-        markdown -> export_markdown(Plan, IncludeTasks);
-        text     -> export_text(Plan, IncludeTasks)
+        markdown -> export_textual(Plan, IncludeTasks, markdown);
+        text     -> export_textual(Plan, IncludeTasks, text)
     end.
 
 -spec filter_plan(plan(), boolean(), boolean()) -> map().
 filter_plan(Plan, IncludeTasks, IncludeMetadata) ->
-    Drops =
-        [K || {K, Keep} <- [{tasks,       IncludeTasks},
-                             {created_at,  IncludeMetadata},
-                             {source,      IncludeMetadata},
-                             {next_queue,  IncludeMetadata}],
-              not Keep],
+    Optional = [{tasks,       IncludeTasks},
+                {created_at,  IncludeMetadata},
+                {source,      IncludeMetadata},
+                {next_queue,  IncludeMetadata}],
+    Drops = [K || {K, false} <- Optional],
     maps:without(Drops, Plan).
 
 -spec export_json(map()) -> binary().
@@ -440,69 +451,91 @@ export_json(Plan) ->
 -spec jsonify(term()) -> term().
 jsonify(undefined) -> null;
 jsonify(Map) when is_map(Map) ->
-    maps:map(fun(_K, V) -> jsonify(V) end, Map);
+    maps:map(fun(_, V) -> jsonify(V) end, Map);
 jsonify(List) when is_list(List) ->
     [jsonify(X) || X <- List];
 jsonify(X) -> X.
 
--spec export_markdown(plan(), boolean()) -> binary().
-export_markdown(Plan, IncludeTasks) ->
-    Title    = maps:get(title,            Plan, <<>>),
-    Goal     = maps:get(goal,             Plan, <<>>),
-    Duration = maps:get(duration_minutes, Plan, 0),
-    Tasks    = maps:get(tasks,            Plan, []),
-
-    GoalPart  = case Goal of <<>> -> []; _ -> [<<"## Goal\n">>, Goal, <<"\n\n">>] end,
+-spec export_textual(plan(), boolean(), export_format()) -> binary().
+export_textual(Plan, IncludeTasks, Fmt) ->
+    {Title, Goal, Duration, Tasks} = export_parts(Plan),
+    GoalPart  = case Goal of
+        <<>> -> [];
+        _    -> [fmt_goal_prefix(Fmt), Goal, fmt_goal_suffix(Fmt)]
+    end,
     TasksPart = case IncludeTasks andalso Tasks =/= [] of
-        true  -> [<<"## Tasks\n\n">>, [format_task(T, markdown) || T <- Tasks]];
+        true  -> [fmt_tasks_header(Fmt), [format_task(T, Fmt) || T <- Tasks]];
         false -> []
     end,
     iolist_to_binary([
-        <<"# ">>, Title, <<"\n\n">>,
+        fmt_header(Fmt), Title, fmt_title_suffix(Fmt),
         GoalPart,
-        <<"## Duration\n">>, integer_to_binary(Duration), <<" minutes\n\n">>,
+        fmt_duration_prefix(Fmt), integer_to_binary(Duration), fmt_duration_suffix(Fmt),
         TasksPart
     ]).
 
--spec export_text(plan(), boolean()) -> binary().
-export_text(Plan, IncludeTasks) ->
-    Title    = maps:get(title,            Plan, <<>>),
-    Goal     = maps:get(goal,             Plan, <<>>),
-    Duration = maps:get(duration_minutes, Plan, 0),
-    Tasks    = maps:get(tasks,            Plan, []),
+-spec export_parts(plan()) -> {binary(), binary(), non_neg_integer(), [task()]}.
+export_parts(Plan) ->
+    {
+        maps:get(title,            Plan, <<>>),
+        maps:get(goal,             Plan, <<>>),
+        maps:get(duration_minutes, Plan, 0),
+        maps:get(tasks,            Plan, [])
+    }.
 
-    GoalPart  = case Goal of <<>> -> []; _ -> [<<"\nGoal: ">>, Goal, <<"\n">>] end,
-    TasksPart = case IncludeTasks andalso Tasks =/= [] of
-        true  -> [<<"\nTasks:\n">>, [format_task(T, text) || T <- Tasks]];
-        false -> []
-    end,
-    iolist_to_binary([
-        Title, <<"\n">>,
-        GoalPart,
-        <<"\nDuration: ">>, integer_to_binary(Duration), <<" minutes\n">>,
-        TasksPart
-    ]).
+-spec fmt_header(export_format()) -> binary().
+fmt_header(markdown) -> <<"# ">>;
+fmt_header(text)     -> <<>>.
+
+-spec fmt_title_suffix(export_format()) -> binary().
+fmt_title_suffix(markdown) -> <<"\n\n">>;
+fmt_title_suffix(text)     -> <<"\n">>.
+
+-spec fmt_goal_prefix(export_format()) -> binary().
+fmt_goal_prefix(markdown) -> <<"## Goal\n">>;
+fmt_goal_prefix(text)     -> <<"\nGoal: ">>.
+
+-spec fmt_goal_suffix(export_format()) -> binary().
+fmt_goal_suffix(markdown) -> <<"\n\n">>;
+fmt_goal_suffix(text)     -> <<"\n">>.
+
+-spec fmt_duration_prefix(export_format()) -> binary().
+fmt_duration_prefix(markdown) -> <<"## Duration\n">>;
+fmt_duration_prefix(text)     -> <<"\nDuration: ">>.
+
+-spec fmt_duration_suffix(export_format()) -> binary().
+fmt_duration_suffix(markdown) -> <<" minutes\n\n">>;
+fmt_duration_suffix(text)     -> <<" minutes\n">>.
+
+-spec fmt_tasks_header(export_format()) -> binary().
+fmt_tasks_header(markdown) -> <<"## Tasks\n\n">>;
+fmt_tasks_header(text)     -> <<"\nTasks:\n">>.
 
 -spec format_task(task(), export_format()) -> iolist().
 format_task(Task, Fmt) ->
-    Mark = case {maps:get(completed, Task, false), Fmt} of
-        {true,  markdown} -> <<"- [x] ">>;
-        {false, markdown} -> <<"- [ ] ">>;
-        {true,  _}        -> <<"[x] ">>;
-        {false, _}        -> <<"[ ] ">>
-    end,
+    Mark  = task_marker(maps:get(completed, Task, false), Fmt),
     Title = maps:get(title, Task, <<>>),
     Dur   = integer_to_binary(maps:get(duration_minutes, Task, 0)),
     [Mark, Title, <<" (">>, Dur, <<" min)\n">>].
 
+-spec task_marker(boolean(), export_format()) -> binary().
+task_marker(true,  markdown) -> <<"- [x] ">>;
+task_marker(false, markdown) -> <<"- [ ] ">>;
+task_marker(true,  _)        -> <<"[x] ">>;
+task_marker(false, _)        -> <<"[ ] ">>.
+
 %%%===================================================================
 %%% Priority queue (ETS ordered_set)
+%%%
+%%% Keys are {-Priority, Timestamp, PlanId} so that:
+%%%   • Higher priority is dequeued first (negated → sorts earlier)
+%%%   • Within the same priority, oldest entry is dequeued first (FIFO)
 %%%===================================================================
 
 -spec enqueue_plan(plan(), priority()) -> ok.
 enqueue_plan(Plan, Priority) ->
     Ts  = now_ms(),
-    Key = {Priority, Ts, maps:get(id, Plan)},
+    Key = {-Priority, Ts, maps:get(id, Plan)},
     true = ets:insert(?QUEUE_TABLE, {Key, Plan}),
     ok.
 
@@ -524,9 +557,23 @@ dequeue_plan(N) when N > 0 ->
             end
     end.
 
+-spec peek_plan() -> {ok, plan()} | {error, empty}.
+peek_plan() ->
+    case ets:first(?QUEUE_TABLE) of
+        '$end_of_table' ->
+            {error, empty};
+        Key ->
+            [{Key, Plan}] = ets:lookup(?QUEUE_TABLE, Key),
+            {ok, Plan}
+    end.
+
 -spec list_queue() -> [plan()].
 list_queue() ->
     ets:select(?QUEUE_TABLE, [{{'_', '$1'}, [], ['$1']}]).
+
+-spec queue_size() -> non_neg_integer().
+queue_size() ->
+    ets:info(?QUEUE_TABLE, size).
 
 -spec clear_queue() -> ok.
 clear_queue() ->
@@ -568,9 +615,12 @@ pick_band(Energy, Intensity) ->
     end.
 
 -spec adjust_for_available(non_neg_integer(), non_neg_integer()) -> non_neg_integer().
-adjust_for_available(Optimal, Avail) when Avail < 30 -> min(Optimal, 20);
-adjust_for_available(Optimal, Avail) when Avail < 60 -> min(Optimal, 30);
-adjust_for_available(Optimal, _Avail)                -> Optimal.
+adjust_for_available(Optimal, Avail) ->
+    case lists:search(fun({Threshold, _Cap}) -> Avail < Threshold end,
+                      ?AVAILABILITY_BANDS) of
+        {value, {_, Cap}} -> min(Optimal, Cap);
+        false             -> Optimal
+    end.
 
 -spec calculate_break_duration(non_neg_integer()) -> non_neg_integer().
 calculate_break_duration(WorkDuration) ->

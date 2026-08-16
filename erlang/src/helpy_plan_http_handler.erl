@@ -18,6 +18,10 @@
     <<"https://helpy.example.com">>
 ]).
 
+%% Pre-encoded fallback for serialization failures (avoids recursive crash)
+-define(FALLBACK_ERROR_JSON,
+    <<"{\"success\":false,\"error\":\"Internal serialization error\"}">>).
+
 %% HTTP status codes
 -define(HTTP_OK, 200).
 -define(HTTP_CREATED, 201).
@@ -53,7 +57,6 @@
 
 %% Authentication
 -define(AUTH_HEADER, <<"authorization">>).
--define(BEARER_PREFIX, <<"Bearer ">>).
 
 %% Public endpoints (skip authentication)
 -define(PUBLIC_ENDPOINTS, [
@@ -66,6 +69,13 @@
 -define(ALLOWED_BOT_TYPES, [
     <<"general">>, <<"focus">>, <<"break">>, <<"social">>, <<"reminder">>
 ]).
+
+%% Security headers applied to every response
+-define(SECURITY_HEADERS, #{
+    <<"x-content-type-options">> => <<"nosniff">>,
+    <<"x-frame-options">>        => <<"DENY">>,
+    <<"vary">>                   => <<"origin">>
+}).
 
 %% ---------------------------------------------------------------------------
 %% Types
@@ -82,10 +92,10 @@
 
 -spec init(cowboy_req:req(), term()) -> handler_result().
 init(Req0, State) ->
-    Req1 = handle_cors(Req0),
+    Req1 = set_response_headers(Req0),
     case cowboy_req:method(Req1) of
         <<"OPTIONS">> ->
-            %% Preflight — reply 204 with CORS headers already set on Req1
+            %% Preflight — 204 with CORS + security headers already on Req1
             Req2 = cowboy_req:reply(?HTTP_NO_CONTENT, #{}, <<>>, Req1),
             {ok, Req2, State};
         _ ->
@@ -121,28 +131,31 @@ process_request(Req0, State) ->
     end.
 
 %% ---------------------------------------------------------------------------
-%% CORS
+%% Response headers (CORS + security)
 %% ---------------------------------------------------------------------------
 
--spec handle_cors(cowboy_req:req()) -> cowboy_req:req().
-handle_cors(Req) ->
+-spec set_response_headers(cowboy_req:req()) -> cowboy_req:req().
+set_response_headers(Req) ->
     Origin = cowboy_req:header(<<"origin">>, Req, <<>>),
-    Headers0 = #{
+    AllHeaders = maps:merge(?SECURITY_HEADERS, cors_headers(Origin)),
+    cowboy_req:set_resp_headers(AllHeaders, Req).
+
+-spec cors_headers(binary()) -> #{binary() => binary()}.
+cors_headers(Origin) ->
+    Base = #{
         <<"access-control-allow-methods">> => <<"GET, POST, PUT, DELETE, OPTIONS">>,
         <<"access-control-allow-headers">> => <<"content-type, authorization">>,
-        <<"access-control-max-age">>       => <<"86400">>,
-        <<"vary">>                         => <<"origin">>
+        <<"access-control-max-age">>       => <<"86400">>
     },
-    Headers = case maybe_allowed_origin(Origin) of
-        undefined -> Headers0;
-        Allowed   -> Headers0#{<<"access-control-allow-origin">> => Allowed}
-    end,
-    cowboy_req:set_resp_headers(Headers, Req).
+    case allowed_origin(Origin) of
+        undefined -> Base;
+        Allowed   -> Base#{<<"access-control-allow-origin">> => Allowed}
+    end.
 
--spec maybe_allowed_origin(binary()) -> binary() | undefined.
-maybe_allowed_origin(<<>>) ->
+-spec allowed_origin(binary()) -> binary() | undefined.
+allowed_origin(<<>>) ->
     undefined;
-maybe_allowed_origin(Origin) ->
+allowed_origin(Origin) ->
     case lists:member(Origin, ?ALLOWED_ORIGINS) of
         true  -> Origin;
         false -> undefined
@@ -179,9 +192,21 @@ authenticate(Req) ->
             end
     end.
 
+%% Case-insensitive "Bearer " prefix; trims surrounding whitespace from token.
 -spec parse_bearer_token(binary()) -> {ok, binary()} | error.
-parse_bearer_token(<<?BEARER_PREFIX/binary, Token/binary>>) when Token =/= <<>> ->
-    {ok, Token};
+parse_bearer_token(AuthHeader) when byte_size(AuthHeader) >= 7 ->
+    Prefix = binary:part(AuthHeader, 0, 7),
+    case string:lowercase(Prefix) of
+        <<"bearer ">> ->
+            Token = string:trim(binary:part(AuthHeader, 7,
+                                             byte_size(AuthHeader) - 7)),
+            case Token of
+                <<>> -> error;
+                _    -> {ok, Token}
+            end;
+        _ ->
+            error
+    end;
 parse_bearer_token(_) ->
     error.
 
@@ -219,7 +244,8 @@ route(<<"GET">>, [<<"api">>, <<"plans">>], UserId, Req) ->
 route(<<"POST">>, [<<"api">>, <<"plans">>, <<"queue">>], UserId, Req) ->
     with_json_body(Req, fun(Data, Req1) ->
         {Args, Options} = extract_plan_params(Data),
-        Priority = clamp(expect_integer(Data, <<"priority">>, ?DEFAULT_PRIORITY), 0, 100),
+        Priority = clamp(expect_integer(Data, <<"priority">>, ?DEFAULT_PRIORITY),
+                         0, 100),
         case helpy_plan_service:create_plan_safe(Args, Options) of
             {ok, Plan} ->
                 helpy_plan_service:enqueue_plan(Plan, Priority, UserId),
@@ -229,7 +255,8 @@ route(<<"POST">>, [<<"api">>, <<"plans">>, <<"queue">>], UserId, Req) ->
         end
     end);
 
-route(<<"POST">>, [<<"api">>, <<"plans">>, <<"queue">>, <<"dequeue">>], UserId, Req) ->
+route(<<"POST">>, [<<"api">>, <<"plans">>, <<"queue">>, <<"dequeue">>],
+      UserId, Req) ->
     case helpy_plan_service:dequeue_plan(UserId) of
         {ok, Plan} ->
             ok_json(?HTTP_OK, #{plan => Plan}, Req);
@@ -260,7 +287,8 @@ route(<<"DELETE">>, [<<"api">>, <<"plans">>, PlanId], UserId, Req) ->
     end;
 
 %% --- Recommendations -------------------------------------------------------
-route(<<"POST">>, [<<"api">>, <<"recommendations">>, <<"smart">>], _UserId, Req) ->
+route(<<"POST">>, [<<"api">>, <<"recommendations">>, <<"smart">>],
+      _UserId, Req) ->
     with_json_body(Req, fun(Data, Req1) ->
         TotalMinutes = clamp(expect_number(Data, <<"totalAvailableMinutes">>,
                                            ?DEFAULT_TOTAL_MINUTES),
@@ -302,7 +330,8 @@ route(<<"GET">>, [<<"api">>, <<"session">>, <<"state">>], UserId, Req) ->
 
 route(<<"POST">>, [<<"api">>, <<"session">>, <<"start">>], UserId, Req) ->
     with_json_body(Req, fun(Data, Req1) ->
-        Title    = validate_title(maps:get(<<"title">>, Data, ?DEFAULT_SESSION_TITLE)),
+        Title    = validate_title(maps:get(<<"title">>, Data,
+                                           ?DEFAULT_SESSION_TITLE)),
         Duration = clamp(expect_integer(Data, <<"durationMinutes">>,
                                         ?DEFAULT_SESSION_DURATION),
                          ?MIN_SESSION_DURATION, ?MAX_SESSION_DURATION),
@@ -320,7 +349,8 @@ route(<<"POST">>, [<<"api">>, <<"session">>, <<"stop">>], UserId, Req) ->
 route(<<"POST">>, [<<"api">>, <<"bot">>, <<"action">>], UserId, Req) ->
     with_json_body(Req, fun(Data, Req1) ->
         Type   = validate_bot_type(maps:get(<<"type">>, Data, <<"general">>)),
-        Detail = validate_detail(maps:get(<<"detail">>, Data, <<"No details">>)),
+        Detail = validate_detail(maps:get(<<"detail">>, Data,
+                                          <<"No details">>)),
         Res = helpy_bot_server:log_action(Type, Detail, UserId),
         ok_json(?HTTP_OK, Res, Req1)
     end);
@@ -351,12 +381,16 @@ route(<<"GET">>, [<<"api">>, <<"sessions">>], UserId, Req) ->
 
 route(<<"POST">>, [<<"api">>, <<"sessions">>, <<"start">>], UserId, Req) ->
     with_json_body(Req, fun(Data, Req1) ->
-        Duration = clamp(expect_integer(Data, <<"duration_minutes">>,
-                                        ?DEFAULT_SESSION_DURATION),
-                         ?MIN_DURATION_MINUTES, ?MAX_DURATION_MINUTES),
+        %% Accept both camelCase and snake_case for backward compatibility
+        Duration = clamp(
+            expect_integer(Data, <<"durationMinutes">>,
+                expect_integer(Data, <<"duration_minutes">>,
+                    ?DEFAULT_SESSION_DURATION)),
+            ?MIN_DURATION_MINUTES, ?MAX_DURATION_MINUTES),
         case helpy_session_manager:start_session(UserId, Duration) of
             {ok, Session}   -> created_json(#{session => Session}, Req1);
-            {error, Reason} -> throw({http_error, ?HTTP_TOO_MANY_REQUESTS, Reason})
+            {error, Reason} -> throw({http_error, ?HTTP_TOO_MANY_REQUESTS,
+                                      Reason})
         end
     end);
 
@@ -406,7 +440,7 @@ route(<<"GET">>, [<<"api">>, <<"analytics">>, <<"user">>, UserIdParam],
     end);
 
 %% --- Fallback --------------------------------------------------------------
-route(_Method, _Segments, _UserId, Req) ->
+route(_Method, _Segments, _UserId, _Req) ->
     throw_not_found(<<"Not found">>).
 
 %% ---------------------------------------------------------------------------
@@ -415,6 +449,8 @@ route(_Method, _Segments, _UserId, Req) ->
 
 -spec ensure_authorized(user_id(), user_id(),
                         fun(() -> cowboy_req:req())) -> cowboy_req:req().
+ensure_authorized(undefined, _RequesterId, _Fun) ->
+    throw({http_error, ?HTTP_FORBIDDEN, <<"Insufficient permissions">>});
 ensure_authorized(TargetId, RequesterId, Fun) ->
     case TargetId =:= RequesterId orelse is_admin(RequesterId) of
         true  -> Fun();
@@ -436,7 +472,7 @@ clamp(Value, Min, Max) when is_number(Value) ->
 
 -spec validate_title(term()) -> binary().
 validate_title(Title) when is_binary(Title) ->
-    truncate_binary(Title, ?MAX_TITLE_LEN);
+    truncate_binary(string:trim(Title), ?MAX_TITLE_LEN);
 validate_title(_) ->
     ?DEFAULT_SESSION_TITLE.
 
@@ -451,20 +487,51 @@ validate_bot_type(_) ->
 
 -spec validate_detail(term()) -> binary().
 validate_detail(Detail) when is_binary(Detail) ->
-    truncate_binary(Detail, ?MAX_DETAIL_LEN);
+    truncate_binary(string:trim(Detail), ?MAX_DETAIL_LEN);
 validate_detail(_) ->
     <<"No details">>.
 
+%% Truncates at a UTF-8 character boundary so no multi-byte sequence is split.
 -spec truncate_binary(binary(), non_neg_integer()) -> binary().
+truncate_binary(Bin, MaxLen) when byte_size(Bin) =< MaxLen ->
+    Bin;
 truncate_binary(Bin, MaxLen) ->
-    case byte_size(Bin) > MaxLen of
-        true  -> binary:part(Bin, 0, MaxLen);
-        false -> Bin
+    try
+        Chars = unicode:characters_to_list(Bin, utf8),
+        unicode:characters_to_binary(
+            truncate_chars(Chars, MaxLen, 0, []), utf8)
+    catch
+        _:_ ->
+            %% Not valid UTF-8 — fall back to byte-level truncation
+            binary:part(Bin, 0, MaxLen)
     end.
+
+-spec truncate_chars([unicode:charpos()], non_neg_integer(),
+                     non_neg_integer(), [unicode:charpos()]) ->
+    [unicode:charpos()].
+truncate_chars(_, MaxBytes, Bytes, Acc) when Bytes >= MaxBytes ->
+    lists:reverse(Acc);
+truncate_chars([], _MaxBytes, _Bytes, Acc) ->
+    lists:reverse(Acc);
+truncate_chars([C | Rest], MaxBytes, Bytes, Acc) ->
+    case Bytes + char_byte_size(C) =< MaxBytes of
+        true  -> truncate_chars(Rest, MaxBytes, Bytes + char_byte_size(C),
+                                [C | Acc]);
+        false -> lists:reverse(Acc)
+    end.
+
+-spec char_byte_size(integer()) -> 1..4.
+char_byte_size(C) when C < 16#80    -> 1;
+char_byte_size(C) when C < 16#800   -> 2;
+char_byte_size(C) when C < 16#10000 -> 3;
+char_byte_size(_)                   -> 4.
 
 -spec validate_schedule(term()) -> ok | {error, binary()}.
 validate_schedule(Schedule) when is_list(Schedule) ->
-    ok;
+    case lists:all(fun is_map/1, Schedule) of
+        true  -> ok;
+        false -> {error, <<"Schedule entries must be objects">>}
+    end;
 validate_schedule(_) ->
     {error, <<"Invalid schedule format">>}.
 
@@ -515,9 +582,14 @@ decode_json_body(Body, Req) ->
 
 -spec extract_plan_params(map()) -> {binary(), map()}.
 extract_plan_params(Data) ->
-    Args    = maps:get(<<"args">>, Data, ?DEFAULT_ARGS),
+    Args    = coerce_binary(maps:get(<<"args">>, Data, ?DEFAULT_ARGS)),
     Options = decode_options(maps:get(<<"options">>, Data, ?DEFAULT_OPTIONS)),
     {Args, Options}.
+
+-spec coerce_binary(term()) -> binary().
+coerce_binary(B) when is_binary(B) -> B;
+coerce_binary(L) when is_list(L)   -> iolist_to_binary(L);
+coerce_binary(_)                   -> ?DEFAULT_ARGS.
 
 -spec expect_number(map(), binary(), number()) -> number().
 expect_number(Map, Key, Default) ->
@@ -557,7 +629,7 @@ decode_option(K, V, Acc) when is_binary(K) ->
         Acc#{binary_to_existing_atom(K, utf8) => V}
     catch
         error:badarg ->
-            ?LOG_WARNING(#{event => unknown_option, option => K}),
+            ?LOG_DEBUG(#{event => unknown_option, option => K}),
             Acc#{K => V}
     end;
 decode_option(K, V, Acc) ->
@@ -573,21 +645,21 @@ session_state(UserId, Req) ->
 %% ---------------------------------------------------------------------------
 
 -spec ok_json(status_code(), term(), cowboy_req:req()) -> cowboy_req:req().
-ok_json(Status, Data, Req) when is_map(Data) ->
-    reply_json(Status, Data#{success => true}, Req);
 ok_json(Status, Data, Req) ->
-    reply_json(Status, #{success => true, data => Data}, Req).
+    reply_json(Status, with_success(Data), Req).
 
 -spec created_json(term(), cowboy_req:req()) -> cowboy_req:req().
-created_json(Data, Req) when is_map(Data) ->
-    reply_json(?HTTP_CREATED, Data#{success => true}, Req);
 created_json(Data, Req) ->
-    reply_json(?HTTP_CREATED, #{success => true, data => Data}, Req).
+    reply_json(?HTTP_CREATED, with_success(Data), Req).
 
 -spec error_json(status_code(), term(), cowboy_req:req()) -> cowboy_req:req().
 error_json(Status, Reason, Req) ->
     reply_json(Status, #{success => false,
                          error => to_error_binary(Reason)}, Req).
+
+-spec with_success(term()) -> map().
+with_success(Data) when is_map(Data) -> Data#{success => true};
+with_success(Data)                   -> #{success => true, data => Data}.
 
 -spec no_content(cowboy_req:req()) -> cowboy_req:req().
 no_content(Req) ->
@@ -601,8 +673,7 @@ reply_json(Status, Data, Req) ->
         catch
             _:_ ->
                 ?LOG_ERROR(#{event => jsx_encode_failed, data => Data}),
-                jsx:encode(#{success => false,
-                             error  => <<"Failed to serialize response">>})
+                ?FALLBACK_ERROR_JSON
         end,
     cowboy_req:reply(Status,
                      #{<<"content-type">> => ?JSON_CONTENT_TYPE},

@@ -24,6 +24,22 @@ describe('Workspace UI regression coverage', () => {
     expect(renderer).toContain('openAssistantDrawer(moreAssistantBtn);');
   });
 
+  test('keeps the balanced workspace layout hooks in the Focus and More tabs', () => {
+    expect(html).toContain('class="focus-primary-grid"');
+    expect(html).toContain('class="section focus-hero-section focus-grid-primary"');
+    expect(html).toContain('class="section focus-grid-secondary" id="focus-session-panel"');
+    expect(html).toContain('class="more-actions-grid"');
+    expect(html).toContain('class="more-insights-grid"');
+    expect(html).toContain('class="more-insights-column"');
+    expect(html).toContain('class="section nested-section"');
+  });
+
+  test('redraws the weekly focus chart when the More tab is visible during resize', () => {
+    expect(renderer).toContain("const moreTab = document.getElementById('more-tab');");
+    expect(renderer).toContain("if (moreTab && !moreTab.hasAttribute('hidden')) {");
+    expect(renderer).not.toContain("const statsTab = document.getElementById('stats-tab');");
+  });
+
   test('does not create a duplicate appearance menu container in the header', () => {
     expect(renderer).toContain("const appearancePreferences = document.getElementById('appearancePreferences');");
     expect(renderer).not.toContain("document.createElement('details')");

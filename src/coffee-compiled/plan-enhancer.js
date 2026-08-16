@@ -8,7 +8,7 @@
 
   CONST = require('./plan-enhancer-constants');
 
-  ({SimpleCache, DEFAULT_MESSAGES, DEFAULTS, WASM_TARGETS, EFFICIENCY_WEIGHTS, TIP_THRESHOLDS, PRESETS, DEFAULT_FOCUS_PROMPTS, MS_PER_DAY, MUSIC_PRESETS, MUSIC_GENRES, MUSIC_SOURCE_TYPES, MUSIC_SLASH_FLAGS, _isNumber, _isPositiveInt, _isPlainObject} = CONST);
+  ({SimpleCache, DEFAULT_MESSAGES, DEFAULTS, WASM_TARGETS, EFFICIENCY_WEIGHTS, TIP_THRESHOLDS, PRESETS, DEFAULT_FOCUS_PROMPTS, MS_PER_DAY, MUSIC_PRESETS, MUSIC_GENRES, MUSIC_SOURCE_TYPES, MUSIC_SLASH_FLAGS, isFiniteNumber: _isNumber, isPositiveInt: _isPositiveInt, isPlainObject: _isPlainObject} = CONST);
 
   // ── Module-level constants (previously magic numbers) ─────────────────
   MEMO_MAX_SIZE = 500;
@@ -834,7 +834,7 @@
 
     };
 
-    PlanEnhancer.prototype.generateOptimizedPlan = async(async function(duration, opts = {}) {
+    PlanEnhancer.prototype.generateOptimizedPlan = function(duration, opts = {}) {
       var bd, cacheKey, cached, cs, err, fb, fc, now, wb, wc;
       if (!_isPositiveInt(duration)) {
         this.logger.warn('[PlanEnhancer.generateOptimizedPlan] invalid duration');
@@ -854,11 +854,9 @@
       if (!((this.wasmModule != null) && typeof this.wasmModule === 'object')) {
         return this._cacheAndReturn(cacheKey, this._fallbackPlanWith(cs, bd, 'Wasm unavailable; using pure-JS preset.', this._computeConfidence(duration, false, cs, bd)));
       }
-      try {
-        ({
-          chunkSize: wc,
-          breakDuration: wb
-        } = (await this._callWasm(duration, cs, bd)));
+      return this._callWasm(duration, cs, bd).then((res) => {
+        wc = res ? res.chunkSize : cs;
+        wb = res ? res.breakDuration : bd;
         fc = _isPositiveInt(wc) ? wc : cs;
         fb = _isPositiveInt(wb) ? wb : bd;
         return this._cacheAndReturn(cacheKey, {
@@ -868,14 +866,12 @@
           reason: 'Computed via Wasm optimizer.',
           confidence: this._computeConfidence(duration, true, fc, fb)
         });
-      } catch (error) {
-        err = error;
+      }).catch((error) => {
         _wasmAvailable = false;
         _wasmAvailableUntil = Date.now() + WASM_COOLDOWN_MS;
-        this.logger.warn('[PlanEnhancer.generateOptimizedPlan] Wasm failed/timeout; fallback + 30s cooldown.', err != null ? err.message : void 0);
         return this._cacheAndReturn(cacheKey, this._fallbackPlanWith(cs, bd, 'Wasm raised an error or timed out; pure-JS fallback.', this._computeConfidence(duration, false, cs, bd)));
-      }
-    });
+      });
+    };
 
     return PlanEnhancer;
 

@@ -1,0 +1,90 @@
+{
+  "manifest_version": 3,
+  "name": "Helpy — Focus & Tab Companion",
+  "version": "1.4.0",
+  "description": "A private focus companion for mindful tab tracking, focus sessions, plans, and distraction blocking.",
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "activeTab",
+    "scripting",
+    "notifications",
+    "storage",
+    "alarms",
+    "identity",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
+  ],
+  "host_permissions": [
+    "http://localhost:3456/*",
+    "http://localhost:8080/*",
+    "http://localhost:4567/*",
+    "https://www.googleapis.com/*",
+    "https://accounts.google.com/*"
+  ],
+  "omnibox": { "keyword": "helpy" },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "Helpy Focus Companion"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "options_page": "options.html",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["categories.json", "reports.html", "blocked.html", "blocked.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "MacCtrl+Shift+H"
+      }
+    },
+    "toggle-tracking": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "MacCtrl+Shift+P"
+      },
+      "description": "Toggle tab tracking"
+    },
+    "toggle-pomodoro": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "MacCtrl+Shift+T"
+      },
+      "description": "Toggle Pomodoro timer"
+    },
+    "open-reports": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+R",
+        "mac": "MacCtrl+Shift+R"
+      },
+      "description": "Open reports page"
+    }
+  }
+}

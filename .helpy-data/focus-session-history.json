@@ -1,0 +1,15 @@
+{
+  "sessions": [
+    {
+      "startedAt": "2026-08-03T06:19:32.442Z",
+      "endedAt": "2026-08-03T06:20:11.832Z",
+      "durationMs": 39390
+    },
+    {
+      "startedAt": "2026-08-03T06:20:11.850Z",
+      "endedAt": "2026-08-03T06:20:11.863Z",
+      "durationMs": 13
+    }
+  ],
+  "blockedAttempts": []
+}

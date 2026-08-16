@@ -36,18 +36,7 @@
 start(_StartType, _StartArgs) ->
     ok = helpy_plan_config:load(),
     ok = helpy_plan_metrics:init(),
-    case start_http_listener() of
-        {ok, _} ->
-            case helpy_plan_sup:start_link() of
-                {ok, SupPid} ->
-                    {ok, SupPid};
-                {error, Reason} ->
-                    cleanup_listener(),
-                    {error, Reason}
-            end;
-        {error, Reason} ->
-            {error, Reason}
-    end.
+    with_http_listener(fun() -> helpy_plan_sup:start_link() end).
 
 %% @private
 -spec stop(term()) -> ok.
@@ -102,22 +91,47 @@ dispatch() ->
 routes() ->
     HttpHandler    = helpy_plan_http_handler,
     MetricsHandler = helpy_plan_metrics_handler,
+    ApiRoutes      = api_routes(HttpHandler),
+    ApiRoutes ++ [{<<"/metrics">>, MetricsHandler, []}].
+
+%% @private
+-spec api_routes(module()) -> [route()].
+api_routes(HttpHandler) ->
     [
+        %% Plan management
         {<<"/api/plans">>,                                HttpHandler, []},
         {<<"/api/plans/:id">>,                            HttpHandler, []},
+        %% System status
         {<<"/api/erlang/status">>,                        HttpHandler, []},
+        %% Session management
         {<<"/api/sessions">>,                             HttpHandler, []},
         {<<"/api/sessions/start">>,                       HttpHandler, []},
         {<<"/api/sessions/end">>,                         HttpHandler, []},
         {<<"/api/sessions/pause">>,                       HttpHandler, []},
         {<<"/api/sessions/resume">>,                      HttpHandler, []},
         {<<"/api/sessions/:user_id/status">>,             HttpHandler, []},
+        %% Analytics endpoints
         {<<"/api/analytics/daily">>,                      HttpHandler, []},
         {<<"/api/analytics/weekly">>,                     HttpHandler, []},
         {<<"/api/analytics/streaks">>,                    HttpHandler, []},
-        {<<"/api/analytics/user/:user_id">>,              HttpHandler, []},
-        {<<"/metrics">>,                                  MetricsHandler, []}
+        {<<"/api/analytics/user/:user_id">>,              HttpHandler, []}
     ].
+
+%% @private
+-spec with_http_listener(fun(() -> {ok, pid()} | {error, term()})) -> {ok, pid()} | {error, term()}.
+with_http_listener(MainFn) ->
+    case start_http_listener() of
+        {ok, _ListenerPid} ->
+            case MainFn() of
+                Result = {ok, _SupPid} ->
+                    Result;
+                Error = {error, Reason} ->
+                    cleanup_listener(),
+                    Error
+            end;
+        Error = {error, _Reason} ->
+            Error
+    end.
 
 %% @private
 -spec cleanup_listener() -> ok.

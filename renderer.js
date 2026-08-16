@@ -1275,6 +1275,10 @@ function setupFocusSessionControls() {
     await renderFocusReport();
   });
   window.electronAPI.getFocusSessionState().then(renderFocusSession);
+  window.electronAPI.onFocusSessionUpdated((state) => {
+    renderFocusSession(state);
+    if (isFocusShieldActive) renderFocusShield(state);
+  });
   renderFocusReport();
   if (focusSessionDisplayInterval) clearInterval(focusSessionDisplayInterval);
   focusSessionDisplayInterval = setInterval(
@@ -2984,8 +2988,8 @@ function drawFocusChart(stats = latestPlanStatistics, focusReport = latestFocusR
 }
 
 window.addEventListener('resize', () => {
-  const statsTab = document.getElementById('stats-tab');
-  if (statsTab && !statsTab.hasAttribute('hidden')) {
+  const moreTab = document.getElementById('more-tab');
+  if (moreTab && !moreTab.hasAttribute('hidden')) {
     drawFocusChart(latestPlanStatistics, latestFocusReport);
   }
 });
@@ -3966,41 +3970,81 @@ function appendBotMessage(sender, text, isUser = false, actionChips = []) {
 }
 
 let isFocusShieldActive = false;
-function toggleFocusShield(forceState = null) {
+function formatShieldTime(ms) {
+  const totalSeconds = Math.max(0, Math.ceil(Number(ms || 0) / 1000));
+  return `${String(Math.floor(totalSeconds / 60)).padStart(2, '0')}:${String(totalSeconds % 60).padStart(2, '0')}`;
+}
+
+function renderFocusShield(state) {
   const overlay = document.getElementById('focusShieldOverlay');
   const toggleBtn = document.getElementById('shieldToggle');
   const activeTaskEl = document.getElementById('shieldActiveTask');
-
-  isFocusShieldActive = forceState !== null ? Boolean(forceState) : !isFocusShieldActive;
+  const active = Boolean(state?.active);
+  const paused = Boolean(state?.paused);
 
   if (overlay) {
-    overlay.style.display = isFocusShieldActive ? 'flex' : 'none';
-    overlay.setAttribute('aria-hidden', String(!isFocusShieldActive));
+    overlay.style.display = isFocusShieldActive && active ? 'flex' : 'none';
+    overlay.setAttribute('aria-hidden', String(!(isFocusShieldActive && active)));
   }
 
   if (toggleBtn) {
-    if (isFocusShieldActive) toggleBtn.classList.add('active');
+    if (isFocusShieldActive && active) toggleBtn.classList.add('active');
     else toggleBtn.classList.remove('active');
-    toggleBtn.setAttribute('aria-pressed', String(isFocusShieldActive));
+    toggleBtn.setAttribute('aria-pressed', String(isFocusShieldActive && active));
   }
 
-  if (isFocusShieldActive) {
+  if (active) {
     const activeTask = window.currentPlan?.title || window.activeFocusTaskTitle || 'Deep Focus Session';
     if (activeTaskEl) activeTaskEl.textContent = activeTask;
-    if (typeof showToast === 'function') {
-      showToast('🛡️ Focus Shield Enabled! Single-Task Mode Engaged.', 'success');
-    }
-  } else {
-    if (typeof showToast === 'function') {
-      showToast('Focus Shield Deactivated.', 'info');
+    const goal = document.getElementById('shieldActiveGoal');
+    const timer = document.getElementById('shieldTimerDisplay');
+    const mode = document.getElementById('shieldModeBadge');
+    const pause = document.getElementById('shieldPauseBtn');
+    const notes = document.getElementById('shieldNotesList');
+    if (goal) goal.textContent = paused ? 'Shield paused. Resume when you are ready.' : 'Distractions are blocked while you work on one thing.';
+    if (timer) timer.textContent = formatShieldTime(state.remainingMs);
+    if (mode) mode.textContent = paused ? 'PAUSED' : state.phase === 'break' ? 'BREAK MODE' : 'WORK MODE';
+    if (pause) pause.textContent = paused ? 'Resume Timer' : 'Pause Timer';
+    if (notes) {
+      notes.replaceChildren();
+      (state.interruptionNotes || []).forEach((note) => {
+        const item = document.createElement('div');
+        item.className = 'shield-note-item';
+        item.textContent = `• ${note}`;
+        notes.appendChild(item);
+      });
+      if (!(state.interruptionNotes || []).length) {
+        const empty = document.createElement('div');
+        empty.className = 'shield-note-empty';
+        empty.textContent = 'Nothing parked yet — your mind is clear.';
+        notes.appendChild(empty);
+      }
     }
   }
+}
 
-  // Sync state with Chrome extension HTTP server
+async function toggleFocusShield(forceState = null) {
+  const shouldActivate = forceState !== null ? Boolean(forceState) : !isFocusShieldActive;
+  let state;
+  if (shouldActivate) {
+    const workMinutes = Number(document.getElementById('session-work-minutes')?.value) || 25;
+    const breakMinutes = Number(document.getElementById('session-break-minutes')?.value) || 5;
+    state = await window.electronAPI.startFocusSession({ workMinutes, breakMinutes, strict: true });
+    isFocusShieldActive = true;
+    if (typeof showToast === 'function') showToast('🛡️ Focus Shield enabled. Your blocklist is now enforced.', 'success');
+  } else {
+    state = await window.electronAPI.stopFocusSession();
+    isFocusShieldActive = false;
+    if (typeof showToast === 'function') showToast('Focus Shield ended.', 'info');
+  }
+  renderFocusShield(state);
+  renderFocusSession(state);
+
+  // Keep the browser extension in sync without starting a second session.
   fetch('http://localhost:3456/api/shield-state', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ active: isFocusShieldActive }),
+    body: JSON.stringify({ active: isFocusShieldActive, syncOnly: true }),
   }).catch(() => {});
 }
 
@@ -4023,33 +4067,32 @@ document.addEventListener('DOMContentLoaded', () => {
   const shieldCompleteBtn = document.getElementById('shieldCompleteBtn');
   const shieldPauseBtn = document.getElementById('shieldPauseBtn');
   const shieldNoteInput = document.getElementById('shieldQuickNote');
-  const shieldNotesList = document.getElementById('shieldNotesList');
-
   if (shieldExitBtn) shieldExitBtn.addEventListener('click', () => toggleFocusShield(false));
   if (shieldCompleteBtn) {
-    shieldCompleteBtn.addEventListener('click', () => {
-      toggleFocusShield(false);
-      if (typeof showToast === 'function') showToast('🎉 Task Completed! Great job focusing!', 'success');
+    shieldCompleteBtn.addEventListener('click', async () => {
+      await toggleFocusShield(false);
+      if (typeof showToast === 'function') showToast('🎉 Focus session finished. Nice work!', 'success');
     });
   }
   if (shieldPauseBtn) {
-    shieldPauseBtn.addEventListener('click', () => {
-      const pauseBtn = document.getElementById('pause-timer-btn');
-      if (pauseBtn) pauseBtn.click();
-      if (typeof showToast === 'function') showToast('Focus Timer Paused', 'info');
+    shieldPauseBtn.addEventListener('click', async () => {
+      const state = await window.electronAPI.getFocusSessionState();
+      const updated = state?.paused
+        ? await window.electronAPI.resumeFocusSession()
+        : await window.electronAPI.pauseFocusSession();
+      renderFocusShield(updated);
+      renderFocusSession(updated);
     });
   }
 
-  if (shieldNoteInput && shieldNotesList) {
-    shieldNoteInput.addEventListener('keydown', (e) => {
+  if (shieldNoteInput) {
+    shieldNoteInput.addEventListener('keydown', async (e) => {
       if (e.key === 'Enter' && shieldNoteInput.value.trim()) {
         e.preventDefault();
         const noteText = shieldNoteInput.value.trim();
-        const noteItem = document.createElement('div');
-        noteItem.className = 'shield-note-item';
-        noteItem.textContent = `• ${noteText} (${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
-        shieldNotesList.appendChild(noteItem);
+        const state = await window.electronAPI.addFocusSessionNote(noteText);
         shieldNoteInput.value = '';
+        renderFocusShield(state);
       }
     });
   }
@@ -4329,9 +4372,15 @@ document.addEventListener('DOMContentLoaded', () => {
     appendDrawerMessage('Helpy Assistant', 'Thinking…', false);
     appendBotMessage('Helpy Bot', 'Thinking…', false);
     try {
+      const tasks = window.electronAPI && typeof window.electronAPI.getTasks === 'function'
+        ? await window.electronAPI.getTasks().catch(() => [])
+        : [];
       const response = await api.processBotQuery(cleanPrompt, {
         source: 'desktop',
         conversation: botConversation.slice(0, -1),
+        tasks: Array.isArray(tasks) ? tasks.slice(0, 8) : [],
+        current_plan: currentPlan || null,
+        focus_shield_active: isFocusShieldActive,
       });
       removeThinkingMessages();
 
@@ -4441,7 +4490,353 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial refresh of memory UI
   refreshBotMemoryUI();
+
+  // Initialize Interactive Focus Room Hub
+  initInteractiveRoom();
 });
+
+/* ==========================================================================
+   INTERACTIVE FOCUS ROOM LOGIC
+   ========================================================================== */
+function initInteractiveRoom() {
+  const roomHub = document.getElementById('interactiveRoomHub');
+  if (!roomHub) return;
+
+  // 1. Theme Lighting Modes Toggle
+  const lampBtn = document.getElementById('roomLampBtn');
+  const ambianceLabel = document.getElementById('roomAmbianceLabel');
+  const lightingModes = [
+    { class: 'lighting-warm', name: 'Warm Study' },
+    { class: 'lighting-neon', name: 'Neon Cyberpunk' },
+    { class: 'lighting-void', name: 'Deep Void' },
+    { class: 'lighting-aurora', name: 'Daylight Aurora' },
+  ];
+  let currentLightingIdx = 0;
+
+  if (lampBtn) {
+    lampBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      roomHub.classList.remove(lightingModes[currentLightingIdx].class);
+      currentLightingIdx = (currentLightingIdx + 1) % lightingModes.length;
+      const nextMode = lightingModes[currentLightingIdx];
+      roomHub.classList.add(nextMode.class);
+      if (ambianceLabel) ambianceLabel.textContent = `Focus Ambiance: ${nextMode.name}`;
+      showToast(`Ambiance theme changed to ${nextMode.name}`);
+      recordActionScore(1, 0.2);
+    });
+  }
+
+  // 2. Focus Metrics & Archetypes
+  const avatarSwitchBtn = document.getElementById('roomAvatarSwitchBtn');
+  const archetypeLabel = document.getElementById('currentArchetypeLabel');
+  const stepsVal = document.getElementById('roomStepsVal');
+  const distVal = document.getElementById('roomDistVal');
+
+  const avatarCharacters = [
+    { id: 'bot', name: 'Helpy Bot', label: 'Bot' },
+    { id: 'engineer', name: 'Lead Engineer', label: 'Engineer' },
+    { id: 'researcher', name: 'Scholar', label: 'Scholar' },
+    { id: 'creative', name: 'Designer', label: 'Designer' },
+    { id: 'astronaut', name: 'Explorer', label: 'Explorer' },
+  ];
+  let currentAvatarIdx = 0;
+  let totalActions = 0;
+  let focusScore = 0.0;
+
+  function recordActionScore(actionsInc = 1, scoreInc = 0.5) {
+    totalActions += actionsInc;
+    focusScore += scoreInc;
+    if (stepsVal) stepsVal.textContent = totalActions;
+    if (distVal) distVal.textContent = focusScore.toFixed(1);
+  }
+
+  if (avatarSwitchBtn) {
+    avatarSwitchBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentAvatarIdx = (currentAvatarIdx + 1) % avatarCharacters.length;
+      const nextChar = avatarCharacters[currentAvatarIdx];
+      if (archetypeLabel) archetypeLabel.textContent = nextChar.label;
+      showToast(`Focus archetype switched to ${nextChar.name}`);
+      recordActionScore(1, 0.3);
+    });
+  }
+
+  // 3. Focus Action Button Handlers
+  function playCoffeeChime() {
+    try {
+      initAudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.36);
+
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1174.66, now + 0.08);
+      osc2.frequency.exponentialRampToValueAtTime(1760, now + 0.28);
+      gain2.gain.setValueAtTime(0.1, now + 0.08);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now + 0.08);
+      osc2.stop(now + 0.41);
+    } catch (e) {
+      console.warn('Audio feedback failed:', e);
+    }
+  }
+
+  function triggerCoffeeBreak() {
+    playCoffeeChime();
+    recordActionScore(1, 1.0);
+
+    const mugParticles = document.querySelectorAll('.coffee-steam-particles');
+    mugParticles.forEach(p => {
+      p.style.filter = 'drop-shadow(0 0 8px rgba(245, 158, 11, 0.9))';
+      setTimeout(() => { p.style.filter = ''; }, 2500);
+    });
+
+    const mugBtn = document.getElementById('roomMugBtn');
+    if (mugBtn) {
+      mugBtn.style.transform = 'scale(1.04) translateY(-2px)';
+      mugBtn.style.borderColor = 'rgba(245, 158, 11, 0.8)';
+      setTimeout(() => {
+        mugBtn.style.transform = '';
+        mugBtn.style.borderColor = '';
+      }, 500);
+    }
+
+    showToast('Fresh roast brewed — Starting 5-minute coffee recharge break');
+    const timerInput = document.getElementById('timerMinutes');
+    if (timerInput) timerInput.value = '5';
+    const startTimerBtn = document.getElementById('startTimerBtn');
+    if (startTimerBtn) startTimerBtn.click();
+  }
+
+  function triggerDeskFocus() {
+    recordActionScore(1, 2.5);
+    showToast('Engaging Deep Work Focus Sprint (25 min)...');
+    const timerInput = document.getElementById('timerMinutes');
+    if (timerInput) timerInput.value = '25';
+    const startTimerBtn = document.getElementById('startTimerBtn');
+    if (startTimerBtn) startTimerBtn.click();
+  }
+
+  const bookshelfFacts = [
+    "Erlang OTP Pattern: Gen_server handles request-response patterns with isolate process heaps.",
+    "Productivity Insight: 25 minutes of single-task focus restores executive function by 40%.",
+    "Tech Knowledge: BEAM VM runs lightweight green threads per CPU core with reduction-based preemptive scheduling.",
+    "Focus Science: Atomic habits build momentum through compounding daily micro-wins.",
+    "Cognitive Health: Interleaving deep sprints with short pauses increases retention by 35%.",
+  ];
+  let factIdx = 0;
+
+  function triggerBookshelfTips() {
+    recordActionScore(1, 0.5);
+    const fact = bookshelfFacts[factIdx % bookshelfFacts.length];
+    factIdx++;
+    showToast(fact);
+  }
+
+  const windowScenes = ['Sunrise', 'Midnight Stars', 'Rainy Afternoon', 'Golden Hour'];
+  let sceneIdx = 0;
+
+  function triggerWindowScene() {
+    recordActionScore(1, 0.4);
+    sceneIdx = (sceneIdx + 1) % windowScenes.length;
+    const sceneBadge = document.getElementById('currentSceneBadge');
+    if (sceneBadge) sceneBadge.textContent = windowScenes[sceneIdx];
+    showToast(`Atmosphere scenery set to ${windowScenes[sceneIdx]}`);
+  }
+
+  function triggerCompanionTalk() {
+    recordActionScore(1, 0.5);
+    const botDrawer = document.getElementById('bot-drawer');
+    const botToggleBtn = document.getElementById('bot-toggle-btn') || document.getElementById('openBotFromMoreBtn');
+    if (botToggleBtn) {
+      botToggleBtn.click();
+    } else if (botDrawer) {
+      botDrawer.classList.toggle('open');
+    }
+    showToast('Helpy assistant ready for task support');
+  }
+
+  // Hook up Action Deck Buttons
+  const coffeeBtn = document.getElementById('roomMugBtn');
+  if (coffeeBtn) coffeeBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerCoffeeBreak(); });
+
+  const deskBtn = document.getElementById('actionDeskBtn');
+  if (deskBtn) deskBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerDeskFocus(); });
+
+  const bookBtn = document.getElementById('actionBookshelfBtn');
+  if (bookBtn) bookBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerBookshelfTips(); });
+
+  const winBtn = document.getElementById('actionWindowBtn');
+  if (winBtn) winBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerWindowScene(); });
+
+  const compBtn = document.getElementById('actionCompanionBtn');
+  if (compBtn) compBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerCompanionTalk(); });
+
+  const soundDeckBtn = document.getElementById('actionSoundDeckBtn');
+  if (soundDeckBtn) soundDeckBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleSoundscape(); });
+
+  // 4. Web Audio Ambient Soundscape Synthesizer
+  let audioCtx = null;
+  let noiseNode = null;
+  let gainNode = null;
+  let filterNode = null;
+  let isSoundPlaying = false;
+
+  const playBtn = document.getElementById('roomSoundPlayBtn');
+  const presetSelect = document.getElementById('roomSoundPresetSelect');
+  const volumeSlider = document.getElementById('roomSoundVolumeSlider');
+  const eqBars = document.getElementById('roomEqualizerBars');
+  const soundDeckStatus = document.getElementById('soundDeckStatusLabel');
+  const soundDeckBadge = document.getElementById('soundDeckPlayBadge');
+
+  function initAudioContext() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContextClass();
+    }
+  }
+
+  function toggleSoundscape() {
+    if (playBtn) playBtn.click();
+  }
+
+  function startAmbientSynth(preset = 'rain', volume = 0.7) {
+    initAudioContext();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+
+    stopAmbientSynth();
+
+    const bufferSize = audioCtx.sampleRate * 2;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    noiseNode = audioCtx.createBufferSource();
+    noiseNode.buffer = noiseBuffer;
+    noiseNode.loop = true;
+
+    filterNode = audioCtx.createBiquadFilter();
+
+    if (preset === 'rain') {
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(800, audioCtx.currentTime);
+    } else if (preset === 'forest') {
+      filterNode.type = 'bandpass';
+      filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      filterNode.Q.setValueAtTime(1.5, audioCtx.currentTime);
+    } else if (preset === 'waves') {
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+      const lfo = audioCtx.createOscillator();
+      lfo.frequency.setValueAtTime(0.15, audioCtx.currentTime);
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.setValueAtTime(300, audioCtx.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(filterNode.frequency);
+      lfo.start();
+    } else if (preset === 'lofi') {
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(600, audioCtx.currentTime);
+    } else if (preset === 'whitenoise') {
+      filterNode.type = 'lowpass';
+      filterNode.frequency.setValueAtTime(3000, audioCtx.currentTime);
+    }
+
+    gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+    noiseNode.connect(filterNode);
+    filterNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    noiseNode.start();
+    isSoundPlaying = true;
+
+    if (eqBars) eqBars.classList.add('playing');
+    if (playBtn) playBtn.innerHTML = '<svg class="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  }
+
+  function stopAmbientSynth() {
+    if (noiseNode) {
+      try { noiseNode.stop(); noiseNode.disconnect(); } catch (e) {}
+      noiseNode = null;
+    }
+    isSoundPlaying = false;
+    if (eqBars) eqBars.classList.remove('playing');
+    if (playBtn) playBtn.innerHTML = '<svg class="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  }
+
+  if (playBtn) {
+    playBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isSoundPlaying) {
+        stopAmbientSynth();
+      } else {
+        const preset = presetSelect ? presetSelect.value : 'rain';
+        const vol = volumeSlider ? Number(volumeSlider.value) / 100 : 0.7;
+        startAmbientSynth(preset, vol);
+      }
+    });
+  }
+
+  if (presetSelect) {
+    presetSelect.addEventListener('change', () => {
+      if (isSoundPlaying) {
+        const vol = volumeSlider ? Number(volumeSlider.value) / 100 : 0.7;
+        startAmbientSynth(presetSelect.value, vol);
+      }
+    });
+  }
+
+  if (volumeSlider) {
+    volumeSlider.addEventListener('input', () => {
+      if (gainNode && audioCtx) {
+        gainNode.gain.setValueAtTime(Number(volumeSlider.value) / 100, audioCtx.currentTime);
+      }
+    });
+  }
+
+  // 4. Room Sticky Wall Notes
+  const addNoteBtn = document.getElementById('addStickyNoteBtn');
+  const stickyContainer = document.getElementById('stickyNotesContainer');
+  const colors = ['note-yellow', 'note-blue', 'note-pink', 'note-green'];
+
+  if (addNoteBtn && stickyContainer) {
+    addNoteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const noteDiv = document.createElement('div');
+      noteDiv.className = `sticky-note ${color}`;
+      noteDiv.innerHTML = `
+        <div class="sticky-note-pin"></div>
+        <textarea class="sticky-note-input" placeholder="Type a note..." rows="2"></textarea>
+      `;
+      stickyContainer.appendChild(noteDiv);
+      const input = noteDiv.querySelector('textarea');
+      if (input) input.focus();
+    });
+  }
+}
 
 // Helper for other services to log actions into bot memory
 window.logBotAction = function (type, detail) {

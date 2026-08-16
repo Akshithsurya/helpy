@@ -280,7 +280,7 @@ class RemoteSearchAdapter extends BaseSourceAdapter
     externalId:  "#{@getSourceType().charAt 0}_#{i}"
     durationSec: 180 + i * 10
 
-  _runSearch: (q, limit) ->
+  _runSearch: async (q, limit) ->
     if @_searchFn?
       try
         rows = await @_searchFn q, limit
@@ -323,7 +323,7 @@ class SpotifyAdapter extends RemoteSearchAdapter
   constructor: (opts = {}) ->
     super opts
     @accessToken = if _isNonEmptyStr opts?.accessToken then opts.accessToken else null
-    @client      = if _isPlainObject opts?.client      then opts.client      else null
+    @client      = if _isPlainObject(opts?.client)      then opts.client      else null
     if not @_searchFn? and @client?.search? and _isFunction @client.search
       @_searchFn = (q, limit) => @client.search q, limit
 

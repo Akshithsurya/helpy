@@ -26,6 +26,13 @@ class Database
 {
     private readonly PDO $connection;
     private bool $tablesInitialized = false;
+    private int $transactionDepth = 0;
+
+    private const DEFAULT_BUSY_TIMEOUT = 5000;
+    private const DEFAULT_CACHE_SIZE = -2000;
+    private const MAX_VARIABLES_LIMIT = 999;
+    private const IDENTIFIER_PATTERN = '/^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/';
+    private const DEFAULT_CHUNK_SCALE = 0.5; // Use 50% of max variables to be conservative
 
     /**
      * @param string $dbPath       数据库文件路径
@@ -71,8 +78,8 @@ class Database
             'journal_mode = WAL',       // 并发读写
             'synchronous = NORMAL',     // 安全与性能平衡
             'foreign_keys = ON',        // 外键约束
-            'busy_timeout = 5000',      // 锁等待 5 秒
-            'cache_size = -2000',       // 2 MB 页缓存
+            'busy_timeout = ' . self::DEFAULT_BUSY_TIMEOUT,      // 锁等待 5 秒
+            'cache_size = ' . self::DEFAULT_CACHE_SIZE,       // 2 MB 页缓存
             'temp_store = MEMORY',      // 临时表存内存
         ];
 
@@ -121,15 +128,21 @@ class Database
                 )
             ");
 
+            // Add created index to plans for performance
+            $this->connection->exec('CREATE INDEX IF NOT EXISTS idx_plans_updated ON plans(updated_at)');
+
             // 拆分为独立 exec()，避免多语句在 PDO SQLite 中不可靠
             $this->connection->exec('CREATE INDEX IF NOT EXISTS idx_plans_created ON plans(created_at)');
             $this->connection->exec('CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp)');
             $this->connection->exec('CREATE INDEX IF NOT EXISTS idx_events_type ON events(type)');
+            $this->connection->exec('CREATE INDEX IF NOT EXISTS idx_events_session_id ON events(session_id)');
 
             $this->connection->commit();
             $this->tablesInitialized = true;
         } catch (PDOException $e) {
-            $this->connection->rollBack();
+            if ($this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
             throw DatabaseException::fromPDOException($e, 'Table initialization failed');
         }
     }
@@ -152,7 +165,7 @@ class Database
      */
     private function sanitizeIdentifier(string $identifier): string
     {
-        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/', $identifier)) {
+        if (!preg_match(self::IDENTIFIER_PATTERN, $identifier)) {
             throw new InvalidArgumentException("Invalid identifier: $identifier");
         }
         return $identifier;
@@ -216,6 +229,31 @@ class Database
     public function fetchColumn(string $sql, array $params = [], int $column = 0): mixed
     {
         $result = $this->query($sql, $params)->fetchColumn($column);
+        return $result !== false ? $result : null;
+    }
+
+    /**
+     * Fetch all records as a list of objects of the specified class
+     * @template T
+     * @param class-string<T> $className
+     * @return list<T>
+     */
+    public function fetchAllInto(string $className, string $sql, array $params = []): array
+    {
+        $stmt = $this->query($sql, $params);
+        return $stmt->fetchAll(PDO::FETCH_CLASS, $className);
+    }
+
+    /**
+     * Fetch a single record into an object of the specified class
+     * @template T
+     * @param class-string<T> $className
+     * @return T|null
+     */
+    public function fetchOneInto(string $className, string $sql, array $params = []): ?object
+    {
+        $stmt = $this->query($sql, $params);
+        $result = $stmt->fetchObject($className);
         return $result !== false ? $result : null;
     }
 
@@ -288,7 +326,7 @@ class Database
         $numColumns = count($columns);
 
         // SQLite 默认变量限制通常为 999，保守设置为 500 以兼容旧版本
-        $maxVariables = 500;
+        $maxVariables = (int) (self::MAX_VARIABLES_LIMIT * self::DEFAULT_CHUNK_SCALE);
         $chunkSize = max(1, (int) floor($maxVariables / $numColumns));
 
         $totalAffected = 0;
@@ -440,6 +478,30 @@ class Database
         return $stmt->rowCount() > 0;
     }
 
+    /**
+     * Delete multiple records by array of IDs
+     * @param list<string> $ids
+     */
+    public function deleteByIds(string $table, array $ids): int
+    {
+        if (empty($ids)) {
+            throw new InvalidArgumentException('IDs array cannot be empty');
+        }
+        
+        $table = $this->sanitizeIdentifier($table);
+        $placeholders = [];
+        $params = [];
+        
+        foreach ($ids as $index => $id) {
+            $key = "id$index";
+            $placeholders[] = ":$key";
+            $params[$key] = $id;
+        }
+        
+        $placeholdersStr = implode(', ', $placeholders);
+        return $this->query("DELETE FROM $table WHERE id IN ($placeholdersStr)", $params)->rowCount();
+    }
+
     // ──────────────────────────────────────────────
     //  查询快捷方法
     // ──────────────────────────────────────────────
@@ -473,6 +535,43 @@ class Database
         return (int) $this->fetchColumn($sql, $params);
     }
 
+    /**
+     * Paginate results with limit and offset
+     * @return array{total: int, items: array<array<string, mixed>>, page: int, perPage: int, totalPages: int}
+     */
+    public function paginate(string $table, int $page = 1, int $perPage = 20, string $where = '1=1', array $params = [], string $orderBy = 'created_at DESC'): array
+    {
+        $table = $this->sanitizeIdentifier($table);
+        $orderBy = $this->sanitizeOrderBy($orderBy);
+        
+        $total = $this->count($table, $where, $params);
+        $totalPages = (int) ceil($total / $perPage);
+        $page = max(1, min($page, $totalPages));
+        $offset = ($page - 1) * $perPage;
+        
+        $sql = "SELECT * FROM $table WHERE $where ORDER BY $orderBy LIMIT :limit OFFSET :offset";
+        $mergeParams = array_merge($params, [':limit' => $perPage, ':offset' => $offset]);
+        $items = $this->fetchAll($sql, $mergeParams);
+        
+        return compact('total', 'items', 'page', 'perPage', 'totalPages');
+    }
+
+    /**
+     * Sanitize ORDER BY clause to prevent SQL injection
+     */
+    private function sanitizeOrderBy(string $orderBy): string
+    {
+        $parts = explode(' ', trim($orderBy));
+        $column = $this->sanitizeIdentifier($parts[0]);
+        $direction = strtoupper($parts[1] ?? 'DESC');
+        
+        if (!in_array($direction, ['ASC', 'DESC'], true)) {
+            $direction = 'DESC';
+        }
+        
+        return "$column $direction";
+    }
+
     // ──────────────────────────────────────────────
     //  事务
     // ──────────────────────────────────────────────
@@ -499,7 +598,8 @@ class Database
      */
     public function transaction(callable $callback): mixed
     {
-        // 如果已经在事务中，使用 SAVEPOINT 实现真正的嵌套事务
+        $this->transactionDepth++;
+        
         if ($this->connection->inTransaction()) {
             $savepoint = 'sp_' . bin2hex(random_bytes(4));
             $this->exec("SAVEPOINT $savepoint");
@@ -507,10 +607,12 @@ class Database
             try {
                 $result = $callback($this);
                 $this->exec("RELEASE SAVEPOINT $savepoint");
+                $this->transactionDepth--;
                 return $result;
             } catch (Throwable $e) {
                 $this->exec("ROLLBACK TO SAVEPOINT $savepoint");
                 $this->exec("RELEASE SAVEPOINT $savepoint");
+                $this->transactionDepth--;
                 throw $e;
             }
         }
@@ -520,9 +622,13 @@ class Database
         try {
             $result = $callback($this);
             $this->connection->commit();
+            $this->transactionDepth--;
             return $result;
         } catch (Throwable $e) {
-            $this->connection->rollBack();
+            if ($this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
+            $this->transactionDepth--;
             throw $e;
         }
     }
@@ -542,7 +648,9 @@ class Database
 
     public function rollBack(): void
     {
-        $this->connection->rollBack();
+        if ($this->connection->inTransaction()) {
+            $this->connection->rollBack();
+        }
     }
 
     // ──────────────────────────────────────────────
@@ -555,6 +663,7 @@ class Database
             'driver'            => $this->connection->getAttribute(PDO::ATTR_DRIVER_NAME),
             'inTransaction'     => $this->connection->inTransaction(),
             'tablesInitialized' => $this->tablesInitialized,
+            'transactionDepth'  => $this->transactionDepth,
         ];
     }
 }

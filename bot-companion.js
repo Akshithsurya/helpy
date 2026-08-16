@@ -369,7 +369,7 @@ class BotCompanion {
     const warnings = normalized.warnings || fallback.warnings || [];
     const action = normalized.action || fallback.action || null;
     const actionData = normalized.actionData || fallback.actionData || null;
-    const actionChips = normalized.actionChips || fallback.actionChips || [];
+    const actionChips = normalized.actionChips || normalized.action_chips || fallback.actionChips || [];
 
     return {
       success: normalized.success !== false,

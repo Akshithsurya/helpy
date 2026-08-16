@@ -222,13 +222,53 @@
           <path d="m12 12-3 9"/>
           <path d="m12 12 3 9"/>
         </symbol>
+        <!-- Coffee Cup -->
+        <symbol id="icon-coffee-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+          <line x1="6" y1="1" x2="6" y2="4"/>
+          <line x1="10" y1="1" x2="10" y2="4"/>
+          <line x1="14" y1="1" x2="14" y2="4"/>
+        </symbol>
+        <!-- Sun/Window Landscape -->
+        <symbol id="icon-window-view" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <line x1="12" y1="3" x2="12" y2="21"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+        </symbol>
+        <!-- Footsteps -->
+        <symbol id="icon-footsteps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 16v-2.38C4 11.5 5.5 10 7.5 10S11 11.5 11 13.62V16c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2z"/>
+          <path d="M13 8V5.62C13 3.5 14.5 2 16.5 2S20 3.5 20 5.62V8c0 1.1-.9 2-2 2h-3c-1.1 0-2-.9-2-2z"/>
+        </symbol>
+        <!-- Ruler / Distance -->
+        <symbol id="icon-ruler" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.3 8.7 8.7 21.3a2 2 0 0 1-2.8 0L2.7 18.1a2 2 0 0 1 0-2.8L15.3 2.7a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8z"/>
+          <line x1="14" y1="4" x2="11" y2="7"/>
+          <line x1="10" y1="8" x2="7" y2="11"/>
+          <line x1="6" y1="12" x2="3" y2="15"/>
+        </symbol>
+        <!-- User Profile Avatar -->
+        <symbol id="icon-user-avatar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4"/>
+          <path d="M5.5 21a8.5 8.5 0 0 1 13 0"/>
+        </symbol>
+        <!-- Lamp / Light -->
+        <symbol id="icon-lamp-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18h6"/>
+          <path d="M10 22h4"/>
+          <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/>
+        </symbol>
       </defs>
     </svg>
     <div id="main-app" class="container">
       <header class="app-header">
         <div class="brand-block">
-          <span class="brand-kicker">Your focus companion</span>
-          <h1>Helpy</h1>
+          <div class="brand-mark" aria-hidden="true"><svg><use href="#icon-shield"/></svg></div>
+          <div>
+            <span class="brand-kicker">Your focus companion</span>
+            <h1>Helpy</h1>
+          </div>
         </div>
         <div class="header-controls" aria-label="Workspace controls">
           <select id="languageSelector" class="secondary-btn" aria-label="Language">
@@ -271,23 +311,192 @@
 
       <!-- Tab Navigation -->
       <nav class="tabs" role="tablist" aria-label="Main Navigation">
-        <button class="tab-button active" role="tab" aria-selected="true" aria-controls="focus-tab" id="tab-focus" data-tab="focus">Focus</button>
-        <button class="tab-button" role="tab" aria-selected="false" aria-controls="tasks-tab" id="tab-tasks" data-tab="tasks">Tasks</button>
-        <button class="tab-button" role="tab" aria-selected="false" aria-controls="notifications-tab" id="tab-notifications" data-tab="notifications">Notifications</button>
-        <button class="tab-button" role="tab" aria-selected="false" aria-controls="more-tab" id="tab-more" data-tab="more">More</button>
+        <button class="tab-button active" role="tab" aria-selected="true" aria-controls="focus-tab" id="tab-focus" data-tab="focus">
+          <svg class="inline-stat-icon" aria-hidden="true"><use href="#icon-target"/></svg>
+          <span>Focus</span>
+        </button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="tasks-tab" id="tab-tasks" data-tab="tasks">
+          <svg class="inline-stat-icon" aria-hidden="true"><use href="#icon-check-circle"/></svg>
+          <span>Tasks</span>
+        </button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="notifications-tab" id="tab-notifications" data-tab="notifications">
+          <svg class="inline-stat-icon" aria-hidden="true"><use href="#icon-zap"/></svg>
+          <span>Notifications</span>
+        </button>
+        <button class="tab-button" role="tab" aria-selected="false" aria-controls="more-tab" id="tab-more" data-tab="more">
+          <svg class="inline-stat-icon" aria-hidden="true"><use href="#icon-bar-chart"/></svg>
+          <span>Insights &amp; More</span>
+        </button>
       </nav>
 
       <main class="tab-contents">
         <!-- Focus Tab -->
         <section id="focus-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-focus">
           <div class="focus-primary-grid">
-            <div class="section focus-hero-section">
+            <div class="section focus-hero-section focus-grid-primary">
               <header class="section-header">
                 <div>
-                  <h2>Focus Workspace</h2>
-                  <p class="section-helper">Start from the essentials, then reveal supporting tools only when you need them.</p>
+                  <h2>Focus Workspace &amp; Interactive Room</h2>
+                  <p class="section-helper">Customize your environment, interact with room items, and launch focus sessions.</p>
                 </div>
               </header>
+
+              <!-- Focus Quick-Action Control Hub -->
+              <div id="interactiveRoomHub" class="interactive-room-hub focus-actions-hub lighting-warm">
+                <div class="room-skyline">
+                  <div class="room-ambient-glow"></div>
+                  <div class="room-status-group">
+                    <div class="room-status-badge">
+                      <span class="room-pulse-dot"></span>
+                      <span id="roomAmbianceLabel">Focus Ambiance: Warm Study</span>
+                    </div>
+                    <div class="room-nav-stats">
+                      <span class="room-steps-counter"><svg class="inline-stat-icon" aria-hidden="true"><use href="#icon-zap"/></svg> <strong id="roomStepsVal">0</strong> actions</span>
+                      <span class="room-dist-counter"><svg class="inline-stat-icon" aria-hidden="true"><use href="#icon-target"/></svg> <span id="roomDistVal">0.0</span> focus score</span>
+                    </div>
+                  </div>
+                  <div class="room-top-controls">
+                    <button id="roomLampBtn" class="secondary-btn btn-xs" title="Toggle Lighting Theme">
+                      <svg class="btn-xs-icon" aria-hidden="true"><use href="#icon-lamp-light"/></svg>
+                      <span>Theme</span>
+                    </button>
+                    <button id="roomAvatarSwitchBtn" class="secondary-btn btn-xs" title="Switch Focus Archetype">
+                      <svg class="btn-xs-icon" aria-hidden="true"><use href="#icon-user-avatar"/></svg>
+                      <span id="currentArchetypeLabel">Bot</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Focus Action Buttons Grid (All-Button Deck) -->
+                <div class="focus-action-deck" role="region" aria-label="Focus Quick Action Deck">
+                  <!-- Coffee Break Button -->
+                  <button id="roomMugBtn" class="focus-deck-btn btn-coffee" title="Brew fresh coffee and start a 5-minute recharge break" aria-label="Brew Coffee Break (5 min)">
+                    <div class="deck-btn-glow"></div>
+                    <div class="deck-btn-icon-wrap">
+                      <div class="coffee-steam-particles"><span></span><span></span><span></span></div>
+                      <svg class="deck-btn-icon" aria-hidden="true"><use href="#icon-coffee-cup"/></svg>
+                    </div>
+                    <div class="deck-btn-content">
+                      <span class="deck-btn-title">Coffee Break</span>
+                      <span class="deck-btn-desc">5-min recharge session</span>
+                    </div>
+                    <span class="deck-btn-badge">5m</span>
+                  </button>
+
+                  <!-- Deep Work Focus Button -->
+                  <button id="actionDeskBtn" class="focus-deck-btn btn-desk" title="Start a 25-minute deep focus work sprint" aria-label="Deep Work Focus (25 min)">
+                    <div class="deck-btn-glow"></div>
+                    <div class="deck-btn-icon-wrap">
+                      <svg class="deck-btn-icon" aria-hidden="true"><use href="#icon-code"/></svg>
+                    </div>
+                    <div class="deck-btn-content">
+                      <span class="deck-btn-title">Deep Work</span>
+                      <span class="deck-btn-desc">25-min sprint session</span>
+                    </div>
+                    <span class="deck-btn-badge">25m</span>
+                  </button>
+
+                  <!-- Knowledge Shelf Button -->
+                  <button id="actionBookshelfBtn" class="focus-deck-btn btn-bookshelf" title="Inspect tech, focus, and engineering insights" aria-label="Knowledge Shelf Insights">
+                    <div class="deck-btn-glow"></div>
+                    <div class="deck-btn-icon-wrap">
+                      <svg class="deck-btn-icon" aria-hidden="true"><use href="#icon-book"/></svg>
+                    </div>
+                    <div class="deck-btn-content">
+                      <span class="deck-btn-title">Knowledge Shelf</span>
+                      <span class="deck-btn-desc">Daily productivity tip</span>
+                    </div>
+                    <span class="deck-btn-badge">Tip</span>
+                  </button>
+
+                  <!-- Panoramic Window Atmosphere Button -->
+                  <button id="actionWindowBtn" class="focus-deck-btn btn-window" title="Cycle through ambient scenery themes" aria-label="Panoramic Scenery Cycle">
+                    <div class="deck-btn-glow"></div>
+                    <div class="deck-btn-icon-wrap">
+                      <svg class="deck-btn-icon" aria-hidden="true"><use href="#icon-window-view"/></svg>
+                    </div>
+                    <div class="deck-btn-content">
+                      <span class="deck-btn-title">Atmosphere</span>
+                      <span class="deck-btn-desc">Cycle scene backdrop</span>
+                    </div>
+                    <span class="deck-btn-badge" id="currentSceneBadge">Sunrise</span>
+                  </button>
+
+                  <!-- Companion Helpy Assistant Button -->
+                  <button id="actionCompanionBtn" class="focus-deck-btn btn-companion" title="Talk with your Helpy focus companion" aria-label="Helpy Companion Bot">
+                    <div class="deck-btn-glow"></div>
+                    <div class="deck-btn-icon-wrap">
+                      <svg class="deck-btn-icon" aria-hidden="true"><use href="#icon-bot"/></svg>
+                    </div>
+                    <div class="deck-btn-content">
+                      <span class="deck-btn-title">Helpy Bot</span>
+                      <span class="deck-btn-desc">Interactive companion</span>
+                    </div>
+                    <span class="deck-btn-badge">AI</span>
+                  </button>
+
+                  <!-- Quick Soundscape Toggle Button -->
+                  <button id="actionSoundDeckBtn" class="focus-deck-btn btn-sounddeck" title="Toggle audio background soundscape" aria-label="Toggle Soundscape Synthesizer">
+                    <div class="deck-btn-glow"></div>
+                    <div class="deck-btn-icon-wrap">
+                      <svg class="deck-btn-icon" aria-hidden="true"><use href="#icon-headphones"/></svg>
+                    </div>
+                    <div class="deck-btn-content">
+                      <span class="deck-btn-title">Sound Deck</span>
+                      <span class="deck-btn-desc" id="soundDeckStatusLabel">Ambient generator</span>
+                    </div>
+                    <span class="deck-btn-badge" id="soundDeckPlayBadge">Off</span>
+                  </button>
+                </div>
+
+                <!-- Interactive Ambient Soundscape Deck & Synthesizer -->
+                <div class="room-desk-scene focus-sound-panel-wrap">
+                  <div class="room-soundscape-panel">
+                    <div class="soundscape-header">
+                      <div class="soundscape-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <span>Ambient Soundscape Synthesizer</span>
+                      </div>
+                      <button id="roomSoundPlayBtn" class="room-sound-play-btn" aria-label="Play Soundscape">
+                        <svg class="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      </button>
+                    </div>
+
+                    <div class="soundscape-controls">
+                      <select id="roomSoundPresetSelect" class="soundscape-select" aria-label="Select Ambient Sound">
+                        <option value="rain">Gentle Rain</option>
+                        <option value="forest">Calm Forest</option>
+                        <option value="waves">Ocean Waves</option>
+                        <option value="lofi">Lo-Fi Beats</option>
+                        <option value="whitenoise">White Noise</option>
+                      </select>
+
+                      <div class="soundscape-volume-wrap">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                        <input type="range" id="roomSoundVolumeSlider" min="0" max="100" value="70" aria-label="Soundscape Volume" />
+                      </div>
+                    </div>
+
+                    <div id="roomEqualizerBars" class="sound-equalizer-bars">
+                      <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Room Sticky Wall Notes -->
+                <div class="room-sticky-notes-wall">
+                  <div class="sticky-notes-header">
+                    <span>Workspace Sticky Wall</span>
+                    <button id="addStickyNoteBtn" class="secondary-btn btn-xs">+ Note</button>
+                  </div>
+                  <div id="stickyNotesContainer" class="sticky-notes-grid">
+                    <div class="sticky-note note-yellow">
+                      <div class="sticky-note-pin"></div>
+                      <textarea class="sticky-note-input" placeholder="Pin a note..." rows="2">Welcome Akshith Surya! Click any focus action button above to launch your session.</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <label for="commandInput" class="visually-hidden">Quick Command Input</label>
               <input type="text" id="commandInput" placeholder="Type /plan work 60 or /help" autocomplete="off" />
               <div id="commandAutocomplete" class="command-autocomplete" role="listbox" aria-hidden="true"></div>
@@ -324,7 +533,7 @@
               </div>
             </div>
 
-            <div class="section" id="focus-session-panel">
+            <div class="section focus-grid-secondary" id="focus-session-panel">
               <header class="section-header">
                 <div>
                   <h2>Active Session</h2>
@@ -348,7 +557,7 @@
               <div id="focus-report" class="command-result">Loading local focus report...</div>
             </div>
 
-            <div class="section" id="currentPlanSection" style="display: none;">
+            <div class="section focus-grid-secondary" id="currentPlanSection" style="display: none;">
               <header class="section-header">
                 <div>
                   <h2>Current Plan</h2>
@@ -372,23 +581,44 @@
           </div>
 
           <div class="section" id="focus-timer-section">
-            <h2>Focus Timer (Pomodoro Mode)</h2>
-            <div id="timer-mode-indicator" class="timer-mode-indicator">Work Mode</div>
-            <div id="timer-display" class="timer-display" aria-live="off">00:00</div>
+            <div class="section-header">
+              <div>
+                <h2>Focus Timer (Pomodoro Mode)</h2>
+                <p class="section-helper">Scientific intervals with smooth glowing progress indicator.</p>
+              </div>
+              <div id="timer-mode-indicator" class="timer-mode-indicator">Work Mode</div>
+            </div>
+
             <div class="timer-mode-controls">
-              <button id="timer-mode-work" class="mode-btn primary-btn">Work</button>
-              <button id="timer-mode-short-break" class="mode-btn secondary-btn">Short Break</button>
-              <button id="timer-mode-long-break" class="mode-btn secondary-btn">Long Break</button>
+              <button id="timer-mode-work" class="mode-btn primary-btn active">Work (25m)</button>
+              <button id="timer-mode-short-break" class="mode-btn secondary-btn">Short Break (5m)</button>
+              <button id="timer-mode-long-break" class="mode-btn secondary-btn">Long Break (15m)</button>
             </div>
+
+            <div id="timer-display" class="timer-display" aria-live="off">00:00</div>
+
             <div class="timer-controls">
-              <button id="start-timer-btn" class="primary-btn">Start</button>
-              <button id="pause-timer-btn" class="secondary-btn is-hidden">Pause</button>
-              <button id="resume-timer-btn" class="secondary-btn is-hidden">Resume</button>
-              <button id="stop-timer-btn" class="danger-btn is-hidden">Stop</button>
+              <button id="start-timer-btn" class="primary-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Start Session</span>
+              </button>
+              <button id="pause-timer-btn" class="secondary-btn is-hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                <span>Pause</span>
+              </button>
+              <button id="resume-timer-btn" class="secondary-btn is-hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Resume</span>
+              </button>
+              <button id="stop-timer-btn" class="danger-btn is-hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14"/></svg>
+                <span>Stop</span>
+              </button>
             </div>
-            <div class="timer-duration-input">
-              <label for="timer-duration">Duration (minutes)</label>
-              <input type="number" id="timer-duration" min="5" max="240" value="25" />
+
+            <div class="timer-duration-input" style="max-width: 320px; margin: 16px auto 0;">
+              <label for="timer-duration" style="font-size: 0.85rem; color: var(--ink-light); margin-bottom: 4px; display: block;">Custom Duration (minutes)</label>
+              <input type="number" id="timer-duration" min="1" max="240" value="25" />
             </div>
           </div>
 
@@ -531,13 +761,8 @@
 
   <!-- Focus Shield Immersive Overlay -->
   <div id="focusShieldOverlay" class="focus-shield-overlay" style="display: none;" aria-hidden="true">
-    <div class="shield-backdrop-glow"></div>
     <div class="shield-container">
-      <div class="shield-header-badge">
-        <svg aria-hidden="true" width="22" height="22" class="shield-badge-icon"><use href="#icon-shield"/></svg>
-        <span>FOCUS SHIELD ACTIVE</span>
-      </div>
-
+      <div class="shield-eyebrow"><span class="shield-live-dot"></span> Focus Shield is protecting your attention</div>
       <h1 id="shieldActiveTask" class="shield-title">Deep Focus Session</h1>
       <p id="shieldActiveGoal" class="shield-goal">Eliminate all distractions and achieve single-task flow state.</p>
 
@@ -546,30 +771,20 @@
         <div id="shieldModeBadge" class="shield-mode-tag">WORK MODE</div>
       </div>
 
-      <div class="shield-info-row">
-        <div class="shield-info-card">
-          <span class="info-label">Distraction Shielding</span>
-          <span class="info-value green-text">ENFORCED</span>
+      <section class="shield-capture" aria-label="Distraction parking lot">
+        <div class="shield-capture-heading">
+          <strong>Parking lot</strong>
+          <span>Capture it, then return to your task.</span>
         </div>
-        <div class="shield-info-card">
-          <span class="info-label">Ambient Soundscape</span>
-          <span id="shieldSoundName" class="info-value">Brown Noise</span>
-        </div>
-        <div class="shield-info-card">
-          <span class="info-label">Session Streak</span>
-          <span id="shieldStreakCount" class="info-value">1 Completed</span>
-        </div>
-      </div>
+        <label class="sr-only" for="shieldQuickNote">Park a distraction or thought</label>
+        <input id="shieldQuickNote" type="text" maxlength="180" placeholder="A thought or distraction? Park it here and press Enter" autocomplete="off" />
+        <div id="shieldNotesList" class="shield-notes-list" aria-live="polite"></div>
+      </section>
 
       <div class="shield-actions">
-        <button id="shieldCompleteBtn" class="primary-btn shield-btn-large">Complete Task</button>
+        <button id="shieldCompleteBtn" class="primary-btn shield-btn-large">Finish Session</button>
         <button id="shieldPauseBtn" class="secondary-btn shield-btn-sub">Pause Timer</button>
         <button id="shieldExitBtn" class="danger-btn shield-btn-sub">Exit Shield Mode</button>
-      </div>
-
-      <div class="shield-interruption-box">
-        <input type="text" id="shieldQuickNote" placeholder="Quick capture distraction thought (Press Enter)..." autocomplete="off" />
-        <div id="shieldNotesList" class="shield-notes-list"></div>
       </div>
     </div>
   </div>
@@ -755,40 +970,46 @@
 
           <details class="section section-disclosure" id="moreInsightsPanel" open>
             <summary>Insights</summary>
-            <div class="section nested-section">
-              <div class="section-header compact-header">
-                <h2>Focus Statistics</h2>
-                <div class="notification-actions">
-                  <button id="exportCsvBtn" class="secondary-btn">Export CSV</button>
-                  <button id="exportJsonBtn" class="secondary-btn">Export JSON</button>
+            <div class="more-insights-grid">
+              <div class="more-insights-column">
+                <div class="section nested-section">
+                  <div class="section-header compact-header">
+                    <h2>Focus Statistics</h2>
+                    <div class="notification-actions">
+                      <button id="exportCsvBtn" class="secondary-btn">Export CSV</button>
+                      <button id="exportJsonBtn" class="secondary-btn">Export JSON</button>
+                    </div>
+                  </div>
+                  <div id="statisticsData" class="statistics-data" aria-live="polite"></div>
+                </div>
+                <div class="section nested-section">
+                  <h2>Clipped Web Notes & Highlights</h2>
+                  <div id="desktopWebNotesList" class="history-list" aria-live="polite">
+                    <p style="color: var(--text-muted);">No clipped notes yet. Clip pages from the Helpy Chrome extension!</p>
+                  </div>
+                </div>
+                <div class="section nested-section">
+                  <h2>System Monitor</h2>
+                  <div id="systemMonitorData" class="system-monitor-data" aria-live="polite"></div>
                 </div>
               </div>
-              <div id="statisticsData" class="statistics-data" aria-live="polite"></div>
-            </div>
-            <div class="section nested-section">
-              <h2>Weekly Focus Chart</h2>
-              <canvas id="focusChart" width="600" height="300" role="img" aria-label="Weekly focus chart"></canvas>
-            </div>
-            <div class="section nested-section">
-              <h2>Clipped Web Notes & Highlights</h2>
-              <div id="desktopWebNotesList" class="history-list" aria-live="polite">
-                <p style="color: var(--text-muted);">No clipped notes yet. Clip pages from the Helpy Chrome extension!</p>
+              <div class="more-insights-column">
+                <div class="section nested-section">
+                  <h2>Weekly Focus Chart</h2>
+                  <canvas id="focusChart" width="600" height="300" role="img" aria-label="Weekly focus chart"></canvas>
+                </div>
+                <div class="section nested-section">
+                  <h2>Browser Bridge</h2>
+                  <div id="bridgeStatusCard" class="bridge-status"></div>
+                  <div id="bridgeTabsData" class="bridge-tabs-data" aria-live="polite"></div>
+                </div>
+                <div class="section nested-section">
+                  <h2>Activity Tracking</h2>
+                  <div id="activityHistory" class="activity-history" aria-live="polite"></div>
+                  <h3>App Usage Stats</h3>
+                  <div id="appUsageStats" class="app-usage-stats" aria-live="polite"></div>
+                </div>
               </div>
-            </div>
-            <div class="section nested-section">
-              <h2>Browser Bridge</h2>
-              <div id="bridgeStatusCard" class="bridge-status"></div>
-              <div id="bridgeTabsData" class="bridge-tabs-data" aria-live="polite"></div>
-            </div>
-            <div class="section nested-section">
-              <h2>System Monitor</h2>
-              <div id="systemMonitorData" class="system-monitor-data" aria-live="polite"></div>
-            </div>
-            <div class="section nested-section">
-              <h2>Activity Tracking</h2>
-              <div id="activityHistory" class="activity-history" aria-live="polite"></div>
-              <h3>App Usage Stats</h3>
-              <div id="appUsageStats" class="app-usage-stats" aria-live="polite"></div>
             </div>
           </details>
 
@@ -895,10 +1116,12 @@
       </div>
 
       <div class="bot-chips-row">
+        <button class="bot-chip-btn bot-chip-primary" data-prompt="Plan my next focus session using my tasks">Plan my next focus</button>
         <button class="bot-chip-btn" data-prompt="tell me a cool fact">Cool Fact</button>
         <button class="bot-chip-btn" data-prompt="give me motivation">Motivation</button>
         <button class="bot-chip-btn" data-prompt="what do you remember?">My Memory</button>
         <button class="bot-chip-btn" data-prompt="how do I focus better?">Focus Tip</button>
+        <button class="bot-chip-btn" data-prompt="give me a quick check-in based on my progress">Check-in</button>
         <button class="bot-chip-btn" data-prompt="tell me about erlang">Erlang Facts</button>
       </div>
 

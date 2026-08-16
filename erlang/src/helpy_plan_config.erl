@@ -1,3 +1,9 @@
+%% @doc Configuration cache for the helpy_plan application.
+%%
+%% Provides fast access to application environment configuration by caching
+%% values in an ETS table. Values are lazily loaded from the application
+%% environment on first access, or can be bulk-loaded via {@link load/0}
+%% or {@link reload/0}.
 -module(helpy_plan_config).
 
 -export([
@@ -6,7 +12,9 @@
     delete/1,
     load/0,
     reload/0,
-    get_all/0
+    get_all/0,
+    get_application/0,
+    get_table_name/0
 ]).
 
 -define(CONFIG_TABLE, helpy_plan_config_table).
@@ -14,97 +22,157 @@
 
 -type key() :: atom().
 -type value() :: term().
+-type config_list() :: [{key(), value()}].
+
+-export_type([key/0, value/0, config_list/0]).
 
 %%%===================================================================
 %%% Public API
 %%%===================================================================
 
+%% @doc Returns the name of the application this module manages.
+-spec get_application() -> atom().
+get_application() ->
+    ?APP_NAME.
+
+%% @doc Returns the name of the ETS table used for caching.
+-spec get_table_name() -> atom().
+get_table_name() ->
+    ?CONFIG_TABLE.
+
+%% @doc Equivalent to {@link get/2} with `undefined' as the default.
 -spec get(key()) -> value().
 get(Key) ->
     get(Key, undefined).
 
+%% @doc Returns the configuration value for `Key'.
+%%
+%% Looks up `Key' in the ETS cache first. On a miss (or if the table does
+%% not yet exist), falls back to the application environment and caches the
+%% result for future lookups. Returns `Default' if the key is not found.
 -spec get(key(), value()) -> value().
 get(Key, Default) ->
-    try ets:lookup(?CONFIG_TABLE, Key) of
-        [{_, Value}] ->
-            Value;
-        [] ->
-            case application:get_env(?APP_NAME, Key) of
-                {ok, Value} ->
-                    %% Cache the value for future lookups
-                    ets:insert(?CONFIG_TABLE, {Key, Value}),
-                    Value;
-                undefined ->
-                    Default
-            end
+    try
+        ets:lookup_element(?CONFIG_TABLE, Key, 2)
     catch
         error:badarg ->
-            %% Graceful fallback if the table hasn't been initialized yet
-            case application:get_env(?APP_NAME, Key) of
-                {ok, Value} -> Value;
-                undefined -> Default
-            end
+            get_from_env(Key, Default)
     end.
 
--spec set(key(), value()) -> ok.
-set(Key, Value) ->
-    try ets:insert(?CONFIG_TABLE, {Key, Value})
-    catch error:badarg -> ok end,
-    application:set_env(?APP_NAME, Key, Value),
-    ok.
+%% @doc Sets a configuration value.
+%%
+%% Updates the application environment (source of truth) first, then the
+%% ETS cache. The ETS table is created on demand if it doesn't exist.
+-spec set(key(), value()) -> ok | {error, term()}.
+set(Key, Value) when is_atom(Key) ->
+    try
+        ok = application:set_env(?APP_NAME, Key, Value),
+        ensure_table(),
+        true = ets:insert(?CONFIG_TABLE, {Key, Value}),
+        ok
+    catch
+        error:Reason ->
+            {error, Reason}
+    end.
 
+%% @doc Removes a configuration key from both the application environment
+%% and the ETS cache.
 -spec delete(key()) -> ok.
-delete(Key) ->
+delete(Key) when is_atom(Key) ->
+    ok = application:unset_env(?APP_NAME, Key),
     try ets:delete(?CONFIG_TABLE, Key)
-    catch error:badarg -> ok end,
-    application:unset_env(?APP_NAME, Key),
+    catch error:badarg -> ok
+    end,
     ok.
 
--spec load() -> ok.
+%% @doc Creates the ETS table (if needed) and loads all values from the
+%% application environment into the cache.
+-spec load() -> ok | {error, term()}.
 load() ->
-    ensure_table(),
-    load_from_env(),
-    ok.
+    try
+        ensure_table(),
+        sync_from_env()
+    catch
+        error:Reason ->
+            {error, Reason}
+    end.
 
--spec reload() -> ok.
+%% @doc Reloads all configuration from the application environment.
+%%
+%% Clears the ETS cache and repopulates it from the application environment.
+-spec reload() -> ok | {error, term()}.
 reload() ->
-    ensure_table(),
-    try ets:delete_all_objects(?CONFIG_TABLE)
-    catch error:badarg -> ok end,
-    load_from_env(),
-    ok.
+    try
+        ensure_table(),
+        Env = application:get_all_env(?APP_NAME),
+        true = ets:delete_all_objects(?CONFIG_TABLE),
+        true = ets:insert(?CONFIG_TABLE, Env),
+        ok
+    catch
+        error:Reason ->
+            {error, Reason}
+    end.
 
--spec get_all() -> [{key(), value()}].
+%% @doc Returns all cached configuration key-value pairs.
+%%
+%% Falls back to the application environment if the ETS table has not been
+%% initialized.
+-spec get_all() -> config_list().
 get_all() ->
-    try ets:tab2list(?CONFIG_TABLE)
-    catch error:badarg -> application:get_all_env(?APP_NAME) end.
+    try
+        ets:tab2list(?CONFIG_TABLE)
+    catch
+        error:badarg ->
+            application:get_all_env(?APP_NAME)
+    end.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
+%% @private Creates the ETS table if it doesn't already exist.
 -spec ensure_table() -> ok.
 ensure_table() ->
-    %% Atomically create the table if it doesn't exist, handling race conditions cleanly
-    case ets:info(?CONFIG_TABLE) of
+    case ets:whereis(?CONFIG_TABLE) of
         undefined ->
             try
                 ets:new(?CONFIG_TABLE, [
                     named_table, public, set,
                     {read_concurrency, true},
                     {write_concurrency, true}
-                ])
+                ]),
+                ok
             catch
-                %% Race condition: another process created the table between our info check and ets:new call
-                error:badarg -> ok
+                error:badarg ->
+                    case ets:whereis(?CONFIG_TABLE) of
+                        undefined -> {error, failed_to_create_table};
+                        _ -> ok
+                    end
             end;
-        _ ->
+        _Pid ->
             ok
     end.
 
--spec load_from_env() -> ok.
-load_from_env() ->
+%% @private Looks up a key from the application environment and caches it.
+-spec get_from_env(key(), value()) -> value().
+get_from_env(Key, Default) ->
+    case application:get_env(?APP_NAME, Key) of
+        {ok, Value} ->
+            try
+                ensure_table(),
+                ets:insert(?CONFIG_TABLE, {Key, Value})
+            catch
+                error:badarg ->
+                    ok
+            end,
+            Value;
+        undefined ->
+            Default
+    end.
+
+%% @private Bulk-inserts all application environment entries into the cache.
+-spec sync_from_env() -> ok.
+sync_from_env() ->
     Env = application:get_all_env(?APP_NAME),
-    try ets:insert(?CONFIG_TABLE, Env)
-    catch error:badarg -> ok end,
+    true = ets:insert(?CONFIG_TABLE, Env),
     ok.

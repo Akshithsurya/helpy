@@ -2,6 +2,8 @@
 
 require 'time'
 require 'securerandom'
+require 'logger'
+require 'set'
 
 module PlanService
   module Ical
@@ -31,11 +33,34 @@ module PlanService
     UTC_TIMESTAMP_FORMAT = '%Y%m%dT%H%M%SZ'
     private_constant :UTC_TIMESTAMP_FORMAT
 
+    # Required iCalendar properties to ensure compliance
+    REQUIRED_CALENDAR_PROPERTIES = %w[VERSION PRODID CALSCALE].to_set.freeze
+    private_constant :REQUIRED_CALENDAR_PROPERTIES
+
+    # Logger for error tracking and debugging
+    LOGGER = Logger.new($stdout)
+    private_constant :LOGGER
+
     # Exports a plan to a fully RFC 5545 compliant iCalendar string.
     # @param plan [Hash] Plan data with :created_at and :tasks array
     # @return [String] Valid iCalendar content with proper line folding
     def self.export(plan)
-      fold_lines(build_calendar(plan)).join(CRLF) << CRLF
+      unless plan.is_a?(Hash)
+        LOGGER.error("Invalid plan type: expected Hash, got #{plan.class}")
+        return empty_calendar
+      end
+
+      lines = build_calendar(plan)
+      validate_calendar_structure(lines)
+      fold_lines(lines).join(CRLF) << CRLF
+    rescue StandardError => e
+      LOGGER.error("Failed to export calendar: #{e.message}\n#{e.backtrace.join("\n")}")
+      empty_calendar
+    end
+
+    # Returns a minimal valid empty calendar for error cases
+    def self.empty_calendar
+      ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:#{PRODID}", "CALSCALE:GREGORIAN", "END:VCALENDAR"].join(CRLF) << CRLF
     end
 
     class << self
@@ -52,21 +77,35 @@ module PlanService
         ]
       end
 
+      # Validates core calendar structure meets RFC 5545 requirements
+      def validate_calendar_structure(lines)
+        present_properties = lines.filter_map { |l| l.split(':', 2).first if l.start_with?('VERSION:', 'PRODID:', 'CALSCALE:') }.to_set
+        missing = REQUIRED_CALENDAR_PROPERTIES - present_properties
+        raise "Invalid calendar structure: missing #{missing.join(', ')}" unless missing.empty?
+        raise "Unclosed VEVENT components detected" if lines.count('BEGIN:VEVENT') != lines.count('END:VEVENT')
+      end
+
       # Generates VEVENT entries for all schedulable (non-break) tasks
       def build_events(plan)
         base_time = parse_time(plan[:created_at])
-        return [] unless base_time
+        unless base_time
+          LOGGER.warn("Invalid or missing created_at timestamp in plan")
+          return []
+        end
 
-        dtstamp = format_utc(Time.now.utc)
+        dtstamp = format_utc(Time.now)
         elapsed = 0
 
-        Array(plan[:tasks]).flat_map do |task|
-          next [] unless schedulable?(task)
+        Array(plan[:tasks]).filter_map do |task|
+          next unless schedulable?(task)
 
           duration   = task[:duration_minutes].to_i
           start_time = base_time + elapsed
           elapsed   += duration * 60
           build_event(task, start_time, duration, dtstamp)
+        rescue StandardError => e
+          LOGGER.warn("Failed to process task #{task&.dig(:id)}: #{e.message}")
+          nil
         end
       end
 
@@ -109,20 +148,22 @@ module PlanService
       def fold_single_line(line)
         return [line] if line.bytesize <= MAX_LINE
 
-        bytes   = line.b
-        total   = bytes.bytesize
-        chunks  = []
-        offset  = 0
-        leading = true
+        bytes = line.b
+        total = bytes.bytesize
+        chunks = []
+        offset = 0
 
+        # First chunk (no continuation prefix)
+        size = utf8_safe_slice_size(bytes, offset, MAX_LINE)
+        chunks << bytes.byteslice(offset, size).force_encoding(Encoding::UTF_8)
+        offset += size
+
+        # Subsequent chunks (prefixed with a single space)
         while offset < total
-          limit  = leading ? MAX_LINE : CONTINUATION_LIMIT
-          size   = utf8_safe_slice_size(bytes, offset, limit)
-          raw    = bytes.byteslice(offset, size)
-          prefix = leading ? '' : CONTINUATION_PREFIX
-          chunks << "#{prefix}#{raw}".force_encoding(Encoding::UTF_8)
+          size = utf8_safe_slice_size(bytes, offset, CONTINUATION_LIMIT)
+          raw = bytes.byteslice(offset, size)
+          chunks << "#{CONTINUATION_PREFIX}#{raw}".force_encoding(Encoding::UTF_8)
           offset += size
-          leading = false
         end
 
         chunks
@@ -136,6 +177,7 @@ module PlanService
         return [limit, remaining].min if limit >= remaining
 
         size = limit
+        # Step back if the byte at the boundary is a UTF-8 continuation byte (10xxxxxx)
         size -= 1 while size > 1 && (bytes.getbyte(offset + size) & 0xC0) == 0x80
         size
       end
@@ -153,7 +195,9 @@ module PlanService
       def parse_string_time(string)
         Time.iso8601(string).utc
       rescue ArgumentError
-        (Time.parse(string) rescue nil)&.utc
+        Time.parse(string).utc
+      rescue ArgumentError
+        nil
       end
 
       # UTC date-time with trailing Z (RFC 5545 §3.3.5 Form 2)

@@ -53,17 +53,60 @@ final class ValidationResult
     }
 
     /**
-     * Combines two validation results into one.
+     * Combines multiple validation results into one.
      */
-    public function merge(ValidationResult $other): self
+    public function merge(ValidationResult ...$others): self
     {
+        $errors = $this->errors;
+        $warnings = $this->warnings;
+        $suggestions = $this->suggestions;
+        $fixes = $this->fixes;
+        $isValid = $this->isValid;
+
+        foreach ($others as $other) {
+            $errors = array_merge($errors, $other->errors);
+            $warnings = array_merge($warnings, $other->warnings);
+            $suggestions = array_merge($suggestions, $other->suggestions);
+            $fixes = array_merge($fixes, $other->fixes);
+            $isValid = $isValid && $other->isValid;
+        }
+
         return new self(
-            isValid: $this->isValid && $other->isValid,
-            errors: array_merge($this->errors, $other->errors),
-            warnings: array_merge($this->warnings, $other->warnings),
-            suggestions: array_merge($this->suggestions, $other->suggestions),
-            fixes: array_merge($this->fixes, $other->fixes)
+            isValid: $isValid,
+            errors: $errors,
+            warnings: $warnings,
+            suggestions: $suggestions,
+            fixes: $fixes
         );
+    }
+
+    /**
+     * Creates a new ValidationResult from an array of existing results.
+     */
+    public static function combine(ValidationResult ...$results): self
+    {
+        if (empty($results)) {
+            return self::success();
+        }
+
+        $first = array_shift($results);
+        return $first->merge(...$results);
+    }
+}
+
+/**
+ * Represents a structured issue with an associated fix message.
+ */
+final class ValidationIssue
+{
+    private function __construct(
+        public readonly string $message,
+        public readonly string $fix
+    ) {}
+
+    public static function create(string $message, string $fix): self
+    {
+        return new self($message, $fix);
     }
 }
 
@@ -80,13 +123,11 @@ final class PlanValidator
     private const DEFAULT_MIN_DURATION = 15;
     private const DEFAULT_MAX_DURATION = 240;
 
-    /** @var list<string> */
+    /** @var list<ValidationIssue> */
     private array $errors = [];
-    /** @var list<string> */
+    /** @var list<ValidationIssue> */
     private array $warnings = [];
-    /** @var list<string> */
-    private array $fixes = [];
-    /** @var list<string> */
+    /** @var list<ValidationIssue> */
     private array $suggestions = [];
 
     /**
@@ -123,29 +164,26 @@ final class PlanValidator
 
         return new ValidationResult(
             isValid: empty($this->errors),
-            errors: $this->errors,
-            warnings: $this->warnings,
-            suggestions: $this->suggestions,
-            fixes: $this->fixes
+            errors: array_map(fn(ValidationIssue $issue) => $issue->message, $this->errors),
+            warnings: array_map(fn(ValidationIssue $issue) => $issue->message, $this->warnings),
+            suggestions: array_map(fn(ValidationIssue $issue) => $issue->message, $this->suggestions),
+            fixes: array_map(fn(ValidationIssue $issue) => $issue->fix, array_merge($this->errors, $this->warnings, $this->suggestions))
         );
     }
 
     private function addError(string $message, string $fix): void
     {
-        $this->errors[] = $message;
-        $this->fixes[] = $fix;
+        $this->errors[] = ValidationIssue::create($message, $fix);
     }
 
     private function addWarning(string $message, string $fix): void
     {
-        $this->warnings[] = $message;
-        $this->fixes[] = $fix;
+        $this->warnings[] = ValidationIssue::create($message, $fix);
     }
 
     private function addSuggestion(string $message, string $fix): void
     {
-        $this->suggestions[] = $message;
-        $this->fixes[] = $fix;
+        $this->suggestions[] = ValidationIssue::create($message, $fix);
     }
 
     private function validateTitle(): void
@@ -159,7 +197,7 @@ final class PlanValidator
 
         if (mb_strlen($title, 'UTF-8') > self::MAX_TITLE_LENGTH) {
             $this->addError(
-                'Plan title is too long (maximum ' . self::MAX_TITLE_LENGTH . ' characters).',
+                sprintf('Plan title is too long (maximum %d characters).', self::MAX_TITLE_LENGTH),
                 'Shorten the plan title.'
             );
         }
@@ -179,7 +217,7 @@ final class PlanValidator
 
         if (mb_strlen($goal, 'UTF-8') > self::MAX_GOAL_LENGTH) {
             $this->addError(
-                'Plan goal is too long (maximum ' . self::MAX_GOAL_LENGTH . ' characters).',
+                sprintf('Plan goal is too long (maximum %d characters).', self::MAX_GOAL_LENGTH),
                 'Shorten the plan goal.'
             );
         }
@@ -207,15 +245,23 @@ final class PlanValidator
 
         $duration = (int)$duration;
 
+        if ($duration < 1) {
+            $this->addError(
+                'Plan duration must be at least 1 minute.',
+                'Set the duration to a positive number of minutes.'
+            );
+            return;
+        }
+
         if ($duration < $this->minDuration) {
             $this->addWarning(
-                "Suggested duration is at least {$this->minDuration} minutes.",
-                "Increase duration to at least {$this->minDuration} minutes."
+                sprintf('Suggested duration is at least %d minutes.', $this->minDuration),
+                sprintf('Increase duration to at least %d minutes.', $this->minDuration)
             );
         } elseif ($duration > $this->maxDuration) {
             $this->addWarning(
-                "Suggested duration is no more than {$this->maxDuration} minutes.",
-                "Decrease duration to {$this->maxDuration} minutes or less."
+                sprintf('Suggested duration is no more than %d minutes.', $this->maxDuration),
+                sprintf('Decrease duration to %d minutes or less.', $this->maxDuration)
             );
         }
     }
@@ -234,30 +280,39 @@ final class PlanValidator
 
         if (count($tags) > self::MAX_TAGS_COUNT) {
             $this->addWarning(
-                'Too many tags provided (maximum ' . self::MAX_TAGS_COUNT . ').',
+                sprintf('Too many tags provided (maximum %d).', self::MAX_TAGS_COUNT),
                 'Reduce the number of tags to the most relevant ones.'
             );
         }
 
+        $seenTags = [];
         foreach ($tags as $index => $tag) {
-            // Prevent "Array" or "Object" string casts and strict check types
             if (!is_string($tag) && !is_numeric($tag)) {
                 $this->addError(
-                    "Tag at index {$index} must be a string or number.",
-                    "Ensure all tags are valid strings or numbers."
+                    sprintf('Tag at index %d must be a string or number.', $index),
+                    'Ensure all tags are valid strings or numbers.'
                 );
                 continue;
             }
 
-            $tagString = trim((string)$tag);
+            $tagString = trim(strtolower((string)$tag));
             
             if ($tagString === '') {
                 $this->addWarning(
-                    "Tag at index {$index} is empty.",
-                    "Remove empty tags or provide a meaningful value."
+                    sprintf('Tag at index %d is empty.', $index),
+                    'Remove empty tags or provide a meaningful value.'
                 );
                 continue;
             }
+
+            if (in_array($tagString, $seenTags, true)) {
+                $this->addWarning(
+                    sprintf('Duplicate tag found: "%s".', $tagString),
+                    sprintf('Remove the duplicate tag "%s".', $tagString)
+                );
+                continue;
+            }
+            $seenTags[] = $tagString;
 
             $tagLength = mb_strlen($tagString, 'UTF-8');
             if ($tagLength > self::MAX_TAG_LENGTH) {
@@ -267,7 +322,6 @@ final class PlanValidator
                 );
             }
 
-            // Add consistency recommendation regardless of length to avoid conflicting "valid" messaging
             if (!preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $tagString)) {
                 $this->addSuggestion(
                     sprintf("Tag '%s' does not follow standard formatting.", $tagString),

@@ -38,17 +38,10 @@
 
 -spec init() -> ok.
 init() ->
-    case ets:info(?METRICS_TABLE, name) of
-        undefined ->
-            %% Guard against the race where another process creates the
-            %% table between our info check and ets:new.
-            try
-                _ = ets:new(?METRICS_TABLE, ?TABLE_OPTS)
-            catch
-                error:badarg -> ok
-            end;
-        _ ->
-            ok
+    try
+        _ = ets:new(?METRICS_TABLE, ?TABLE_OPTS)
+    catch
+        error:badarg -> ok
     end,
     ok.
 
@@ -62,8 +55,7 @@ increment(Key) ->
 
 -spec increment(atom(), integer()) -> ok.
 increment(Key, Amount) when is_integer(Amount) ->
-    safe_call(fun() -> bump_counter(Key, Amount) end),
-    ok.
+    safe_call(fun() -> bump_counter(Key, Amount) end, ok).
 
 -spec decrement(atom()) -> ok.
 decrement(Key) ->
@@ -71,23 +63,20 @@ decrement(Key) ->
 
 -spec decrement(atom(), integer()) -> ok.
 decrement(Key, Amount) when is_integer(Amount) ->
-    safe_call(fun() -> bump_counter(Key, -Amount) end),
-    ok.
+    safe_call(fun() -> bump_counter(Key, -Amount) end, ok).
 
 -spec set(atom(), metric_value()) -> ok.
 set(Key, Value) when is_number(Value) ->
     %% Replacement semantics: set always overwrites regardless of prior type.
-    safe_call(fun() -> ets:insert(?METRICS_TABLE, {Key, gauge, Value}) end),
-    ok.
+    safe_call(fun() -> ets:insert(?METRICS_TABLE, {Key, gauge, Value}) end, ok).
 
 -spec observe(atom(), number()) -> ok.
 observe(Key, Value) when is_number(Value) ->
-    safe_call(fun() -> observe_histogram(Key, Value) end),
-    ok.
+    safe_call(fun() -> observe_histogram(Key, Value) end, ok).
 
 -spec get(atom()) -> metric_data().
 get(Key) ->
-    case safe_call(fun() -> ets:lookup(?METRICS_TABLE, Key) end) of
+    case safe_call(fun() -> ets:lookup(?METRICS_TABLE, Key) end, []) of
         [{Key, counter, Value}] -> Value;
         [{Key, gauge, Value}]   -> Value;
         [{Key, histogram, Sum, Count, Min, Max}] ->
@@ -98,22 +87,20 @@ get(Key) ->
 
 -spec get_all() -> [{atom(), map()}].
 get_all() ->
-    Entries = safe_call(fun() -> ets:tab2list(?METRICS_TABLE) end),
+    Entries = safe_call(fun() -> ets:tab2list(?METRICS_TABLE) end, []),
     [format_entry(Entry) || Entry <- Entries].
 
 -spec delete(atom()) -> ok.
 delete(Key) ->
-    safe_call(fun() -> ets:delete(?METRICS_TABLE, Key) end),
-    ok.
+    safe_call(fun() -> ets:delete(?METRICS_TABLE, Key) end, ok).
 
 -spec reset() -> ok.
 reset() ->
-    safe_call(fun() -> ets:delete_all_objects(?METRICS_TABLE) end),
-    ok.
+    safe_call(fun() -> ets:delete_all_objects(?METRICS_TABLE) end, ok).
 
 -spec to_prometheus() -> binary().
 to_prometheus() ->
-    Entries = safe_call(fun() -> lists:keysort(1, ets:tab2list(?METRICS_TABLE)) end),
+    Entries = safe_call(fun() -> lists:keysort(1, ets:tab2list(?METRICS_TABLE)) end, []),
     iolist_to_binary([prom_line(Entry) || Entry <- Entries]).
 
 %%%===================================================================
@@ -122,84 +109,81 @@ to_prometheus() ->
 
 %% ------------------------------------------------------------------
 %% Safe call wrapper — ensures metrics never crash the calling process
-%% when the table is missing or transiently unavailable.  Returns []
-%% as a benign sentinel suitable for list-comprehension callers.
+%% when the table is missing or transiently unavailable.
 %% ------------------------------------------------------------------
 
--spec safe_call(fun()) -> term().
-safe_call(Fun) ->
+-spec safe_call(fun(), term()) -> term().
+safe_call(Fun, Default) ->
     try
         Fun()
     catch
-        error:badarg -> []
+        error:badarg -> Default
     end.
 
 %% ------------------------------------------------------------------
-%% Counter bump — type-safe via select_replace
+%% Counter bump — uses insert_new to avoid select_replace on first
+%% observation. Atomically adds Amount only to an existing counter.
 %% ------------------------------------------------------------------
 
 -spec bump_counter(atom(), integer()) -> ok.
 bump_counter(Key, Amount) ->
     T = ?METRICS_TABLE,
-    %% Insert a fresh counter if the key is absent; no-op if it exists
-    %% (even as a gauge or histogram — we must not clobber those).
-    _ = ets:insert_new(T, {Key, counter, 0}),
-    %% Atomically add Amount only to an existing counter tuple.
-    _ = ets:select_replace(T, [
-        {{Key, counter, '$1'}, [],
-         [{{const, Key}, counter, {'+', '$1', {const, Amount}}}]}
-    ]),
-    ok.
+    case ets:insert_new(T, {Key, counter, Amount}) of
+        true ->
+            ok;
+        false ->
+            %% Atomically add Amount only to an existing counter tuple.
+            %% If the key exists as a gauge or histogram, it won't match
+            %% and will be safely ignored.
+            _ = ets:select_replace(T, [
+                {{Key, counter, '$1'}, [],
+                 [{{const, Key}, counter, {'+', '$1', {const, Amount}}}]}
+            ]),
+            ok
+    end.
 
 %% ------------------------------------------------------------------
-%% Histogram observation — a single atomic select_replace that bumps
-%% sum/count and conditionally tightens min/max.  Spec order matters:
-%% more specific guards first, then the unconditional default.
+%% Histogram observation — skips select_replace on first observation.
+%% Atomically updates sum/count and conditionally tightens min/max.
 %% ------------------------------------------------------------------
 
 -spec observe_histogram(atom(), number()) -> ok.
 observe_histogram(Key, Value) ->
     T = ?METRICS_TABLE,
-    %% Seed a new histogram if the key is absent.
-    _ = ets:insert_new(T, {Key, histogram, 0, 0, Value, Value}),
-    %% Guards re-check bounds at replacement time, so concurrent
-    %% observes never lose a true extremum.
-    _ = ets:select_replace(T, [
-        %% Value is new min AND new max (only relevant when Min > Max
-        %% due to a prior type-overwriting race — keeps both in sync).
-        {{Key, histogram, '$1', '$2', '$3', '$4'},
-         [{'<', {const, Value}, '$3'}, {'>', {const, Value}, '$4'}],
-         [{{const, Key}, histogram,
-           {'+', '$1', {const, Value}},
-           {'+', '$2', 1},
-           {const, Value},
-           {const, Value}}]},
-        %% Value is new min only.
-        {{Key, histogram, '$1', '$2', '$3', '$4'},
-         [{'<', {const, Value}, '$3'}],
-         [{{const, Key}, histogram,
-           {'+', '$1', {const, Value}},
-           {'+', '$2', 1},
-           {const, Value},
-           '$4'}]},
-        %% Value is new max only.
-        {{Key, histogram, '$1', '$2', '$3', '$4'},
-         [{'>', {const, Value}, '$4'}],
-         [{{const, Key}, histogram,
-           {'+', '$1', {const, Value}},
-           {'+', '$2', 1},
-           '$3',
-           {const, Value}}]},
-        %% No extremum update — just bump sum and count.
-        {{Key, histogram, '$1', '$2', '$3', '$4'},
-         [],
-         [{{const, Key}, histogram,
-           {'+', '$1', {const, Value}},
-           {'+', '$2', 1},
-           '$3',
-           '$4'}]}
-    ]),
-    ok.
+    case ets:insert_new(T, {Key, histogram, Value, 1, Value, Value}) of
+        true ->
+            ok;
+        false ->
+            %% Guards re-check bounds at replacement time, so concurrent
+            %% observes never lose a true extremum.
+            _ = ets:select_replace(T, [
+                %% Value is new min
+                {{Key, histogram, '$1', '$2', '$3', '$4'},
+                 [{'<', {const, Value}, '$3'}],
+                 [{{const, Key}, histogram,
+                   {'+', '$1', {const, Value}},
+                   {'+', '$2', 1},
+                   {const, Value},
+                   '$4'}]},
+                %% Value is new max
+                {{Key, histogram, '$1', '$2', '$3', '$4'},
+                 [{'>', {const, Value}, '$4'}],
+                 [{{const, Key}, histogram,
+                   {'+', '$1', {const, Value}},
+                   {'+', '$2', 1},
+                   '$3',
+                   {const, Value}}]},
+                %% No extremum update — just bump sum and count
+                {{Key, histogram, '$1', '$2', '$3', '$4'},
+                 [],
+                 [{{const, Key}, histogram,
+                   {'+', '$1', {const, Value}},
+                   {'+', '$2', 1},
+                   '$3',
+                   '$4'}]}
+            ]),
+            ok
+    end.
 
 %% ------------------------------------------------------------------
 %% Formatting

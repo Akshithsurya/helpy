@@ -61,9 +61,12 @@ acquire_lock() {
     echo $$ > "${LOCK_FILE}"
 }
 
-# Robust process detection to avoid false positives
+# Robust process detection to avoid false positives with full ps output filtering
 get_service_pids() {
-    pgrep -f "${BEAM_PROCESS_PATTERN}" || true
+    local pids
+    # Use ps to get full command line to avoid pgrep partial matching issues
+    pids=$(ps aux | grep -E "${BEAM_PROCESS_PATTERN}" | grep -v grep | awk '{print $2}' | tr '\n' ' ' | xargs)
+    echo "${pids}"
 }
 
 # Improved stale process handling with force kill option
@@ -108,13 +111,19 @@ cleanup_stale_processes() {
 # Gracefully handle shutdown with process verification
 execute_service_stop() {
     log_info "Executing service stop sequence..."
-    if ! "${STOP_SCRIPT}"; then
-        log_warning "Stop script encountered non-fatal errors, proceeding with shutdown verification"
-    fi
+    local existing_pids
+    existing_pids=$(get_service_pids)
+    if [[ -n "${existing_pids}" ]]; then
+        if ! "${STOP_SCRIPT}"; then
+            log_warning "Stop script encountered non-fatal errors, proceeding with shutdown verification"
+        fi
 
-    # Wait for clean shutdown with timeout
-    log_info "Waiting ${SHUTDOWN_WAIT} seconds for service to shut down completely..."
-    sleep "${SHUTDOWN_WAIT}"
+        # Wait for clean shutdown with timeout
+        log_info "Waiting ${SHUTDOWN_WAIT} seconds for service to shut down completely..."
+        sleep "${SHUTDOWN_WAIT}"
+    else
+        log_info "No running ${SERVICE_NAME} processes detected, skipping stop sequence"
+    fi
 
     # Clean up any remaining processes
     cleanup_stale_processes
@@ -154,9 +163,7 @@ cleanup_on_interrupt() {
     # Clean up lock file regardless of exit reason
     if [[ -f "${LOCK_FILE}" ]]; then
         rm -f "${LOCK_FILE}"
-        if [[ ${exit_code} -ne 0 ]]; then
-            log_info "Lock file removed during cleanup"
-        fi
+        log_info "Lock file removed during cleanup"
     fi
     if [[ ${exit_code} -ne 0 ]]; then
         log_warning "Restart process did not complete successfully (exit code: ${exit_code})"
@@ -167,6 +174,32 @@ trap cleanup_on_interrupt SIGINT SIGTERM EXIT
 
 # Main workflow orchestration
 main() {
+    # Add command line argument parsing for force/quiet options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -f|--force)
+                FORCE_RESTART=1
+                shift
+                ;;
+            -q|--quiet)
+                # Suppress non-error log messages
+                log_info() { :; }
+                shift
+                ;;
+            -h|--help)
+                echo "Usage: $0 [-f|--force] [-q|--quiet] [-h|--help]"
+                echo "  -f, --force    Force restart even if no running process is detected"
+                echo "  -q, --quiet    Suppress non-error log messages"
+                echo "  -h, --help     Show this help message"
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                exit 1
+                ;;
+        esac
+    done
+
     log_info "Initiating ${SERVICE_NAME} service restart..."
     acquire_lock
     validate_helper_scripts
@@ -177,4 +210,4 @@ main() {
 }
 
 # Execute main function
-main
+main "$@"

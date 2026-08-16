@@ -374,6 +374,7 @@ const simpleHandlers = {
   'stop-focus-session': () => focusSessionManager.stop(),
   'get-focus-session-state': () => focusSessionManager.getState(),
   'get-focus-report': () => focusSessionManager.getReport(),
+  'add-focus-session-note': (note) => focusSessionManager.addInterruptionNote(note),
 
   // Tasks
   'get-tasks': () => taskManager.getTasks(),

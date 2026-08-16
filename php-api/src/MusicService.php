@@ -4,32 +4,35 @@ declare(strict_types=1);
 
 /**
  * Orchestrates the music subsystem:
- *   - CRUD for tracks/playlists/favorites
+ *   - CRUD for tracks / playlists / favorites
  *   - Cross-adapter search with dedupe
  *   - Playback state + history with plan linkage
  *   - Plan-seeded recommendations
  *
- * Only MusicDatabase and MusicSourceAdapterRegistry are injected; all PDO
- * access goes through $this->musicDb (which already has identifier
+ * All PDO access is funneled through $this->musicDb (which provides identifier
  * sanitization + prepared-statement helpers) or its raw PDO handle.
  */
 final class MusicService
 {
     // ── Configuration ──────────────────────────────────────────────────
 
-    private const DEFAULT_AUTOPLAYLIST_SIZE          = 30;
-    private const DEFAULT_HISTORY_LIMIT              = 100;
-    private const MAX_SEARCH_LIMIT                   = 200;
-    private const MAX_LIBRARY_LIMIT                  = 500;
-    private const MIN_PLAY_DURATION_TO_INCREMENT_COUNT = 30;
-    private const REPEAT_MODES                       = ['off', 'one', 'all'];
+    private const DEFAULT_AUTOPLAYLIST_SIZE            = 30;
+    private const DEFAULT_HISTORY_LIMIT                = 100;
+    private const MAX_SEARCH_LIMIT                     = 200;
+    private const MAX_LIBRARY_LIMIT                    = 500;
+    private const MIN_PLAY_DURATION_FOR_COUNT          = 30;
+    private const REPEAT_MODES                         = ['off', 'one', 'all'];
 
     private const PLAYBACK_STATE_DIR  = __DIR__ . '/../data';
     private const PLAYBACK_STATE_FILE = self::PLAYBACK_STATE_DIR . '/playback_state.json';
 
-    private const VOLUME_MIN     = 0.0;
-    private const VOLUME_MAX     = 1.0;
-    private const ID_RANDOM_BYTES = 9;
+    private const VOLUME_MIN       = 0.0;
+    private const VOLUME_MAX       = 1.0;
+    private const ID_RANDOM_BYTES  = 9;
+    private const ID_PREFIX_TRACK  = 'trk_';
+    private const ID_PREFIX_PLAYLIST = 'pl_';
+    private const ID_PREFIX_ITEM   = 'pi_';
+    private const ID_PREFIX_HISTORY = 'ph_';
 
     // ── Constructor ────────────────────────────────────────────────────
 
@@ -52,7 +55,7 @@ final class MusicService
     // ═══════════════════════════════════════════════════════════════════
 
     /**
-     * Search across all adapters (and the local DB), then merge + dedupe.
+     * Search across adapters (and the local DB), then merge + dedupe.
      * Pure read: never mutates DB; callers must save from results explicitly.
      *
      * @return list<array{track: array, source: string}>
@@ -64,9 +67,12 @@ final class MusicService
             return [];
         }
 
-        $cappedLimit = self::clamp($limit, 1, self::MAX_SEARCH_LIMIT);
-        $adapters    = $this->getRelevantAdapters($sourceType);
-        $results     = $this->fetchSearchResultsFromAdapters($adapters, $text, $cappedLimit);
+        $cappedLimit = self::clampInt($limit, 1, self::MAX_SEARCH_LIMIT);
+        $results     = $this->fetchSearchResultsFromAdapters(
+            $this->getRelevantAdapters($sourceType),
+            $text,
+            $cappedLimit,
+        );
 
         if (count($results) < $cappedLimit) {
             $results = $this->mergeLocalSearchResults(
@@ -92,15 +98,13 @@ final class MusicService
         int $limit = 200,
         int $offset = 0,
     ): array {
-        $cappedLimit = self::clamp($limit, 1, self::MAX_LIBRARY_LIMIT);
+        $cappedLimit = self::clampInt($limit, 1, self::MAX_LIBRARY_LIMIT);
         $offset      = max(0, $offset);
 
         [$sql, $params] = $this->buildLibraryQuery($sourceType, $genre, $favoriteOnly, $searchText);
 
         $stmt = $this->musicDb->getPdo()->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
+        $this->bindParams($stmt, $params);
         $stmt->bindValue(':lim', $cappedLimit, PDO::PARAM_INT);
         $stmt->bindValue(':off', $offset, PDO::PARAM_INT);
         $stmt->execute();
@@ -110,23 +114,26 @@ final class MusicService
 
     public function getTrack(string $id): ?array
     {
-        $row = $this->musicDb->getDb()->fetchOne('SELECT * FROM tracks WHERE id = ?', [$id]);
+        $row = $this->musicDb->getDb()->fetchOne(
+            'SELECT * FROM tracks WHERE id = ? LIMIT 1',
+            [$id],
+        );
+
         return $row !== null ? self::rowToTrackArray($row) : null;
     }
 
     /**
-     * Persist a MusicTrackDTO as a library track; deduplicates by
+     * Persist a MusicTrackDTO as a library track; dedupes by
      * (source_type, external_id) or by local_path for local files.
      */
     public function upsertTrackFromDto(MusicTrackDTO $dto): array
     {
         $pdo        = $this->musicDb->getPdo();
-        $now        = date('c');
         $sourceType = $dto->sourceType ?? 'local';
+        $now        = date('c');
 
         $existing = $this->findExistingTrack($pdo, $dto, $sourceType);
-
-        $trackId = $existing !== null
+        $trackId  = $existing !== null
             ? $this->updateExistingTrack($pdo, $dto, (string)$existing['id'], $now)
             : $this->createNewTrack($pdo, $dto, $sourceType, $now);
 
@@ -146,10 +153,11 @@ final class MusicService
 
         $trimmedDesc = trim($description);
         $now         = date('c');
-        $id          = $this->generateUniqueId('pl_');
+        $id          = $this->generateUniqueId(self::ID_PREFIX_PLAYLIST);
 
         $this->musicDb->getPdo()->prepare(
-            'INSERT INTO playlists (id, name, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO playlists (id, name, description, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?)'
         )->execute([$id, $trimmedName, $trimmedDesc, $now, $now]);
 
         return $this->getPlaylist($id, true)
@@ -160,22 +168,25 @@ final class MusicService
                 'created_at'  => $now,
                 'updated_at'  => $now,
                 'track_count' => 0,
-            ], true);
+            ], includeTracks: true);
     }
 
     public function listPlaylists(int $limit = 100): array
     {
-        $cappedLimit = self::clamp($limit, 1, self::MAX_LIBRARY_LIMIT);
+        $cappedLimit = self::clampInt($limit, 1, self::MAX_LIBRARY_LIMIT);
         $pdo  = $this->musicDb->getPdo();
         $stmt = $pdo->prepare(
-            'SELECT p.*, (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS track_count
-             FROM playlists p ORDER BY p.updated_at DESC LIMIT ?'
+            'SELECT p.*,
+                    (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS track_count
+             FROM playlists p
+             ORDER BY p.updated_at DESC
+             LIMIT ?'
         );
         $stmt->bindValue(1, $cappedLimit, PDO::PARAM_INT);
         $stmt->execute();
 
         return array_map(
-            fn(array $r): array => $this->buildPlaylistResponse($r, false),
+            fn(array $r): array => $this->buildPlaylistResponse($r, includeTracks: false),
             $stmt->fetchAll() ?: [],
         );
     }
@@ -183,8 +194,11 @@ final class MusicService
     public function getPlaylist(string $id, bool $withTracks = true): ?array
     {
         $row = $this->musicDb->getDb()->fetchOne(
-            'SELECT p.*, (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS track_count
-             FROM playlists p WHERE p.id = ? LIMIT 1',
+            'SELECT p.*,
+                    (SELECT COUNT(*) FROM playlist_items i WHERE i.playlist_id = p.id) AS track_count
+             FROM playlists p
+             WHERE p.id = ?
+             LIMIT 1',
             [$id],
         );
 
@@ -192,7 +206,7 @@ final class MusicService
             return null;
         }
 
-        $playlist = $this->buildPlaylistResponse($row, $withTracks);
+        $playlist = $this->buildPlaylistResponse($row, includeTracks: $withTracks);
         if ($withTracks) {
             $playlist['tracks'] = $this->fetchPlaylistTracks($id);
         }
@@ -204,8 +218,10 @@ final class MusicService
     {
         return $this->transactional(function (PDO $pdo) use ($id): bool {
             $pdo->prepare('DELETE FROM playlist_items WHERE playlist_id = ?')->execute([$id]);
+
             $stmt = $pdo->prepare('DELETE FROM playlists WHERE id = ?');
             $stmt->execute([$id]);
+
             return $stmt->rowCount() > 0;
         });
     }
@@ -215,13 +231,31 @@ final class MusicService
         $this->ensurePlaylistExists($playlistId);
         $this->ensureTrackExists($trackId);
 
-        $pdo      = $this->musicDb->getPdo();
-        $position = $position ?? $this->getNextPlaylistPosition($pdo, $playlistId);
-        $itemId   = $this->generateUniqueId('pi_');
+        $pdo = $this->musicDb->getPdo();
 
-        $pdo->prepare(
-            'INSERT INTO playlist_items (id, playlist_id, track_id, position, added_at) VALUES (?, ?, ?, ?, ?)'
-        )->execute([$itemId, $playlistId, $trackId, $position, date('c')]);
+        $this->transactional(function (PDO $pdo) use ($playlistId, $trackId, $position): void {
+            // Tolerate optional UNIQUE(playlist_id, track_id) constraint —
+            // if it exists and is violated, treat as "already added".
+            $exists = $pdo->prepare(
+                'SELECT 1 FROM playlist_items WHERE playlist_id = ? AND track_id = ? LIMIT 1'
+            );
+            $exists->execute([$playlistId, $trackId]);
+            if ($exists->fetchColumn() !== false) {
+                return;
+            }
+
+            $resolved = $position ?? $this->getNextPlaylistPosition($pdo, $playlistId);
+            $pdo->prepare(
+                'INSERT INTO playlist_items (id, playlist_id, track_id, position, added_at)
+                 VALUES (?, ?, ?, ?, ?)'
+            )->execute([
+                $this->generateUniqueId(self::ID_PREFIX_ITEM),
+                $playlistId,
+                $trackId,
+                $resolved,
+                date('c'),
+            ]);
+        });
 
         return $this->requirePlaylist($playlistId);
     }
@@ -253,27 +287,38 @@ final class MusicService
             return $this->requirePlaylist($playlistId);
         }
 
-        $pdo          = $this->musicDb->getPdo();
-        $ids          = array_map('strval', array_keys($order));
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $pdo = $this->musicDb->getPdo();
+        $ids = array_map('strval', array_keys($order));
 
-        // Pre-flight existence check — avoids relying on rowCount() which
-        // returns 0 when the row exists but the value didn't change.
+        // Pre-flight existence check — rowCount() returns 0 when the row
+        // exists but the value didn't change, so it can't be relied upon.
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $countStmt = $pdo->prepare(
-            "SELECT COUNT(*) FROM playlist_items WHERE playlist_id = ? AND id IN ($placeholders)"
+            "SELECT COUNT(*) FROM playlist_items
+             WHERE playlist_id = ? AND id IN ($placeholders)"
         );
         $countStmt->execute(array_merge([$playlistId], $ids));
+
         if ((int)$countStmt->fetchColumn() !== count($ids)) {
             throw HttpException::notFound('One or more playlist items not found');
         }
 
+        // CASE WHEN is atomic & typically faster than per-row UPDATEs.
         $this->transactional(function (PDO $pdo) use ($order, $playlistId): void {
-            $stmt = $pdo->prepare(
-                'UPDATE playlist_items SET position = ? WHERE id = ? AND playlist_id = ?'
-            );
+            $case  = 'CASE id ';
+            $binds = [];
             foreach ($order as $itemId => $position) {
-                $stmt->execute([(int)$position, (string)$itemId, $playlistId]);
+                $case  .= 'WHEN ? THEN ? ';
+                $binds[] = (string)$itemId;
+                $binds[] = (int)$position;
             }
+            $case .= 'END';
+
+            $sql = "UPDATE playlist_items
+                    SET position = $case
+                    WHERE playlist_id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([...$binds, $playlistId]);
         });
 
         return $this->requirePlaylist($playlistId);
@@ -322,6 +367,7 @@ final class MusicService
         try {
             $decoded = json_decode($raw, true, 8, JSON_THROW_ON_ERROR);
         } catch (Throwable) {
+            // Corrupt or partially-written file — start fresh.
             return $this->getDefaultPlaybackState();
         }
 
@@ -339,8 +385,15 @@ final class MusicService
 
     public function clearPlaybackState(): void
     {
-        if (is_file(self::PLAYBACK_STATE_FILE)) {
-            @unlink(self::PLAYBACK_STATE_FILE);
+        if (!is_file(self::PLAYBACK_STATE_FILE)) {
+            return;
+        }
+
+        if (@unlink(self::PLAYBACK_STATE_FILE) === false && is_file(self::PLAYBACK_STATE_FILE)) {
+            throw new RuntimeException(sprintf(
+                'Failed to remove playback state file "%s".',
+                self::PLAYBACK_STATE_FILE,
+            ));
         }
     }
 
@@ -353,20 +406,24 @@ final class MusicService
         $sessionId  = self::extractNullableString($event, 'sessionId');
         $ended      = self::extractNullableString($event, 'endedAt');
         $started    = self::extractNullableString($event, 'startedAt') ?? date('c');
+        $id         = $this->generateUniqueId(self::ID_PREFIX_HISTORY);
 
-        $pdo = $this->musicDb->getPdo();
-        $id  = $this->generateUniqueId('ph_');
+        $this->transactional(function (PDO $pdo) use (
+            $id, $trackId, $started, $ended, $duration, $sessionId, $planId, $sourceType,
+        ): void {
+            $pdo->prepare(
+                'INSERT INTO playback_history
+                    (id, track_id, started_at, ended_at, duration_played_sec,
+                     session_id, plan_id, source_type)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute([$id, $trackId, $started, $ended, $duration, $sessionId, $planId, $sourceType]);
 
-        $pdo->prepare(
-            'INSERT INTO playback_history
-                (id, track_id, started_at, ended_at, duration_played_sec, session_id, plan_id, source_type)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        )->execute([$id, $trackId, $started, $ended, $duration, $sessionId, $planId, $sourceType]);
-
-        if ($trackId !== null && $duration >= self::MIN_PLAY_DURATION_TO_INCREMENT_COUNT) {
-            $pdo->prepare('UPDATE tracks SET play_count = play_count + 1, updated_at = ? WHERE id = ?')
-                ->execute([date('c'), $trackId]);
-        }
+            if ($trackId !== null && $duration >= self::MIN_PLAY_DURATION_FOR_COUNT) {
+                $pdo->prepare(
+                    'UPDATE tracks SET play_count = play_count + 1, updated_at = ? WHERE id = ?'
+                )->execute([date('c'), $trackId]);
+            }
+        });
 
         return [
             'id'                => $id,
@@ -387,18 +444,18 @@ final class MusicService
      */
     public function getHistory(int $limit = 100, ?string $trackId = null, ?string $planId = null): array
     {
-        $cappedLimit = self::clamp($limit, 1, self::MAX_LIBRARY_LIMIT);
-        $pdo  = $this->musicDb->getPdo();
+        $cappedLimit = self::clampInt($limit, 1, self::MAX_LIBRARY_LIMIT);
+        $pdo         = $this->musicDb->getPdo();
 
         $where  = [];
         $params = [];
 
         if ($trackId !== null) {
-            $where[]           = 'track_id = :trackId';
+            $where[]            = 'track_id = :trackId';
             $params[':trackId'] = $trackId;
         }
         if ($planId !== null) {
-            $where[]         = 'plan_id = :planId';
+            $where[]          = 'plan_id = :planId';
             $params[':planId'] = $planId;
         }
 
@@ -407,9 +464,7 @@ final class MusicService
         $sql .= ' ORDER BY started_at DESC LIMIT :lim';
 
         $stmt = $pdo->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value);
-        }
+        $this->bindParams($stmt, $params);
         $stmt->bindValue(':lim', $cappedLimit, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -418,11 +473,13 @@ final class MusicService
 
     public function getTopTracks(int $limit = 50, ?string $since = null): array
     {
-        $cappedLimit = self::clamp($limit, 1, self::MAX_LIBRARY_LIMIT);
-        $pdo  = $this->musicDb->getPdo();
+        $cappedLimit = self::clampInt($limit, 1, self::MAX_LIBRARY_LIMIT);
+        $pdo         = $this->musicDb->getPdo();
 
         if ($since === null) {
-            $stmt = $pdo->prepare('SELECT * FROM tracks ORDER BY play_count DESC, title ASC LIMIT ?');
+            $stmt = $pdo->prepare(
+                'SELECT * FROM tracks ORDER BY play_count DESC, title ASC LIMIT ?'
+            );
             $stmt->bindValue(1, $cappedLimit, PDO::PARAM_INT);
             $stmt->execute();
             return array_map(self::rowToTrackArray(...), $stmt->fetchAll() ?: []);
@@ -456,7 +513,7 @@ final class MusicService
      */
     public function getRecommendations(?string $planId = null, ?string $genre = null, int $limit = 30): array
     {
-        $cappedLimit = self::clamp($limit, 1, self::MAX_SEARCH_LIMIT);
+        $cappedLimit = self::clampInt($limit, 1, self::MAX_SEARCH_LIMIT);
         $pdo         = $this->musicDb->getPdo();
 
         $rows = $this->tryFetchSeededRecommendations($pdo, $planId, $genre, $cappedLimit);
@@ -515,14 +572,18 @@ final class MusicService
 
     private function ensurePlaylistExists(string $id): void
     {
-        if (!$this->playlistExists($id)) {
+        $stmt = $this->musicDb->getPdo()->prepare('SELECT 1 FROM playlists WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        if ($stmt->fetchColumn() === false) {
             throw HttpException::notFound('Playlist not found');
         }
     }
 
     private function ensureTrackExists(string $id): void
     {
-        if (!$this->trackExists($id)) {
+        $stmt = $this->musicDb->getPdo()->prepare('SELECT 1 FROM tracks WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        if ($stmt->fetchColumn() === false) {
             throw HttpException::notFound('Track not found');
         }
     }
@@ -531,6 +592,9 @@ final class MusicService
     //  Private: Search helpers
     // ═══════════════════════════════════════════════════════════════════
 
+    /**
+     * @return list<MusicSourceAdapter>
+     */
     private function getRelevantAdapters(?string $sourceType): array
     {
         if ($sourceType !== null && $sourceType !== '') {
@@ -540,6 +604,11 @@ final class MusicService
         return $this->registry->list();
     }
 
+    /**
+     * @param list<MusicSourceAdapter> $adapters
+     *
+     * @return list<array{track: array, source: string}>
+     */
     private function fetchSearchResultsFromAdapters(array $adapters, string $text, int $limit): array
     {
         $query   = new MusicQuery(text: $text, limit: $limit);
@@ -560,8 +629,8 @@ final class MusicService
                 if (isset($seen[$key])) {
                     continue;
                 }
-                $seen[$key]   = true;
-                $results[]    = [
+                $seen[$key] = true;
+                $results[]  = [
                     'track'  => $dto->toArray(),
                     'source' => $adapter->getSourceType(),
                 ];
@@ -574,6 +643,11 @@ final class MusicService
         return $results;
     }
 
+    /**
+     * @param list<array{track: array, source: string}> $results
+     *
+     * @return list<array{track: array, source: string}>
+     */
     private function mergeLocalSearchResults(array $results, string $text, int $remaining): array
     {
         if ($remaining <= 0) {
@@ -617,8 +691,8 @@ final class MusicService
             if (isset($seen[$key])) {
                 continue;
             }
-            $seen[$key]  = true;
-            $results[]   = [
+            $seen[$key] = true;
+            $results[]  = [
                 'track'  => $track,
                 'source' => $track['sourceType'],
             ];
@@ -651,7 +725,9 @@ final class MusicService
             $where[] = 'is_favorite = 1';
         }
         if ($searchText !== null && $searchText !== '') {
-            $where[]       = "(title LIKE :st ESCAPE '\\' OR artist LIKE :st ESCAPE '\\' OR album LIKE :st ESCAPE '\\')";
+            $where[]       = "(title LIKE :st ESCAPE '\\'
+                                OR artist LIKE :st ESCAPE '\\'
+                                OR album LIKE :st ESCAPE '\\')";
             $params[':st'] = '%' . self::escapeLike($searchText) . '%';
         }
 
@@ -669,7 +745,9 @@ final class MusicService
     private function findExistingTrack(PDO $pdo, MusicTrackDTO $dto, string $sourceType): ?array
     {
         if ($dto->externalId !== null && $dto->externalId !== '') {
-            $stmt = $pdo->prepare('SELECT * FROM tracks WHERE source_type = ? AND external_id = ? LIMIT 1');
+            $stmt = $pdo->prepare(
+                'SELECT * FROM tracks WHERE source_type = ? AND external_id = ? LIMIT 1'
+            );
             $stmt->execute([$sourceType, $dto->externalId]);
             $match = $stmt->fetch();
             if ($match !== false) {
@@ -678,7 +756,9 @@ final class MusicService
         }
 
         if ($dto->localPath !== null && $dto->localPath !== '') {
-            $stmt = $pdo->prepare('SELECT * FROM tracks WHERE source_type = ? AND local_path = ? LIMIT 1');
+            $stmt = $pdo->prepare(
+                'SELECT * FROM tracks WHERE source_type = ? AND local_path = ? LIMIT 1'
+            );
             $stmt->execute([$sourceType, $dto->localPath]);
             $match = $stmt->fetch();
             if ($match !== false) {
@@ -697,8 +777,10 @@ final class MusicService
                     url = ?, local_path = ?, cover_url = ?, year = ?, updated_at = ?
               WHERE id = ?'
         )->execute([
-            $dto->title, $dto->artist, $dto->album, $dto->durationSec ?? 0, $dto->genre,
-            $dto->url, $dto->localPath, $dto->coverUrl, $dto->year, $now, $trackId,
+            $dto->title, $dto->artist, $dto->album,
+            $dto->durationSec ?? 0, $dto->genre,
+            $dto->url, $dto->localPath, $dto->coverUrl, $dto->year,
+            $now, $trackId,
         ]);
 
         return $trackId;
@@ -706,16 +788,18 @@ final class MusicService
 
     private function createNewTrack(PDO $pdo, MusicTrackDTO $dto, string $sourceType, string $now): string
     {
-        $id = $this->generateUniqueId('trk_');
+        $id = $this->generateUniqueId(self::ID_PREFIX_TRACK);
         $pdo->prepare(
             'INSERT INTO tracks
                 (id, source_type, external_id, title, artist, album, duration_sec, genre,
                  url, local_path, cover_url, year, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         )->execute([
-            $id, $sourceType, $dto->externalId, $dto->title, $dto->artist, $dto->album,
-            $dto->durationSec ?? 0, $dto->genre, $dto->url, $dto->localPath, $dto->coverUrl,
-            $dto->year, $now, $now,
+            $id, $sourceType, $dto->externalId,
+            $dto->title, $dto->artist, $dto->album,
+            $dto->durationSec ?? 0, $dto->genre,
+            $dto->url, $dto->localPath, $dto->coverUrl, $dto->year,
+            $now, $now,
         ]);
 
         return $id;
@@ -725,20 +809,9 @@ final class MusicService
     //  Private: Playlist helpers
     // ═══════════════════════════════════════════════════════════════════
 
-    private function playlistExists(string $id): bool
-    {
-        $stmt = $this->musicDb->getPdo()->prepare('SELECT 1 FROM playlists WHERE id = ? LIMIT 1');
-        $stmt->execute([$id]);
-        return (bool)$stmt->fetchColumn();
-    }
-
-    private function trackExists(string $id): bool
-    {
-        $stmt = $this->musicDb->getPdo()->prepare('SELECT 1 FROM tracks WHERE id = ? LIMIT 1');
-        $stmt->execute([$id]);
-        return (bool)$stmt->fetchColumn();
-    }
-
+    /**
+     * @return list<array>
+     */
     private function fetchPlaylistTracks(string $playlistId): array
     {
         $rows = $this->musicDb->getDb()->fetchAll(
@@ -755,7 +828,9 @@ final class MusicService
 
     private function getNextPlaylistPosition(PDO $pdo, string $playlistId): int
     {
-        $stmt = $pdo->prepare('SELECT COALESCE(MAX(position), -1) FROM playlist_items WHERE playlist_id = ?');
+        $stmt = $pdo->prepare(
+            'SELECT COALESCE(MAX(position), -1) FROM playlist_items WHERE playlist_id = ?'
+        );
         $stmt->execute([$playlistId]);
         return (int)$stmt->fetchColumn() + 1;
     }
@@ -820,13 +895,13 @@ final class MusicService
             }
             $value = $patch[$key];
             $current[$key] = match ($key) {
-                'isPlaying', 'shuffle'  => (bool)$value,
-                'positionSec'           => max(0.0, (float)$value),
-                'volume'                => self::clamp((float)$value, self::VOLUME_MIN, self::VOLUME_MAX),
-                'repeatMode'            => in_array((string)$value, self::REPEAT_MODES, true)
+                'isPlaying', 'shuffle' => (bool)$value,
+                'positionSec'          => max(0.0, (float)$value),
+                'volume'               => self::clampFloat((float)$value, self::VOLUME_MIN, self::VOLUME_MAX),
+                'repeatMode'           => in_array((string)$value, self::REPEAT_MODES, true)
                                             ? (string)$value
                                             : 'off',
-                default                 => $value === null ? null : (string)$value,
+                default                => $value === null ? null : (string)$value,
             };
         }
 
@@ -859,17 +934,24 @@ final class MusicService
     {
         $dir = self::PLAYBACK_STATE_DIR;
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
-            throw new RuntimeException(sprintf('Cannot create playback state directory "%s".', $dir));
+            throw new RuntimeException(sprintf(
+                'Cannot create playback state directory "%s".',
+                $dir,
+            ));
         }
 
-        $json = json_encode(
-            $state,
-            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
-        );
+        try {
+            $json = json_encode(
+                $state,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR,
+            );
+        } catch (JsonException $e) {
+            throw new RuntimeException('Failed to encode playback state: ' . $e->getMessage(), 0, $e);
+        }
 
-        // Include PID in temp filename to avoid collisions across processes.
+        // PID + random bytes in temp name avoids collisions across processes.
         $tmp = sprintf(
-            '%s.tmp.%s.%s',
+            '%s.tmp.%s.%d',
             self::PLAYBACK_STATE_FILE,
             bin2hex(random_bytes(4)),
             getmypid(),
@@ -881,7 +963,10 @@ final class MusicService
 
         if (!@rename($tmp, self::PLAYBACK_STATE_FILE)) {
             @unlink($tmp);
-            throw new RuntimeException('Failed to persist playback state.');
+            throw new RuntimeException(sprintf(
+                'Failed to persist playback state at "%s".',
+                self::PLAYBACK_STATE_FILE,
+            ));
         }
     }
 
@@ -890,9 +975,7 @@ final class MusicService
     // ═══════════════════════════════════════════════════════════════════
 
     /**
-     * Attempt to fetch seeded recommendations. Returns empty array if the
-     * library is empty (caller should fall back — though the fallback is
-     * also empty in that case).
+     * Attempt to fetch seeded recommendations.
      *
      * @return list<array>
      */
@@ -966,9 +1049,8 @@ final class MusicService
     }
 
     /**
-     * Fetch fallback recommendations: favorites first, then any tracks.
-     * Uses a single query with priority ordering to avoid two round-trips
-     * and to avoid discarding partial favorite results.
+     * Fallback recommendations: favorites first, then any tracks.
+     * A single query with priority ordering — one round-trip, no partial loss.
      *
      * @return list<array>
      */
@@ -998,13 +1080,24 @@ final class MusicService
         return $sourceType . '|' . ($externalId ?? $localPath ?? $url ?? '');
     }
 
+    /**
+     * Bind a map of named parameters to a statement.
+     *
+     * @param array<string, scalar|null> $params
+     */
+    private function bindParams(PDOStatement $stmt, array $params): void
+    {
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+    }
+
     private static function extractNullableString(array $data, string $key): ?string
     {
-        if (!isset($data[$key])) {
+        if (!array_key_exists($key, $data) || $data[$key] === null) {
             return null;
         }
-        $value = $data[$key];
-        return $value === null ? null : (string)$value;
+        return (string)$data[$key];
     }
 
     private static function escapeLike(string $value): string
@@ -1012,7 +1105,12 @@ final class MusicService
         return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 
-    private static function clamp(int|float $value, int|float $min, int|float $max): int|float
+    private static function clampInt(int $value, int $min, int $max): int
+    {
+        return max($min, min($value, $max));
+    }
+
+    private static function clampFloat(float $value, float $min, float $max): float
     {
         return max($min, min($value, $max));
     }

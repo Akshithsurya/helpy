@@ -19,7 +19,9 @@ numberOrZero = (value) ->
   if Number.isFinite(amount) and amount > 0 then Math.round(amount) else 0
 
 buildWeeklyFocusSeries = (planStats = {}, focusReport = {}, daysToShow = 7, now = new Date()) ->
-  totalDays = Math.max(1, Number.parseInt(daysToShow, 10) or 7)
+  # Parse and validate input parameters to ensure safe calculation
+  parsedDays = Number.parseInt(daysToShow, 10)
+  totalDays = Math.max(1, if Number.isFinite(parsedDays) then parsedDays else 7)
   plannedMinutes = planStats?.dailyStats ? {}
 
   # Aggregate completed sessions by local date key

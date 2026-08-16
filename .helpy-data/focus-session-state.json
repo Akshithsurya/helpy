@@ -1,0 +1,14 @@
+{
+  "active": false,
+  "paused": false,
+  "phase": "idle",
+  "endsAt": null,
+  "remainingMs": 0,
+  "workMinutes": 25,
+  "breakMinutes": 5,
+  "strict": false,
+  "lockoutUntil": null,
+  "startedAt": null,
+  "phaseStartedAt": null,
+  "interruptionNotes": []
+}

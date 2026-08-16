@@ -12,7 +12,6 @@ module PlanService
 
     # Continuation lines start with a single space (RFC 5545 §3.1)
     CONTINUATION_PREFIX = ' '
-    CONTINUATION_LIMIT  = MAX_LINE - CONTINUATION_PREFIX.bytesize
 
     # Date-time format strings (RFC 5545 §3.3.5)
     UTC_STAMP_FORMAT   = '%Y%m%dT%H%M%SZ'
@@ -28,8 +27,10 @@ module PlanService
       "\n"   => '\n'
     }.freeze
     ESCAPE_REGEX = /[\\;,]|\r\n|\r|\n/.freeze
+
     private_constant :ESCAPE_TABLE, :ESCAPE_REGEX,
-                     :UTC_STAMP_FORMAT, :ZONED_STAMP_FORMAT
+                     :UTC_STAMP_FORMAT, :ZONED_STAMP_FORMAT,
+                     :CONTINUATION_PREFIX
 
     # Exports a plan to a fully RFC 5545 compliant iCalendar string.
     # @param plan [Hash] Plan data with :created_at and :tasks array
@@ -46,34 +47,28 @@ module PlanService
           'BEGIN:VCALENDAR',
           'VERSION:2.0',
           "PRODID:#{PRODID}",
-          'CALSCALE:GREGORIAN', # Avoid ambiguous date handling
+          'CALSCALE:GREGORIAN',
           *build_events(plan),
           'END:VCALENDAR'
         ]
       end
 
-      # Generates VEVENT entries for all non-break tasks in the plan
+      # Generates VEVENT entries for all non-break tasks in the plan.
       def build_events(plan)
         base_time = parse_time(plan[:created_at])
         return [] unless base_time
 
         dtstamp = stamp(Time.now.utc)
         elapsed = 0
-        events  = []
 
-        Array(plan[:tasks]).each do |task|
-          next unless task.is_a?(Hash)
-          next if task[:is_break]
-          next unless valid_task?(task)
-
-          duration   = task[:duration_minutes].to_i
-          start_time = base_time + elapsed
-          elapsed   += duration * 60
-
-          events.concat(build_event(task, start_time, duration, dtstamp))
-        end
-
-        events
+        Array(plan[:tasks])
+          .select { |t| t.is_a?(Hash) && !t[:is_break] && valid_task?(t) }
+          .flat_map do |task|
+            duration = task[:duration_minutes].to_i
+            event    = build_event(task, base_time + elapsed, duration, dtstamp)
+            elapsed += duration * 60
+            event
+          end
       end
 
       def valid_task?(task)
@@ -87,7 +82,7 @@ module PlanService
           'BEGIN:VEVENT',
           "UID:#{generate_uid(task[:id])}",
           "DTSTART;TZID=UTC:#{stamp_zoned(start_time)}",
-          "DTSTAMP:#{dtstamp}", # RFC 5545 §3.6.1 (MUST)
+          "DTSTAMP:#{dtstamp}",
           "DURATION:PT#{duration}M",
           "SUMMARY:#{escape_text(task[:title])}",
           'END:VEVENT'
@@ -103,66 +98,53 @@ module PlanService
         value.to_s.gsub(ESCAPE_REGEX, ESCAPE_TABLE)
       end
 
-      # RFC 5545 §3.1 line folding, preserving UTF-8 character boundaries
+      # RFC 5545 §3.1 line folding, preserving UTF-8 character boundaries.
       def fold_lines(lines)
-        lines.flat_map(&method(:fold_single_line))
+        lines.flat_map { |line| fold_line(line) }
       end
 
-      def fold_single_line(line)
+      def fold_line(line)
         return [line] if line.bytesize <= MAX_LINE
 
-        bytes  = line.b
-        total  = bytes.bytesize
-        chunks = []
-        offset = 0
+        chunks  = []
+        current = +''
 
-        while offset < total
-          limit  = chunks.empty? ? MAX_LINE : CONTINUATION_LIMIT
-          slice  = utf8_safe_slice_size(bytes, offset, limit)
-          chunk  = bytes.byteslice(offset, slice)
-          chunk  = "#{CONTINUATION_PREFIX}#{chunk}" if chunks.any?
-          chunks << chunk.force_encoding(Encoding::UTF_8)
-          offset += slice
+        line.each_char do |char|
+          if !current.empty? && current.bytesize + char.bytesize > MAX_LINE
+            chunks << current
+            current = +CONTINUATION_PREFIX
+          end
+          current << char
         end
 
-        chunks
+        chunks << current
       end
 
-      # Backs off the slice limit to avoid splitting multi-byte UTF-8 chars
-      def utf8_safe_slice_size(bytes, offset, limit)
-        while limit.positive? &&
-              offset + limit < bytes.bytesize &&
-              (bytes.getbyte(offset + limit) & 0xC0) == 0x80
-          limit -= 1
-        end
-        limit
-      end
-
-      # Robust time parser handling Time, Numeric, and string inputs
+      # Robust time parser handling Time, Numeric, and string inputs.
       def parse_time(value)
         return nil unless value
-        return value.utc if value.is_a?(Time)
-        return Time.at(value.to_f).utc if value.is_a?(Numeric)
 
-        parse_string_time(value.to_s)
+        case value
+        when Time    then value.utc
+        when Numeric then Time.at(value.to_f).utc
+        else
+          string = value.to_s
+          safe_parse { Time.iso8601(string) } || safe_parse { Time.parse(string) }
+        end
       end
 
-      def parse_string_time(string)
-        try_parse { Time.iso8601(string) } || try_parse { Time.parse(string) }
-      end
-
-      def try_parse
+      def safe_parse
         yield.utc
       rescue ArgumentError
         nil
       end
 
-      # Form 1: UTC date-time with trailing Z (used for DTSTAMP)
+      # UTC date-time with trailing Z (RFC 5545 §3.3.5 Form 1)
       def stamp(time)
         time.utc.strftime(UTC_STAMP_FORMAT)
       end
 
-      # Form 2: zoned date-time (no trailing Z) used alongside TZID
+      # Zoned date-time (no trailing Z) used alongside TZID (Form 2)
       def stamp_zoned(time)
         time.utc.strftime(ZONED_STAMP_FORMAT)
       end

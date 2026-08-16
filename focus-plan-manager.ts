@@ -363,7 +363,13 @@ class FocusPlanManager {
     timePeriod: string;
   } {
     const normalizedDays = Math.max(1, Number.parseInt(days as unknown as string, 10) || 30);
-    const cutoffTime = Date.now() - normalizedDays * 24 * 60 * 60 * 1000;
+    let maxRefTime = 0;
+    this.history.forEach(entry => {
+      const t = Date.parse(entry.completedAt || entry.createdAt || '');
+      if (Number.isFinite(t) && t > maxRefTime) maxRefTime = t;
+    });
+    if (maxRefTime === 0) maxRefTime = Date.now();
+    const cutoffTime = maxRefTime - normalizedDays * 24 * 60 * 60 * 1000;
     const filteredHistory = this.history.filter(entry => {
       const referenceTime = Date.parse(entry.completedAt || entry.createdAt || '');
       return Number.isFinite(referenceTime) && referenceTime >= cutoffTime;

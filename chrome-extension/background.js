@@ -1306,13 +1306,24 @@ const blockEnforcer = {
 
     this._activeBlockedDomains = newDomains;
     this._allowedDomains = state.allowedDomains || [];
-    // Existing loopback HTTP is used for sync to avoid a separate native host.
-    // Remove legacy redirect rules so the content-script nudge is always shown first.
+    // Apply actual navigation redirects while the Shield is active, so a
+    // blocked site never gets the chance to become a distraction.
     try {
       const legacyRuleIds = Array.from({ length: 500 }, (_, i) => BLOCK_ENFORCER_RULE_ID_START + i);
+      const redirectRules = [...new Set(newDomains)]
+        .slice(0, 500)
+        .map((domain, index) => ({
+          id: BLOCK_ENFORCER_RULE_ID_START + index,
+          priority: 1,
+          action: { type: 'redirect', redirect: { extensionPath: '/blocked.html' } },
+          condition: {
+            urlFilter: `||${String(domain).replace(/^\*\./, '')}^`,
+            resourceTypes: ['main_frame'],
+          },
+        }));
       await chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: legacyRuleIds,
-        addRules: [],
+        addRules: redirectRules,
       });
     } catch {}
   },
@@ -2140,8 +2151,18 @@ async function updateFocusShieldRules(active) {
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message && message.action === 'setShieldState') {
-      updateFocusShieldRules(Boolean(message.active));
-      if (typeof sendResponse === 'function') sendResponse({ success: true, active: message.active });
+      // The app is the source of truth. Pull its current blocklist immediately
+      // rather than applying the old hard-coded social-site list.
+      blockEnforcer
+        .sync()
+        .then(() => {
+          if (typeof sendResponse === 'function')
+            sendResponse({ success: true, active: Boolean(message.active) });
+        })
+        .catch(() => {
+          if (typeof sendResponse === 'function') sendResponse({ success: false });
+        });
+      return true;
     }
   });
 }
@@ -2168,6 +2189,7 @@ if (typeof module !== 'undefined' && module.exports) {
     startChecking,
     tabTracker,
     pomodoroTimer,
+    sendPlanToApp: sendCommandPlanToApp,
     __testing: {
       getState() {
         return {

@@ -74,6 +74,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   stopFocusSession: () => ipcRenderer.invoke('stop-focus-session'),
   getFocusSessionState: () => ipcRenderer.invoke('get-focus-session-state'),
   getFocusReport: () => ipcRenderer.invoke('get-focus-report'),
+  addFocusSessionNote: (note) => ipcRenderer.invoke('add-focus-session-note', note),
   onFocusSessionUpdated: (callback) =>
     ipcRenderer.on('focus-session-updated', (_event, state) => callback(state)),
 

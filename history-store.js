@@ -21,7 +21,7 @@ function createHistoryStore(fileName, normalizeArray) {
     },
     save(entries) {
       const pruned = pruneHistory(entries);
-      writeJsonAtomic(filePath, pruned);
+      writeJsonAtomic(filePath, pruned);s
       return pruned;
     },
     append(entries, nextEntries) {

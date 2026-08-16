@@ -6,6 +6,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 # shellcheck source=common.sh
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/common.sh"
+
+# Trap to clean up lock file and handle errors
+cleanup() {
+    local exit_code=$?
+    rm -rf "$LOCK_FILE"
+    if [[ $exit_code -ne 0 && $ROLLBACK_ON_FAILURE == true && $ROLLBACK_TRIGGERED == false ]]; then
+        log_warn "Deployment failed, initiating rollback..."
+        trigger_rollback
+    fi
+    exit $exit_code
+}
+trap cleanup EXIT INT TERM
+
 ##############################
 # Configuration - Environment Overridable
 ##############################
@@ -47,6 +60,7 @@ DEPLOYMENT_START_TIMESTAMP=$(date +%s)
 DEPLOYMENT_PID="$$"
 ROLLBACK_TRIGGERED=false
 CURRENT_DEPLOY_COMMIT=""
+BACKUP_PATH=""
 # Load previous deployment state
 if [[ -f "$LAST_COMMIT_FILE" ]]; then
     PREVIOUS_COMMIT=$(<"$LAST_COMMIT_FILE")
@@ -61,6 +75,124 @@ log_info "=== Deployment started at $(date -Iseconds) ==="
 # Directory Preparation
 ##############################
 mkdir -p "$BACKUP_DIR"
+# Clean up old backups
+find "$BACKUP_DIR" -maxdepth 1 -type d -mtime +30 -name "backup_*" | sort | head -n -$MAX_BACKUP_COUNT | xargs -r rm -rf
+##############################
+# Core Helper Functions
+##############################
+# Check if service health endpoint is responsive
+is_service_healthy() {
+    curl -fsS --connect-timeout "$CURL_TIMEOUT" "http://localhost:${SERVICE_PORT}${HEALTH_CHECK_ENDPOINT}" &>/dev/null
+}
+
+# Get all running service PIDs
+get_service_pids() {
+    pgrep -f "$SERVICE_NAME" || true
+}
+
+# Gracefully stop existing service
+stop_service() {
+    local pids
+    pids=$(get_service_pids)
+    if [[ -z "$pids" ]]; then
+        log_info "No running service instances found"
+        return 0
+    fi
+    
+    log_info "Attempting to stop service with PIDs: $pids"
+    for attempt in $(seq 1 "$STOP_MAX_RETRIES"); do
+        # Check if any processes are still running
+        local running=0
+        for pid in $pids; do
+            if kill -0 "$pid" 2>/dev/null; then
+                running=1
+                break
+            fi
+        done
+        
+        if [[ $running -eq 0 ]]; then
+            log_info "All service processes stopped successfully"
+            return 0
+        fi
+        
+        # Send SIGTERM first
+        kill $pids 2>/dev/null || true
+        sleep "$STOP_RETRY_DELAY"
+    done
+    
+    # Force kill if still running
+    log_warn "Service did not stop gracefully, force killing..."
+    kill -9 $pids 2>/dev/null || true
+    sleep "$FORCE_KILL_DELAY"
+    
+    # Verify port is released
+    for i in $(seq 1 "$PORT_CHECK_TIMEOUT"); do
+        if ! nc -z localhost "$SERVICE_PORT" 2>/dev/null; then
+            break
+        fi
+        if [[ $i -eq $PORT_CHECK_TIMEOUT ]]; then
+            log_error "Failed to release port $SERVICE_PORT after force kill"
+            return 1
+        fi
+        sleep 1
+    done
+    log_info "Port $SERVICE_PORT successfully released"
+}
+
+# Create backup of current deployment
+create_backup() {
+    BACKUP_PATH="${BACKUP_DIR}/backup_$(date +%Y%m%d_%H%M%S)_${PREVIOUS_COMMIT:0:8}"
+    log_info "Creating backup of current deployment at $BACKUP_PATH"
+    mkdir -p "$BACKUP_PATH"
+    if [[ -d "$ERLANG_DIR" ]]; then
+        cp -a "$ERLANG_DIR" "$BACKUP_PATH/" || {
+            log_error "Failed to copy current deployment to backup"
+            return 1
+        }
+    fi
+    if [[ -f "$LAST_COMMIT_FILE" ]]; then
+        cp "$LAST_COMMIT_FILE" "$BACKUP_PATH/" || log_warn "Failed to copy last commit file to backup"
+    fi
+    log_info "Backup completed successfully"
+}
+
+# Rollback to previous deployment
+trigger_rollback() {
+    ROLLBACK_TRIGGERED=true
+    if [[ -z "$BACKUP_PATH" || ! -d "$BACKUP_PATH" ]]; then
+        log_error "No valid backup found to rollback to"
+        exit 1
+    fi
+
+    log_warn "=== Starting rollback process ==="
+    stop_service || true
+    
+    for attempt in $(seq 1 "$ROLLBACK_MAX_RETRIES"); do
+        log_info "Rollback attempt $attempt/$ROLLBACK_MAX_RETRIES"
+        if cp -a "${BACKUP_PATH}/$(basename "$ERLANG_DIR")" "$(dirname "$ERLANG_DIR")/" && \
+           cp "${BACKUP_PATH}/.last_deployed_commit" "$LAST_COMMIT_FILE" && \
+           "${SCRIPT_DIR}/start.sh"; then
+            log_info "Rollback completed successfully, service is running from backup"
+            exit 1
+        fi
+        sleep "$ROLLBACK_RETRY_DELAY"
+    done
+    
+    log_error "All rollback attempts failed, manual intervention required"
+    exit 1
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local deps=("nc" "curl" "rebar3" "git" "pgrep")
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &>/dev/null; then
+            log_error "Required dependency not found: $dep"
+            exit 1
+        fi
+    done
+}
+
 ##############################
 # Exclusive Locking (Prevent Concurrent Deployments)
 ##############################
@@ -76,8 +208,48 @@ acquire_lock() {
         rm -rf "$LOCK_FILE"
         mkdir "$LOCK_FILE" || {
             log_error "Failed to recreate lock file"
-done
-log_info "Port $SERVICE_PORT successfully released"
+            exit 1
+        }
+    fi
+    echo "$DEPLOYMENT_PID" > "${LOCK_FILE}/.pid"
+    log_info "Successfully acquired deployment lock"
+}
+
+##############################
+# Main Deployment Flow
+##############################
+# Initial checks
+check_dependencies
+acquire_lock
+
+# Step 1: Enter Erlang source directory
+cd "$ERLANG_DIR" || {
+    log_error "Failed to enter Erlang directory: $ERLANG_DIR"
+    exit 1
+}
+
+# Step 2: Fetch latest code and validate commit
+log_info "Fetching latest code from $GIT_REMOTE/$GIT_BRANCH"
+git fetch "$GIT_REMOTE" || { log_error "Failed to fetch from git"; exit 1; }
+CURRENT_DEPLOY_COMMIT=$(git rev-parse "$GIT_REMOTE/$GIT_BRANCH")
+
+if [[ "$CURRENT_DEPLOY_COMMIT" == "$PREVIOUS_COMMIT" ]]; then
+    log_info "No new commits to deploy. Current commit $CURRENT_DEPLOY_COMMIT is already running."
+    exit 0
+fi
+log_info "Preparing to deploy commit: ${CURRENT_DEPLOY_COMMIT:0:8}"
+
+# Step 3: Create backup before making changes
+if [[ -n "$PREVIOUS_COMMIT" ]]; then
+    create_backup
+fi
+
+# Step 4: Checkout new code
+log_info "Checking out new commit: ${CURRENT_DEPLOY_COMMIT:0:8}"
+git checkout -f "$CURRENT_DEPLOY_COMMIT" || { log_error "Failed to checkout new commit"; exit 1; }
+
+# Step 5: Stop existing service
+stop_service || exit 1
 
 # Step 6: Build production release
 if [[ -f "rebar.config" && grep -q "relx" "rebar.config" ]]; then
@@ -120,6 +292,9 @@ for i in $(seq 1 "$HEALTH_CHECK_RETRIES"); do
     is_service_healthy || { log_error "Service health check failed post-startup"; exit 1; }
     sleep 1
 done
+
+# Step 8: Update deployment state
+echo "$CURRENT_DEPLOY_COMMIT" > "$LAST_COMMIT_FILE"
 
 # Final success message
 SERVICE_PIDS=$(get_service_pids)

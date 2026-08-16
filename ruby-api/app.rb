@@ -3,6 +3,7 @@
 require 'sinatra/base'
 require 'rack/deflater'
 require 'json'
+require 'timeout'
 require 'securerandom'
 require 'time'
 require 'logger'

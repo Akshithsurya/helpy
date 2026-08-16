@@ -1,0 +1,64 @@
+directories:
+  output: release/app
+  buildResources: build
+npmRebuild: false
+appId: com.helpy.app
+productName: Helpy
+asarUnpack:
+  - erlang/**/*
+  - ruby-api/**/*
+files:
+  - filter:
+      - '**/*'
+      - '!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}'
+      - '!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}'
+      - '!**/node_modules/*.d.ts'
+      - '!**/node_modules/.bin'
+      - '!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}'
+      - '!.vscode'
+      - '!**/._*'
+      - '!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}'
+      - '!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}'
+      - '!**/{appveyor.yml,.travis.yml,circle.yml}'
+      - '!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}'
+      - '!__tests__'
+      - '!.trae'
+      - '!dist/**'
+      - '!release/**'
+      - '!.env'
+      - '!active-focus-session.json'
+      - '!analytics-data.json'
+      - '!app-history.json'
+      - '!focus-history.json'
+      - '!focus-session-state.json'
+      - '!focus-session-history.json'
+      - '!focus-plan-history.json'
+      - '!focus-plan-templates.json'
+      - '!habits-data.json'
+      - '!jwt-secret.json'
+      - '!notifications-data.json'
+      - '!settings.json'
+      - '!tab-history-store.json'
+      - '!tab-history.json'
+      - '!tags.json'
+      - '!tasks-data.json'
+      - '!tasks.json'
+      - '!tracking-items.json'
+      - '!tracking-records.json'
+      - '!users.json'
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+publish:
+  - provider: github
+    owner: REPLACE_WITH_GITHUB_OWNER
+    repo: REPLACE_WITH_GITHUB_REPOSITORY
+electronVersion: 42.5.1

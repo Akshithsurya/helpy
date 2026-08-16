@@ -162,7 +162,7 @@ class SecurityManager
   @KeyLengthError   = KeyLengthError
   @CSRFTokenError   = CSRFTokenError
   @RateLimitError   = RateLimitError
-  @VERSION          = '2.2.0'
+  @VERSION          = '2.4.0'
 
   # ── Static: key derivation ─────────────────────────────────────────────────
   @deriveKeyFromPassphrase: (passphrase, salt = null, scryptOpts = {}, keyLength = 32) ->
@@ -179,11 +179,12 @@ class SecurityManager
     merged = mergeScryptOpts scryptOpts
     validateScryptOpts merged
     saltBuf = parseSalt salt
-    derived = if sync
-      crypto.scryptSync passphrase, saltBuf, keyLength, merged
+    if sync
+      derived = crypto.scryptSync passphrase, saltBuf, keyLength, merged
+      { key: derived.toString('hex'), salt: saltBuf.toString('hex') }
     else
-      await scryptAsync passphrase, saltBuf, keyLength, merged
-    { key: derived.toString('hex'), salt: saltBuf.toString('hex') }
+      scryptAsync(passphrase, saltBuf, keyLength, merged).then (derived) ->
+        { key: derived.toString('hex'), salt: saltBuf.toString('hex') }
 
   @generateKey: (bytes = 32) ->
     n = if isPositiveInt bytes then bytes else 32
@@ -281,20 +282,20 @@ class SecurityManager
   # ── Encryption: shared internal helpers ────────────────────────────────────
   _formatEncrypted: (iv, body, tagOrMac) ->
     if @_isGCM
-      "#{iv.toString 'base64'}:#{tagOrMac.toString 'base64'}:#{body.toString 'base64'}"
+      "#{iv.toString 'base64url'}:#{tagOrMac.toString 'base64url'}:#{body.toString 'base64url'}"
     else
-      "#{iv.toString 'base64'}:#{body.toString 'base64'}:#{tagOrMac.toString 'base64'}"
+      "#{iv.toString 'base64url'}:#{body.toString 'base64url'}:#{tagOrMac.toString 'base64url'}"
 
   _parseEncrypted: (text) ->
     parts = text.split ':'
     return null unless parts.length is 3
     [ a, b, c ] = parts
-    return null unless a and b and c and BASE64_RE.test(a) and BASE64_RE.test(b) and BASE64_RE.test(c)
-    iv   = Buffer.from a, 'base64'
+    return null unless a and b and c
+    iv   = Buffer.from a, 'base64url'
     if @_isGCM
-      { iv, tag: Buffer.from(b, 'base64'), body: Buffer.from(c, 'base64') }
+      { iv, tag: Buffer.from(b, 'base64url'), body: Buffer.from(c, 'base64url') }
     else
-      { iv, body: Buffer.from(b, 'base64'), mac: Buffer.from(c, 'base64') }
+      { iv, body: Buffer.from(b, 'base64url'), mac: Buffer.from(c, 'base64url') }
 
   _encryptInternal: (raw) ->
     iv     = crypto.randomBytes @_ivLength
@@ -368,7 +369,7 @@ class SecurityManager
   isEncryptedFormat: (text) ->
     return false unless isNonEmptyString text
     parts = text.split ':'
-    parts.length is 3 and parts.every (p) -> isNonEmptyString(p) and BASE64_RE.test p
+    parts.length is 3 and parts.every (p) -> isNonEmptyString(p)
 
   peekEncrypted: (text) ->
     return null unless @isEncryptedFormat text
@@ -421,7 +422,7 @@ class SecurityManager
     if sync
       crypto.scryptSync input, saltBuf, @_scryptKeyLength, @_scryptOptions
     else
-      await scryptAsync input, saltBuf, @_scryptKeyLength, @_scryptOptions
+      scryptAsync input, saltBuf, @_scryptKeyLength, @_scryptOptions
 
   _hash: (data, salt, pepper, sync) ->
     fnName = if sync then 'hashSync' else 'hash'
@@ -429,10 +430,21 @@ class SecurityManager
       throw new HashingError "#{fnName}() input must be a string" unless isString data
       saltBuf = parseSalt salt, @_saltLength
       input   = @_pepperInput data, pepper
-      derived = @_scryptDerive fnName, input, saltBuf, sync
-      throw new HashingError 'scrypt produced unexpected output' \
-        unless isBuffer(derived) and derived.length is @_scryptKeyLength
-      "#{saltBuf.toString 'hex'}:#{derived.toString 'hex'}"
+      if sync
+        derived = @_scryptDerive fnName, input, saltBuf, sync
+        throw new HashingError 'scrypt produced unexpected output' \
+          unless isBuffer(derived) and derived.length is @_scryptKeyLength
+        "#{saltBuf.toString 'hex'}:#{derived.toString 'hex'}"
+      else
+        @_inflightAsync++
+        try
+          derived = await @_scryptDerive fnName, input, saltBuf, sync
+          throw new HashingError 'scrypt produced unexpected output' \
+            unless isBuffer(derived) and derived.length is @_scryptKeyLength
+          "#{saltBuf.toString 'hex'}:#{derived.toString 'hex'}"
+        finally
+          @_inflightAsync--
+
     catch err
       throw err if err instanceof SecurityError
       @logger.error "[SecurityManager.#{fnName}] failed:", err?.message
@@ -451,12 +463,63 @@ class SecurityManager
       saltBuf  = Buffer.from saltHex,     'hex'
       expected = Buffer.from expectedHex, 'hex'
       input    = @_pepperInput data, pepper
-      derived  = @_scryptDerive fnName, input, saltBuf, sync
-      return false unless derived.length is expected.length
-      constantTimeCompare derived, expected
+      if sync
+        derived = @_scryptDerive fnName, input, saltBuf, sync
+        return false unless derived.length is expected.length
+        constantTimeCompare derived, expected
+      else
+        @_inflightAsync++
+        try
+          derived = await @_scryptDerive fnName, input, saltBuf, sync
+          return false unless derived.length is expected.length
+          constantTimeCompare derived, expected
+        finally
+          @_inflightAsync--
     catch err
       @logger.warn "[SecurityManager.#{fnName}] failed:", err?.message
       false
+
+  # ── Sliding window rate limiting ───────────────────────────────────────────
+  checkRateLimit: (key, maxRequests, windowMs) ->
+    @_ensureNotDestroyed()
+    unless isNonEmptyString(key) and isPositiveInt(maxRequests) and isPositiveInt(windowMs)
+      throw new RateLimitError 'Invalid rate limit parameters'
+    now = Date.now()
+    windowStart = now - windowMs
+    bucket = @_rateLimitBuckets.get(key) ? []
+    bucket = bucket.filter (ts) -> ts > windowStart
+    if bucket.length >= maxRequests
+      oldestRequest = Math.min(...bucket)
+      retryMs = oldestRequest + windowMs - now
+      throw new RateLimitError(key, Math.max(0, retryMs))
+    bucket.push now
+    @_rateLimitBuckets.set(key, bucket)
+    if @_rateLimitBuckets.size > 10000
+      @_cleanupRateLimitBuckets windowMs
+    true
+
+  _cleanupRateLimitBuckets: (windowMs) ->
+    now = Date.now()
+    cutoff = now - windowMs
+    for [key, timestamps] from @_rateLimitBuckets.entries()
+      active = timestamps.filter (ts) -> ts > cutoff
+      if active.length is 0
+        @_rateLimitBuckets.delete key
+
+  # ── Safe logging utilities ────────────────────────────────────────────────
+  redactSensitive: (obj, replacer = '[REDACTED]') ->
+    return obj unless isPlainObject obj
+    result = {}
+    for k, v of obj
+      if SENSITIVE_RE.test k
+        result[k] = replacer
+      else if isPlainObject v
+        result[k] = @redactSensitive v, replacer
+      else if Array.isArray v
+        result[k] = v.map (item) -> if isPlainObject(item) then @redactSensitive(item, replacer) else item
+      else
+        result[k] = v
+    result
 
   # ── Tokens ─────────────────────────────────────────────────────────────────
   generateToken: (lengthBytes = 32) ->
@@ -474,196 +537,38 @@ class SecurityManager
   signSecureJWT: (payload, jwtSecret, options = {}) ->
     jwt = _jwtLoader()
     unless jwt?
-      throw new SecurityError 'jsonwebtoken package not available'
-    unless isPlainObject payload
-      throw new SecurityError 'signSecureJWT: payload must be an object'
-    unless isNonEmptyString jwtSecret
-      throw new SecurityError 'signSecureJWT: jwtSecret must be a non-empty string'
-
-    opts = { algorithm: 'HS256', ...options }
-    try
-      jwt.sign payload, jwtSecret, opts
-    catch err
-      @logger.error '[SecurityManager.signSecureJWT] failed:', err?.message
-      throw new SecurityError "JWT signing failed: #{err?.message}", err
+      throw new SecurityError 'jsonwebtoken not installed; install it to use JWT features'
+    @_ensureNotDestroyed()
+    unless isPlainObject(payload)
+      throw new SecurityError 'JWT payload must be an object'
+    unless isNonEmptyString(jwtSecret) or isBuffer(jwtSecret)
+      throw new SecurityError 'jwtSecret must be a non-empty string or Buffer'
+    
+    defaultOpts = 
+      algorithm: 'HS256'
+      expiresIn: '1h'
+    mergedOpts = { ...defaultOpts, ...options }
+    allowedAlgos = new Set ['HS256', 'HS384', 'HS512']
+    unless allowedAlgos.has mergedOpts.algorithm
+      throw new SecurityError "Unsupported JWT algorithm: #{mergedOpts.algorithm}. Use one of: #{Array.from(allowedAlgos).join(', ')}"
+    
+    jwt.sign payload, jwtSecret, mergedOpts
 
   verifySecureJWT: (token, jwtSecret, options = {}) ->
     jwt = _jwtLoader()
-    return { valid: false, data: null, error: 'jsonwebtoken package not available' } unless jwt?
+    unless jwt?
+      throw new SecurityError 'jsonwebtoken not installed; install it to use JWT features'
+    @_ensureNotDestroyed()
+    unless isNonEmptyString(token)
+      throw new SecurityError 'JWT token must be a non-empty string'
+    unless isNonEmptyString(jwtSecret) or isBuffer(jwtSecret)
+      throw new SecurityError 'jwtSecret must be a non-empty string or Buffer'
+    
+    defaultOpts =
+      algorithms: ['HS256', 'HS384', 'HS512']
+    mergedOpts = { ...defaultOpts, ...options }
+    
     try
-      throw new SecurityError 'Token must be a non-empty string'      unless isNonEmptyString token
-      throw new SecurityError 'jwtSecret must be a non-empty string'  unless isNonEmptyString jwtSecret
-      opts = { algorithms: [ 'HS256' ], ...options }
-      decoded = jwt.verify token, jwtSecret, opts
-      { valid: true, data: decoded }
+      jwt.verify token, jwtSecret, mergedOpts
     catch err
-      code =
-        if err?.name is 'TokenExpiredError' then 'token_expired'
-        else if err?.name is 'NotBeforeError' then 'token_not_active'
-        else if err?.name is 'JsonWebTokenError' then 'token_invalid'
-        else 'verify_failed'
-      msg = if err instanceof SecurityError then err.message else err?.message or 'Unknown error'
-      @logger.warn '[SecurityManager.verifySecureJWT] failed:', msg
-      { valid: false, data: null, error: msg, code }
-
-  # ── HMAC ───────────────────────────────────────────────────────────────────
-  hmac: (data, key = null) ->
-    throw new SecurityError 'hmac() data must not be null or undefined' unless data?
-    k = if key? then (if isBuffer key then key else Buffer.from String(key)) else @keyBuffer
-    d = if isBuffer data then data else Buffer.from String(data), 'utf8'
-    crypto.createHmac('sha256', k).update(d).digest 'hex'
-
-  verifyHmac: (data, expectedHex, key = null) ->
-    try
-      return false unless isNonEmptyString expectedHex
-      computed = Buffer.from @hmac(data, key), 'hex'
-      expected = Buffer.from expectedHex, 'hex'
-      constantTimeCompare computed, expected
-    catch
-      false
-
-  # ── Secure storage (sync or async store) ───────────────────────────────────
-  secureStore: (store, key, data) ->
-    try
-      throw new SecurityError 'secureStore: store.set is required'          unless isFunction store?.set
-      throw new SecurityError 'secureStore: key must be a non-empty string' unless isNonEmptyString key
-      enc = @encrypt data
-      res = store.set key, enc
-      if res and typeof res?.then is 'function'
-        res.then(-> true).catch (err) =>
-          @logger.error '[SecurityManager.secureStore] async failed:', err?.message
-          false
-      else
-        true
-    catch err
-      @logger.error '[SecurityManager.secureStore] failed:', err?.message
-      false
-
-  secureRetrieve: (store, key) ->
-    try
-      throw new SecurityError 'secureRetrieve: store.get is required'        unless isFunction store?.get
-      throw new SecurityError 'secureRetrieve: key must be a non-empty string' unless isNonEmptyString key
-      encrypted = store.get key
-      handle = (enc) ->
-        return null unless enc?
-        @decrypt enc
-      if encrypted and typeof encrypted?.then is 'function'
-        encrypted.then(handle.bind(@)).catch (err) =>
-          @logger.warn '[SecurityManager.secureRetrieve] async failed:', err?.message
-          null
-      else
-        handle.call @, encrypted
-    catch err
-      @logger.warn '[SecurityManager.secureRetrieve] failed:', err?.message
-      null
-
-  # ── Sanitization ───────────────────────────────────────────────────────────
-  sanitizeForStorage: (obj, maxDepth = 20) ->
-    depth = if isPositiveInt maxDepth then maxDepth else 20
-    seen  = new WeakSet()
-
-    walk = (value, d) ->
-      return value unless value?
-      return '[Sanitized: max depth]' if d > depth
-
-      type = typeof value
-      return value if type in ['string', 'number', 'boolean', 'bigint', 'symbol']
-
-      return '[Circular]' if seen.has value
-      seen.add value
-
-      return '[Buffer]'               if isBuffer value
-      return value.toISOString()      if value instanceof Date
-      return "[Error: #{value.message}]" if value instanceof Error
-
-      if Array.isArray value
-        return (walk item, d + 1 for item in value)
-
-      if value instanceof Map
-        result = {}
-        value.forEach (v, k) -> result[String(k)] = walk v, d + 1
-        return result
-
-      if value instanceof Set
-        return (walk item, d + 1 for item in value)
-
-      result = {}
-      for own key, val of value
-        result[key] = if isString(key) and SENSITIVE_RE.test key then '[Redacted]' else walk val, d + 1
-      result
-
-    walk obj, 0
-
-  maskSensitive: (text, keepChars = 4, maskChar = '*') ->
-    return '' unless isNonEmptyString text
-    keep = if isPositiveInt keepChars   then keepChars else 4
-    char = if isNonEmptyString maskChar then maskChar[0] else '*'
-
-    # Clamp keep so head+tail never exceeds length
-    keep = Math.min keep, Math.floor(text.length / 2)
-
-    return char.repeat text.length if text.length <= keep * 2
-    head = text.slice 0, keep
-    tail = text.slice -keep
-    mid  = char.repeat Math.max 1, text.length - keep * 2
-    "#{head}#{mid}#{tail}"
-
-  # ── Rate limiting ──────────────────────────────────────────────────────────
-  validateRateLimit: (key, windowMs, maxCalls) ->
-    unless isNonEmptyString key
-      throw new RateLimitError 'invalid-key', 0
-    unless isPositiveInt windowMs
-      throw new RateLimitError key, 0
-    unless isPositiveInt maxCalls
-      throw new RateLimitError key, 0
-
-    now    = Date.now()
-    cutoff = now - windowMs
-    arr    = @_rateLimitBuckets.get(key) ? []
-
-    # In-place prune: drop timestamps older than the cutoff
-    writeIdx = 0
-    for ts in arr
-      arr[writeIdx++] = ts if ts > cutoff
-    arr.length = writeIdx
-
-    allowed = arr.length < maxCalls
-    arr.push now if allowed
-    @_rateLimitBuckets.set key, arr
-
-    remaining    = Math.max 0, maxCalls - arr.length
-    retryAfterMs = if allowed
-      0
-    else if arr.length > 0
-      Math.max 0, arr[0] + windowMs - now
-    else
-      0
-
-    { allowed, remaining, retryAfterMs }
-
-  clearRateLimit: (key) ->
-    @_rateLimitBuckets.delete key
-    return
-
-  pruneRateLimits: (maxAgeMs = 60000) ->
-    now    = Date.now()
-    cutoff = now - (if isPositiveInt maxAgeMs then maxAgeMs else 60000)
-    removed = 0
-    @_rateLimitBuckets.forEach (arr, key) =>
-      writeIdx = 0
-      for ts in arr
-        arr[writeIdx++] = ts if ts > cutoff
-      if writeIdx is 0
-        @_rateLimitBuckets.delete key
-        removed++
-      else
-        arr.length = writeIdx
-    removed
-
-  resetRateLimits: ->
-    count = @_rateLimitBuckets.size
-    @_rateLimitBuckets.clear()
-    count
-
-# ── Export ───────────────────────────────────────────────────────────────────
-module.exports = SecurityManager
+      throw new SecurityError 'JWT verification failed', err

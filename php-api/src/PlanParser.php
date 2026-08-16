@@ -38,19 +38,7 @@ final class PlanResult
     /** Backward-compatible bridge for code expecting the old array format. */
     public function toArray(): array
     {
-        return [
-            'title'            => $this->title,
-            'goal'             => $this->goal,
-            'durationMinutes'  => $this->durationMinutes,
-            'usedPreset'       => $this->usedPreset,
-            'chunkSizeMinutes' => $this->chunkSizeMinutes,
-            'breakMinutes'     => $this->breakMinutes,
-            'tags'             => $this->tags,
-            'musicPreset'      => $this->musicPreset,
-            'playlistId'       => $this->playlistId,
-            'musicSource'      => $this->musicSource,
-            'genre'            => $this->genre,
-        ];
+        return get_object_vars($this);
     }
 }
 

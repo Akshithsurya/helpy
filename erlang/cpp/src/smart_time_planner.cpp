@@ -15,25 +15,54 @@
 namespace {
 
 // -----------------------------------------------------------------------------
-// Named constants — eliminates magic numbers throughout the file
+// Named constants
 // -----------------------------------------------------------------------------
 
 inline constexpr int    kDefaultChunkSize       = 25;
 inline constexpr int    kMinChunkSize           = 10;
 inline constexpr int    kMinBreakMinutes        = 3;
 inline constexpr int    kMaxBreakMinutes        = 10;
-inline constexpr double kIdealBreakRatio        = 0.20;  // 5 min break per 25 min work
+inline constexpr double kIdealBreakRatio        = 0.20;
 inline constexpr double kMinEfficiencyScore     = 0.50;
 inline constexpr double kMaxEfficiencyScore     = 0.95;
 inline constexpr double kBreakRatioPenalty      = 2.0;
 inline constexpr double kDefaultEfficiencyScore = 0.75;
 inline constexpr double kDefaultFocusScore      = 0.70;
 
+// Ideal chunk-size band used for focus scoring.
+inline constexpr int kMinIdealChunk = 20;
+inline constexpr int kMaxIdealChunk = 40;
+
 // Chunk sizes in descending order — iteration naturally finds the largest first.
 inline constexpr std::array<int, 8> kChunkOptions = {50, 45, 40, 30, 25, 20, 15, 10};
 
 // Shared hex lookup table — used by both ID generation and JSON escaping.
 inline constexpr char kHexChars[] = "0123456789abcdef";
+
+// 256-entry lookup: true if the byte must be escaped inside a JSON string
+// literal (control chars U+0000..U+001F, double-quote, backslash).
+// Generated at compile time so there is no runtime cost.
+inline constexpr std::array<bool, 256> kNeedsJsonEscape = []() constexpr {
+    std::array<bool, 256> tbl{};
+    for (int i = 0; i < 0x20; ++i)
+        tbl[static_cast<std::size_t>(i)] = true;
+    tbl[static_cast<unsigned char>('"')]  = true;
+    tbl[static_cast<unsigned char>('\\')] = true;
+    return tbl;
+}();
+
+// Pre-built escape sequences for every control character 0x00..0x1F.
+// Entries with a short form (\b \t \n \f \r) use it; all others use \u00XX.
+inline constexpr std::string_view kShortEscapes[0x20] = {
+    "\\u0000", "\\u0001", "\\u0002", "\\u0003",
+    "\\u0004", "\\u0005", "\\u0006", "\\u0007",
+    "\\b",     "\\t",     "\\n",     "\\u000B",
+    "\\f",     "\\r",     "\\u000E", "\\u000F",
+    "\\u0010", "\\u0011", "\\u0012", "\\u0013",
+    "\\u0014", "\\u0015", "\\u0016", "\\u0017",
+    "\\u0018", "\\u0019", "\\u001A", "\\u001B",
+    "\\u001C", "\\u001D", "\\u001E", "\\u001F",
+};
 
 // -----------------------------------------------------------------------------
 // StringBuilder — efficient append-only builder with JSON support
@@ -82,7 +111,8 @@ public:
         return *this;
     }
     StringBuilder& operator<<(bool v) {
-        buf_.append(v ? "true" : "false");
+        if (v) buf_.append("true", 4);
+        else   buf_.append("false", 5);
         return *this;
     }
     StringBuilder& operator<<(int v)                { append_integer(v); return *this; }
@@ -101,7 +131,7 @@ public:
                 return *this;
             }
         }
-        buf_.append("null");
+        buf_.append("null", 4);
         return *this;
     }
 
@@ -129,7 +159,7 @@ public:
 
     StringBuilder& json_kv(std::string_view key, bool value) {
         json_key(key);
-        buf_.append(value ? "true" : "false");
+        *this << value;
         return *this;
     }
 
@@ -160,8 +190,8 @@ public:
 private:
     template <typename T>
     void append_integer(T v) {
-        // Buffer is large enough for any integer type (max 20 digits + sign).
-        // std::to_chars for integers never fails with this buffer size.
+        // 24 bytes is sufficient for any integer type (max 20 digits + sign).
+        // std::to_chars for integers never fails with a buffer this large.
         char tmp[24];
         const auto [ptr, ec] = std::to_chars(tmp, tmp + sizeof(tmp), v);
         if (ec == std::errc()) {
@@ -170,47 +200,36 @@ private:
     }
 
     // Escapes a string for a JSON string literal (RFC 8259).
-    // U+0000..U+001F, '"' and '\\' are escaped; bytes >= 0x80 pass through
-    // to preserve UTF-8 content.
+    // Uses kNeedsJsonEscape for O(1) per-byte escape decisions and
+    // kShortEscapes for direct replacement without branching.
     void json_escape(std::string_view s) {
         if (s.empty()) return;
 
-        const char* const src = s.data();
+        const unsigned char* src =
+            reinterpret_cast<const unsigned char*>(s.data());
         const std::size_t len = s.size();
         std::size_t i = 0;
 
         while (i < len) {
             // Fast-scan: copy runs of characters that need no escaping.
             const std::size_t run_start = i;
-            while (i < len) {
-                const unsigned char c = static_cast<unsigned char>(src[i]);
-                if (c < 0x20 || c == '"' || c == '\\') break;
+            while (i < len && !kNeedsJsonEscape[src[i]])
                 ++i;
-            }
-            if (i > run_start) {
-                buf_.append(src + run_start, i - run_start);
-            }
-            if (i == len) break;
+            if (i > run_start)
+                buf_.append(reinterpret_cast<const char*>(src + run_start),
+                            i - run_start);
+            if (i == len)
+                break;
 
-            // Escape the character at position i.
-            const unsigned char c = static_cast<unsigned char>(src[i]);
-            switch (c) {
-                case '"':  buf_.append("\\\"", 2); break;
-                case '\\': buf_.append("\\\\", 2); break;
-                case '\b': buf_.append("\\b", 2);  break;
-                case '\f': buf_.append("\\f", 2);  break;
-                case '\n': buf_.append("\\n", 2);  break;
-                case '\r': buf_.append("\\r", 2);  break;
-                case '\t': buf_.append("\\t", 2);  break;
-                default: { // Remaining control characters (< 0x20) → \u00XX
-                    char hex[6] = {
-                        '\\', 'u', '0', '0',
-                        kHexChars[(c >> 4) & 0xF],
-                        kHexChars[c & 0xF]
-                    };
-                    buf_.append(hex, 6);
-                    break;
-                }
+            // Emit the appropriate escape sequence.
+            const unsigned char c = src[i];
+            if (c == '"') {
+                buf_.append("\\\"", 2);
+            } else if (c == '\\') {
+                buf_.append("\\\\", 2);
+            } else {
+                // c < 0x20 — use the pre-built table.
+                buf_.append(kShortEscapes[c]);
             }
             ++i;
         }
@@ -233,30 +252,32 @@ unsigned int rng_next() noexcept {
     return gen();
 }
 
-std::string generate_slot_id() {
+[[nodiscard]] std::string generate_slot_id() {
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
 
-    std::string id;
-    id.reserve(40);
-    id.append("slot-");
+    StringBuilder sb(40);
+    sb.append("slot-", 5);
 
     // Epoch-milliseconds as decimal (locale-independent).
     char num_buf[24];
     const auto [ptr, ec] = std::to_chars(
         num_buf, num_buf + sizeof(num_buf), static_cast<long long>(ms));
     if (ec == std::errc()) {
-        id.append(num_buf, static_cast<std::size_t>(ptr - num_buf));
+        sb.append(num_buf, static_cast<std::size_t>(ptr - num_buf));
     }
-    id.push_back('-');
+    sb << '-';
 
-    // 8 hex digits from the PRNG.
+    // 8 hex digits from the PRNG — written right-to-left then appended.
     unsigned int r = rng_next();
-    for (int i = 0; i < 8; ++i, r >>= 4) {
-        id.push_back(kHexChars[r & 0xF]);
+    char hex_buf[8];
+    for (int i = 7; i >= 0; --i) {
+        hex_buf[i] = kHexChars[r & 0xF];
+        r >>= 4;
     }
+    sb.append(hex_buf, 8);
 
-    return id;
+    return sb.release();
 }
 
 // -----------------------------------------------------------------------------
@@ -287,9 +308,8 @@ SmartPlanner::SmartPlanner() = default;
 
 int SmartPlanner::calculate_optimal_chunk(int available_time, int desired_duration,
                                           [[maybe_unused]] int break_ratio) {
-    if (available_time <= 0 || desired_duration <= 0) {
+    if (available_time <= 0 || desired_duration <= 0)
         return kDefaultChunkSize;
-    }
 
     // kChunkOptions is sorted descending, so the first fitting chunk is the
     // largest.  We want:
@@ -299,25 +319,28 @@ int SmartPlanner::calculate_optimal_chunk(int available_time, int desired_durati
     //   3. Last resort: kMinChunkSize.
     int largest_avail = -1;
     for (const int chunk : kChunkOptions) {
-        if (chunk > available_time) continue;
-        if (largest_avail < 0) largest_avail = chunk;  // first = largest
-        if (chunk <= desired_duration) return chunk;    // best fit — early exit
+        if (chunk > available_time)
+            continue;
+        if (largest_avail < 0)
+            largest_avail = chunk;       // first = largest
+        if (chunk <= desired_duration)
+            return chunk;                 // best fit — early exit
     }
 
-    if (largest_avail >= 0) return largest_avail;
-    return kMinChunkSize;
+    return largest_avail >= 0 ? largest_avail : kMinChunkSize;
 }
 
 bool SmartPlanner::is_slot_available(int slot_start, int slot_duration,
                                      const std::vector<std::pair<int, int>>& busy_slots) noexcept {
-    if (slot_duration <= 0) return false;
+    if (slot_duration <= 0)
+        return false;
     const int slot_end = slot_start + slot_duration;
     for (const auto& [busy_start, busy_end] : busy_slots) {
-        if (busy_end <= busy_start) continue; // Skip degenerate ranges.
+        if (busy_end <= busy_start)
+            continue;                    // Skip degenerate ranges.
         // Half-open interval overlap test.
-        if (slot_start < busy_end && slot_end > busy_start) {
+        if (slot_start < busy_end && slot_end > busy_start)
             return false;
-        }
     }
     return true;
 }
@@ -400,11 +423,16 @@ ProductivityStats SmartPlanner::analyze_productivity(
         return stats;
     }
 
-    // Derive structural statistics from past plans.  Without explicit
-    // completion/feedback data, the work/break ratio serves as a proxy
-    // for sustainability: a 5:1 work-to-break ratio (breaks ≈ 20% of
-    // work time) is ideal; deviations lower the efficiency estimate.
+    // Derive structural statistics from past plans.
+    //
+    // Efficiency: based on the work/break ratio.  A break ratio of ~20 %
+    // (5 min break per 25 min work) is ideal; deviations lower the score.
+    //
+    // Focus: based on average chunk size relative to the ideal band
+    // (20–40 min).  Chunks that are too short fragment attention; chunks
+    // that are too long lead to diminishing returns from fatigue.
     double total_efficiency   = 0.0;
+    double total_focus        = 0.0;
     double weighted_chunk_sum = 0.0;
     int    total_tasks        = 0;
 
@@ -416,17 +444,35 @@ ProductivityStats SmartPlanner::analyze_productivity(
         }
         total_tasks += static_cast<int>(plan.tasks.size());
 
+        // --- Efficiency score ---
         const double ratio = work > 0
             ? static_cast<double>(brk) / static_cast<double>(work)
             : 0.0;
-        const double penalty = std::abs(ratio - kIdealBreakRatio) * kBreakRatioPenalty;
-        total_efficiency   += std::clamp(1.0 - penalty, kMinEfficiencyScore, kMaxEfficiencyScore);
-        weighted_chunk_sum += plan.chunk_size_minutes * static_cast<double>(plan.tasks.size());
+        const double eff_penalty = std::abs(ratio - kIdealBreakRatio) * kBreakRatioPenalty;
+        total_efficiency += std::clamp(1.0 - eff_penalty,
+                                       kMinEfficiencyScore, kMaxEfficiencyScore);
+
+        // --- Focus score ---
+        const int chunk = plan.chunk_size_minutes;
+        double plan_focus;
+        if (chunk >= kMinIdealChunk && chunk <= kMaxIdealChunk) {
+            plan_focus = 1.0;
+        } else {
+            const double dist = (chunk < kMinIdealChunk)
+                ? static_cast<double>(kMinIdealChunk - chunk)
+                : static_cast<double>(chunk - kMaxIdealChunk);
+            plan_focus = std::clamp(1.0 - dist / 20.0, 0.0, 1.0);
+        }
+        total_focus += plan_focus;
+
+        weighted_chunk_sum += plan.chunk_size_minutes
+                            * static_cast<double>(plan.tasks.size());
     }
 
     const double n = static_cast<double>(past_plans.size());
     stats.efficiency_score = total_efficiency / n;
-    stats.focus_score      = std::clamp(stats.efficiency_score, kMinEfficiencyScore, kMaxEfficiencyScore);
+    stats.focus_score      = std::clamp(total_focus / n,
+                                        kMinEfficiencyScore, kMaxEfficiencyScore);
 
     const int avg_chunk = total_tasks > 0
         ? static_cast<int>(std::round(weighted_chunk_sum / total_tasks))
@@ -444,24 +490,25 @@ ProductivityStats SmartPlanner::analyze_productivity(
 
 std::string SmartPlanner::generate_optimized_plan(const PlanProcessor::FullPlan& plan,
                                                    bool auto_adjust) {
-    auto optimized_plan = plan;
+    // Fast path: when auto_adjust is disabled the plan is unchanged —
+    // skip the copy and task regeneration entirely.
+    if (!auto_adjust)
+        return PlanProcessor::plan_to_json(plan);
 
-    if (auto_adjust) {
-        const int optimal_chunk = calculate_optimal_chunk(
-            plan.duration_minutes, plan.chunk_size_minutes);
-        optimized_plan.chunk_size_minutes = optimal_chunk;
-        optimized_plan.break_minutes      = std::clamp(
-            optimal_chunk / 5, kMinBreakMinutes, kMaxBreakMinutes);
-        optimized_plan.tasks = PlanProcessor::generate_tasks(optimized_plan);
-    }
+    auto optimized_plan = plan;
+    const int optimal_chunk = calculate_optimal_chunk(
+        plan.duration_minutes, plan.chunk_size_minutes);
+    optimized_plan.chunk_size_minutes = optimal_chunk;
+    optimized_plan.break_minutes      = std::clamp(
+        optimal_chunk / 5, kMinBreakMinutes, kMaxBreakMinutes);
+    optimized_plan.tasks = PlanProcessor::generate_tasks(optimized_plan);
 
     return PlanProcessor::plan_to_json(optimized_plan);
 }
 
 std::string SmartPlanner::schedule_to_json(const ScheduleResult& schedule) const {
     // Estimate: ~200 bytes overhead + ~80 bytes per slot.
-    const std::size_t est_capacity = 200 + schedule.slots.size() * 80;
-    StringBuilder sb(est_capacity);
+    StringBuilder sb(200 + schedule.slots.size() * 80);
 
     sb << '{';
     sb.json_kv("success", schedule.success) << ',';
@@ -491,8 +538,7 @@ std::string SmartPlanner::schedule_to_json(const ScheduleResult& schedule) const
 
 std::string SmartPlanner::stats_to_json(const ProductivityStats& stats) const {
     // Estimate: ~200 bytes overhead + ~60 bytes per recommendation.
-    const std::size_t est_capacity = 200 + stats.recommendations.size() * 60;
-    StringBuilder sb(est_capacity);
+    StringBuilder sb(200 + stats.recommendations.size() * 60);
 
     sb << '{';
     sb.json_kv("efficiencyScore", stats.efficiency_score) << ',';

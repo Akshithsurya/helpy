@@ -1,29 +1,33 @@
 @echo off
 setlocal enabledelayedexpansion
-
-:: Configuration
+:: Configuration - Centralized and easily configurable
 set "CXX_STD=c++17"
 set "OUTPUT=test.exe"
 set "SOURCES=src/plan_processor.cpp src/plan_template_engine.cpp src/smart_time_planner.cpp src/plan_validator_enhanced.cpp test/test_main.cpp"
 set "INCLUDE_FLAGS=-Iinclude"
 set "COMPILERS=g++ clang++ cl"
-:: GCC/Clang common warnings
-set "COMMON_GCC_FLAGS=-Wall -Wextra -pedantic -Wformat -Werror=format-security -Wshadow -Wnon-virtual-dtor -Wcast-align -Wunused -Wconversion -Wsign-conversion"
-set "DEBUG_FLAGS=-g -O0 -fno-omit-frame-pointer -DDEBUG"
-set "RELEASE_FLAGS=-O2 -DNDEBUG -march=native -flto -ffunction-sections -fdata-sections"
-set "GCC_LINK_FLAGS=-lm -Wl,--gc-sections"
-:: MSVC linker flags
-set "MSVC_LINK_FLAGS=/INCREMENTAL:NO /DEBUG:FASTLINK"
+:: GCC/Clang common warnings - Extended with modern C++ best practices
+set "COMMON_GCC_FLAGS=-Wall -Wextra -pedantic -Wformat -Werror=format-security -Wshadow -Wnon-virtual-dtor -Wcast-align -Wunused -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wformat-truncation -fno-common"
+set "DEBUG_FLAGS=-g -O0 -fno-omit-frame-pointer -DDEBUG -fstack-protector-strong"
+set "RELEASE_FLAGS=-O2 -DNDEBUG -march=native -flto=auto -ffunction-sections -fdata-sections -fstack-protector-strong"
+set "GCC_LINK_FLAGS=-lm -Wl,--gc-sections,-z,relro,-z,now"
+:: MSVC linker flags - Updated with modern security features
+set "MSVC_LINK_FLAGS=/INCREMENTAL:NO /DEBUG:FASTLINK /NXCOMPAT /DYNAMICBASE"
 set "CLEAN=0"
 set "RUN_TESTS=1"
 set "VERBOSE=0"
 set "REBUILD=0"
 set "BUILD_DIR=build"
-set "INTERMEDIATES=test_std.cpp test_std.o *.o *.obj *.d *.a *.lib *.pdb *.ilk *.exp"
+set "INTERMEDIATES=test_std.cpp test_std.o *.o *.obj *.d *.a *.lib *.pdb *.ilk *.exp *.map *.lib *.dll"
 set "STATIC_BUILD=0"
 set "BUILD_TYPE=debug"
 set "ASAN_ENABLED=0"
 set "UBSAN_ENABLED=0"
+set "TEST_ARGS="
+set "COVERAGE_ENABLED=0"
+set "CPPCHECK_ENABLED=0"
+set "CLANG_TIDY_ENABLED=0"
+set "PASS_THROUGH=0"
 
 :: Helper function to set ANSI escape codes properly for Windows 10+ terminals (fixed VT100 enablement)
 :check_ansi_colors
@@ -39,10 +43,13 @@ set "CYAN=!ESC![96m"
 set "WHITE=!ESC![97m"
 set "RESET=!ESC![0m"
 set "BOLD=!ESC![1m"
+set "DIM=!ESC![2m"
+set "UNDERLINE=!ESC![4m"
+exit /b 0
 
-:: Display help menu
+:: Display help menu - Updated with new options
 :show_help
-echo !BOLD!Usage: build.bat [options]!RESET!
+echo !BOLD!Usage: build.bat [options] [-- test_args]!RESET!
 echo.
 echo !BOLD!Options:!RESET!
 echo   !CYAN!debug!RESET!       Build in debug mode (default)
@@ -51,44 +58,56 @@ echo   !CYAN!clean!RESET!       Remove previous build artifacts
 echo   !CYAN!notest!RESET!      Skip running tests after successful build
 echo   !CYAN!rebuild!RESET!     Clean and then perform a full rebuild
 echo   !CYAN!verbose!RESET!     Enable detailed compiler output
-echo   !CYAN!help!RESET!        Show this help message and exit
-echo   !CYAN!static!RESET!      Build statically linked executable
+echo   !CYAN!static!RESET!      Enable static linking
 echo   !CYAN!asan!RESET!        Enable AddressSanitizer (debug only)
 echo   !CYAN!ubsan!RESET!       Enable UndefinedBehaviorSanitizer (debug only)
+echo   !CYAN!help!RESET!        Show this help message
 exit /b 0
 
-:: Parse command line arguments
+:: Argument parsing loop
 :argloop
-if not "%~1"=="" (
-    if /i "%~1"=="release" (
-        set "BUILD_TYPE=release"
-    ) else if /i "%~1"=="debug" (
-        set "BUILD_TYPE=debug"
-    ) else if /i "%~1"=="clean" (
-        set "CLEAN=1"
-    ) else if /i "%~1"=="notest" (
-        set "RUN_TESTS=0"
-    ) else if /i "%~1"=="verbose" (
-        set "VERBOSE=1"
-    ) else if /i "%~1"=="rebuild" (
-        set "REBUILD=1"
-        set "CLEAN=1"
-    ) else if /i "%~1"=="static" (
-        set "STATIC_BUILD=1"
-    ) else if /i "%~1"=="asan" (
-        set "ASAN_ENABLED=1"
-    ) else if /i "%~1"=="ubsan" (
-        set "UBSAN_ENABLED=1"
-    ) else if /i "%~1"=="help" (
-        call :show_help
-        exit /b 0
-    ) else (
-        echo !YELLOW!Warning: Unrecognized argument "%~1", ignoring...!RESET!
-        echo Use "build.bat help" for available options.
-    )
+if "%~1"=="" goto end_args
+if "%~1"=="--" (
+    set "PASS_THROUGH=1"
     shift
     goto argloop
 )
+if !PASS_THROUGH! EQU 1 (
+    set "TEST_ARGS=!TEST_ARGS! %~1"
+    shift
+    goto argloop
+)
+if /i "%~1"=="release" (
+    set "BUILD_TYPE=release"
+) else if /i "%~1"=="debug" (
+    set "BUILD_TYPE=debug"
+) else if /i "%~1"=="clean" (
+    set "CLEAN=1"
+) else if /i "%~1"=="notest" (
+    set "RUN_TESTS=0"
+) else if /i "%~1"=="verbose" (
+    set "VERBOSE=1"
+) else if /i "%~1"=="rebuild" (
+    set "REBUILD=1"
+    set "CLEAN=1"
+) else if /i "%~1"=="static" (
+    set "STATIC_BUILD=1"
+) else if /i "%~1"=="asan" (
+    set "ASAN_ENABLED=1"
+) else if /i "%~1"=="ubsan" (
+    set "UBSAN_ENABLED=1"
+) else if /i "%~1"=="help" (
+    call :check_ansi_colors
+    call :show_help
+    exit /b 0
+) else (
+    call :check_ansi_colors
+    echo !YELLOW!Warning: Unrecognized argument "%~1", ignoring...!RESET!
+    echo Use "build.bat help" for available options.
+)
+shift
+goto argloop
+:end_args
 
 :: Initialize ANSI colors
 call :check_ansi_colors
@@ -183,6 +202,7 @@ if !ASAN_ENABLED! EQU 1 echo AddressSanitizer: enabled
 if !UBSAN_ENABLED! EQU 1 echo UndefinedBehaviorSanitizer: enabled
 echo Verbose mode: !VERBOSE!
 if !STATIC_BUILD! EQU 1 echo Static linking: enabled
+if not "!TEST_ARGS!"=="" echo Test arguments:!TEST_ARGS!
 echo.
 
 :: Track if any compiler succeeded
@@ -413,7 +433,7 @@ for %%c in (%COMPILERS%) do (
                     echo !BOLD!!CYAN!                  Running Tests!RESET!
                     echo !BOLD!!CYAN!==============================================!RESET!
                     echo.
-                    call "!OUTPUT!"
+                    call "!OUTPUT!" !TEST_ARGS!
                     set "TEST_ERROR=!ERRORLEVEL!"
                     if !TEST_ERROR! EQU 0 (
                         echo.

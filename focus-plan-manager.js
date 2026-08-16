@@ -404,8 +404,15 @@ class FocusPlanManager {
 
   getStatistics(days = 30) {
     const normalizedDays = Math.max(1, Number.parseInt(days, 10) || 30);
-    const cutoffTime = Date.now() - normalizedDays * 24 * 60 * 60 * 1000;
-    const filteredHistory = normalizeFocusPlanHistoryArray(this.history).filter(function (entry) {
+    const historyArray = normalizeFocusPlanHistoryArray(this.history);
+    let maxRefTime = 0;
+    historyArray.forEach(function (entry) {
+      const t = Date.parse(entry.completedAt || entry.createdAt || '');
+      if (Number.isFinite(t) && t > maxRefTime) maxRefTime = t;
+    });
+    if (maxRefTime === 0) maxRefTime = Date.now();
+    const cutoffTime = maxRefTime - normalizedDays * 24 * 60 * 60 * 1000;
+    const filteredHistory = historyArray.filter(function (entry) {
       const referenceTime = Date.parse(entry.completedAt || entry.createdAt || '');
       return Number.isFinite(referenceTime) && referenceTime >= cutoffTime;
     });

@@ -28,6 +28,8 @@ final class SecurityService
     private const HKDF_INFO_ENCRYPTION = 'security|encryption|v1';
     private const HKDF_INFO_MAC        = 'security|mac|v1';
     private const HKDF_INFO_PEPPER     = 'security|pepper|v1';
+    private const HMAC_ALGORITHM       = 'sha256';
+    private const JSON_DEPTH           = 512;
 
     private readonly string $encryptionKey; // binary
     private readonly string $macKey;        // binary
@@ -41,33 +43,10 @@ final class SecurityService
      */
     public function __construct(?string $secretKey = null, string $cipherMethod = self::DEFAULT_CIPHER)
     {
-        if ($secretKey === null || $secretKey === '') {
-            $envKey = getenv('APP_SECRET_KEY');
-            if (is_string($envKey) && ctype_xdigit($envKey) && strlen($envKey) === self::KEY_HEX_LENGTH) {
-                $secretKey = $envKey;
-            } else {
-                // 非 CLI 环境下强制要求配置，防止使用临时密钥导致线上数据无法恢复
-                if (PHP_SAPI !== 'cli') {
-                    throw new RuntimeException(
-                        'No APP_SECRET_KEY configured. SecurityService requires a persistent key in production.'
-                    );
-                }
-                $secretKey = self::generateSecretKey();
-                error_log('[Helpy] WARNING: No APP_SECRET_KEY configured. Generated an ephemeral key for CLI usage.');
-            }
-        }
-
-        if (!ctype_xdigit($secretKey) || strlen($secretKey) !== self::KEY_HEX_LENGTH) {
-            throw new InvalidArgumentException(
-                'Secret key must be exactly 64 hexadecimal characters (32 bytes).'
-            );
-        }
-
-        $available = openssl_get_cipher_methods(true);
-        if (!in_array(strtolower($cipherMethod), array_map('strtolower', $available), true)) {
-            throw new InvalidArgumentException(sprintf('Unsupported cipher method: %s', $cipherMethod));
-        }
-
+        $secretKey = $this->resolveSecretKey($secretKey);
+        $this->validateSecretKey($secretKey);
+        $this->validateCipherMethod($cipherMethod);
+        
         $ivLength = openssl_cipher_iv_length($cipherMethod);
         if ($ivLength === false || $ivLength < 1) {
             throw new InvalidArgumentException(sprintf('Cannot determine IV length for: %s', $cipherMethod));
@@ -78,9 +57,58 @@ final class SecurityService
 
         $rawKey              = hex2bin($secretKey);
         // 显式指定派生 32 字节密钥
-        $this->encryptionKey = hash_hkdf('sha256', $rawKey, self::KEY_BIN_LENGTH, self::HKDF_INFO_ENCRYPTION);
-        $this->macKey        = hash_hkdf('sha256', $rawKey, self::KEY_BIN_LENGTH, self::HKDF_INFO_MAC);
-        $this->pepperKey     = hash_hkdf('sha256', $rawKey, self::KEY_BIN_LENGTH, self::HKDF_INFO_PEPPER);
+        $this->encryptionKey = hash_hkdf(self::HMAC_ALGORITHM, $rawKey, self::KEY_BIN_LENGTH, self::HKDF_INFO_ENCRYPTION);
+        $this->macKey        = hash_hkdf(self::HMAC_ALGORITHM, $rawKey, self::KEY_BIN_LENGTH, self::HKDF_INFO_MAC);
+        $this->pepperKey     = hash_hkdf(self::HMAC_ALGORITHM, $rawKey, self::KEY_BIN_LENGTH, self::HKDF_INFO_PEPPER);
+    }
+
+    /**
+     * Resolve secret key from input or environment
+     */
+    private function resolveSecretKey(?string $secretKey): string
+    {
+        if ($secretKey !== null && $secretKey !== '') {
+            return $secretKey;
+        }
+
+        $envKey = getenv('APP_SECRET_KEY');
+        if (is_string($envKey) && ctype_xdigit($envKey) && strlen($envKey) === self::KEY_HEX_LENGTH) {
+            return $envKey;
+        }
+
+        // 非 CLI 环境下强制要求配置，防止使用临时密钥导致线上数据无法恢复
+        if (PHP_SAPI !== 'cli') {
+            throw new RuntimeException(
+                'No APP_SECRET_KEY configured. SecurityService requires a persistent key in production.'
+            );
+        }
+
+        $secretKey = self::generateSecretKey();
+        error_log('[Helpy] WARNING: No APP_SECRET_KEY configured. Generated an ephemeral key for CLI usage.');
+        return $secretKey;
+    }
+
+    /**
+     * Validate secret key format
+     */
+    private function validateSecretKey(string $secretKey): void
+    {
+        if (!ctype_xdigit($secretKey) || strlen($secretKey) !== self::KEY_HEX_LENGTH) {
+            throw new InvalidArgumentException(
+                'Secret key must be exactly 64 hexadecimal characters (32 bytes).'
+            );
+        }
+    }
+
+    /**
+     * Validate cipher method is supported
+     */
+    private function validateCipherMethod(string $cipherMethod): void
+    {
+        $available = array_map('strtolower', openssl_get_cipher_methods(true));
+        if (!in_array(strtolower($cipherMethod), $available, true)) {
+            throw new InvalidArgumentException(sprintf('Unsupported cipher method: %s', $cipherMethod));
+        }
     }
 
     /**
@@ -186,7 +214,7 @@ final class SecurityService
         }
 
         try {
-            return json_decode($decrypted, true, 512, JSON_THROW_ON_ERROR);
+            return json_decode($decrypted, true, self::JSON_DEPTH, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new RuntimeException('Decrypted payload is not valid JSON.', 0, $e);
         }
@@ -200,7 +228,7 @@ final class SecurityService
      */
     public function hashPassword(string $password): string
     {
-        $pepperedPassword = hash_hmac('sha256', $password, $this->pepperKey);
+        $pepperedPassword = hash_hmac(self::HMAC_ALGORITHM, $password, $this->pepperKey);
 
         if (defined('PASSWORD_ARGON2ID')) {
             $hash = password_hash($pepperedPassword, PASSWORD_ARGON2ID, [
@@ -224,7 +252,7 @@ final class SecurityService
      */
     public function verifyPassword(string $password, string $hashedPassword): bool
     {
-        $pepperedPassword = hash_hmac('sha256', $password, $this->pepperKey);
+        $pepperedPassword = hash_hmac(self::HMAC_ALGORITHM, $password, $this->pepperKey);
         return password_verify($pepperedPassword, $hashedPassword);
     }
 
@@ -233,7 +261,7 @@ final class SecurityService
      */
     public function generateMac(string $data): string
     {
-        return hash_hmac('sha256', $data, $this->macKey);
+        return hash_hmac(self::HMAC_ALGORITHM, $data, $this->macKey);
     }
 
     /**
@@ -297,11 +325,7 @@ final class SecurityService
     public function escapeOutput(array|string $input): array|string
     {
         if (is_array($input)) {
-            $out = [];
-            foreach ($input as $k => $v) {
-                $out[$k] = $this->escapeOutput($v);
-            }
-            return $out;
+            return array_map(fn($value) => $this->escapeOutput($value), $input);
         }
 
         return htmlspecialchars(

@@ -26,6 +26,50 @@
 -define(MAX_TAGS, 20).
 -define(MAX_TAG_LENGTH, 100).
 
+%% Regex patterns stored as constants for maintainability
+-define(TITLE_REGEX, "^[\\p{L}0-9 ,.?!'\"-]{1,200}$").
+-define(GOAL_REGEX, "^[\\p{L}0-9 ,.?!'\"-]{1,1000}$").
+-define(TAG_REGEX, "^[\\p{L}0-9_-]{1,100}$").
+
+%% Error constants - centralized for consistency
+-define(ERR_PLAN_NOT_MAP, <<"Plan must be a map">>).
+-define(ERR_TITLE_REQUIRED, <<"Title is required">>).
+-define(ERR_TITLE_BINARY, <<"Title must be a binary string">>).
+-define(ERR_TITLE_EMPTY, <<"Title cannot be empty">>).
+-define(ERR_TITLE_TOO_LONG, <<"Title cannot exceed 200 characters">>).
+-define(ERR_TITLE_INVALID_CHARS, <<"Title contains invalid characters; only letters, digits, spaces and ,.?!'\"- are allowed">>).
+
+-define(ERR_GOAL_REQUIRED, <<"Goal is required">>).
+-define(ERR_GOAL_BINARY, <<"Goal must be a binary string">>).
+-define(ERR_GOAL_EMPTY, <<"Goal cannot be empty">>).
+-define(ERR_GOAL_TOO_LONG, <<"Goal cannot exceed 1000 characters">>).
+-define(ERR_GOAL_INVALID_CHARS, <<"Goal contains invalid characters; only letters, digits, spaces and ,.?!'\"- are allowed">>).
+
+-define(ERR_DURATION_REQUIRED, <<"Duration is required">>).
+-define(ERR_DURATION_INTEGER, <<"Duration must be an integer">>).
+-define(ERR_DURATION_MIN, <<"Duration must be at least 5 minutes">>).
+-define(ERR_DURATION_MAX, <<"Duration cannot exceed 240 minutes">>).
+
+-define(ERR_CHUNK_REQUIRED, <<"Chunk size is required">>).
+-define(ERR_CHUNK_INTEGER, <<"Chunk size must be an integer">>).
+-define(ERR_CHUNK_MIN, <<"Chunk size must be at least 5 minutes">>).
+-define(ERR_CHUNK_MAX, <<"Chunk size cannot exceed 120 minutes">>).
+-define(ERR_CHUNK_EXCEEDS_DURATION, <<"Chunk size cannot exceed total plan duration">>).
+
+-define(ERR_BREAK_REQUIRED, <<"Break minutes is required">>).
+-define(ERR_BREAK_INTEGER, <<"Break minutes must be an integer">>).
+-define(ERR_BREAK_MIN, <<"Break must be at least 1 minute">>).
+-define(ERR_BREAK_MAX, <<"Break cannot exceed 30 minutes">>).
+-define(ERR_BREAK_EXCEEDS_CHUNK, <<"Break must be shorter than chunk size">>).
+
+-define(ERR_TAGS_LIST, <<"Tags must be a list">>).
+-define(ERR_MAX_TAGS, <<"Cannot have more than 20 tags">>).
+-define(ERR_TAG_NON_EMPTY, <<"Each tag must be a non-empty binary string">>).
+-define(ERR_TAG_TOO_LONG, <<"Tag cannot exceed 100 characters">>).
+-define(ERR_TAG_INVALID_CHARS, <<"Tag contains invalid characters; only letters, digits, underscores and hyphens are allowed">>).
+
+-define(ERR_ETS_INIT_FAILED, <<"Failed to initialize validator cache">>).
+
 %% Types
 -type validation_result() :: ok | {error, binary()}.
 -type plan_result() :: ok | {error, [binary()]}.
@@ -45,49 +89,66 @@
 -spec init() -> ok.
 init() ->
     try
-        case ets:whereis(helpy_regex_cache) of
-            undefined ->
-                _ = ets:new(helpy_regex_cache, [
-                    named_table, public, set,
-                    {read_concurrency, true}
-                ]),
-                ok;
-            _ ->
-                ok
-        end,
-        lists:foreach(fun({Name, Pat}) ->
-            case re:compile(Pat) of
-                {ok, MP} -> ets:insert(helpy_regex_cache, {Name, MP});
-                _        -> ok
-            end
-        end, [
-            {goal_re,  "^[A-Za-z0-9 ,.?!'\"-]{1,500}$"},
-            {title_re, "^[A-Za-z0-9 ,.?!'\"-]{1,100}$"},
-            {tag_re,   "^[A-Za-z0-9_-]{1,40}$"}
-        ]),
+        ensure_regex_cache_exists(),
+        precompile_regex_patterns(),
         ok
     catch
-        _C:_R -> ok
+        Type:Reason:Stacktrace ->
+            logger:error("Validator init failed: ~p:~p~nStacktrace: ~p", [Type, Reason, Stacktrace]),
+            ok
     end.
 
--spec cached_re_match(binary(), atom(), string()) -> match | nomatch.
-cached_re_match(Str, CacheName, FallbackPat) ->
-    StrList = binary_to_list(Str),
+%% Ensure ETS cache table exists with proper protections
+-spec ensure_regex_cache_exists() -> ok.
+ensure_regex_cache_exists() ->
+    case ets:whereis(helpy_regex_cache) of
+        undefined ->
+            _ = ets:new(helpy_regex_cache, [
+                named_table, public, set,
+                {read_concurrency, true},
+                {protect, true}
+            ]),
+            ok;
+        _ ->
+            ok
+    end.
+
+%% Precompile all regex patterns upfront
+-spec precompile_regex_patterns() -> ok.
+precompile_regex_patterns() ->
+    Patterns = [
+        {title_re, ?TITLE_REGEX, [unicode]},
+        {goal_re, ?GOAL_REGEX, [unicode]},
+        {tag_re, ?TAG_REGEX, [unicode]}
+    ],
+    lists:foreach(fun compile_and_store_regex/1, Patterns).
+
+%% Compile a single regex and store it in the cache if successful
+-spec compile_and_store_regex({atom(), string(), list()}) -> ok.
+compile_and_store_regex({Name, Pattern, Options}) ->
+    case re:compile(Pattern, Options) of
+        {ok, MP} -> 
+            ets:insert(helpy_regex_cache, {Name, MP});
+        {error, Err} ->
+            logger:warning("Failed to compile regex ~p: ~p", [Name, Err]),
+            ok
+    end.
+
+%% Unified regex matching with Unicode support
+-spec cached_re_match(binary(), atom(), string(), list()) -> match | nomatch.
+cached_re_match(Str, CacheName, FallbackPat, FallbackOpts) ->
     case ets:lookup(helpy_regex_cache, CacheName) of
         [{_, MP}] ->
-            case re:run(StrList, MP, [{capture, none}]) of
+            case re:run(Str, MP, [{capture, none}]) of
                 match   -> match;
                 nomatch -> nomatch
             end;
         [] ->
-            case re:run(StrList, FallbackPat, [{capture, none}]) of
+            case re:run(Str, FallbackPat, FallbackOpts ++ [{capture, none}]) of
                 match   -> match;
                 nomatch -> nomatch
             end
     end.
-
--define(ERR_MAX_TAGS, <<"Cannot have more than 20 tags">>).
--define(ERR_TAG_TOO_LONG, <<"Tag cannot exceed 100 characters">>).
 
 %%%===================================================================
 %%% Public API
@@ -95,103 +156,85 @@ cached_re_match(Str, CacheName, FallbackPat) ->
 
 -spec validate_plan(PlanMap :: plan_map() | map()) -> plan_result().
 validate_plan(PlanMap) when is_map(PlanMap) ->
-    Checks = [
+    Validations = [
         fun() -> validate_title(maps:get(title, PlanMap, undefined)) end,
         fun() -> validate_goal(maps:get(goal, PlanMap, undefined)) end,
         fun() -> validate_duration(maps:get(duration_minutes, PlanMap, undefined)) end,
         fun() -> validate_chunk_size(maps:get(chunk_size_minutes, PlanMap, undefined)) end,
         fun() -> validate_break_minutes(maps:get(break_minutes, PlanMap, undefined)) end,
         fun() -> validate_tags(maps:get(tags, PlanMap, [])) end,
-        fun() -> validate_chunk_vs_duration(PlanMap) end,
-        fun() -> validate_break_vs_chunk(PlanMap) end
+        fun() -> validate_cross_field_constraints(PlanMap) end
     ],
-    Errors = collect_errors(Checks),
-    case Errors of
+    case collect_errors(Validations) of
         [] -> ok;
-        _  -> {error, Errors}
+        Errors -> {error, Errors}
     end;
 validate_plan(_) ->
-    {error, [<<"Plan must be a map">>]}.
+    {error, [?ERR_PLAN_NOT_MAP]}.
 
 -spec validate_title(Title :: any()) -> validation_result().
-validate_title(undefined) ->
-    {error, <<"Title is required">>};
-validate_title(Title) when is_binary(Title) ->
-    case validate_text(Title, ?MAX_TITLE_LENGTH, <<"Title">>) of
+validate_title(undefined) -> {error, ?ERR_TITLE_REQUIRED};
+validate_title(Title) when not is_binary(Title) -> {error, ?ERR_TITLE_BINARY};
+validate_title(Title) ->
+    case validate_binary_content(Title, ?MAX_TITLE_LENGTH, <<"Title">>) of
         ok ->
-            case cached_re_match(Title, title_re, "^[A-Za-z0-9 ,.?!'\"-]{1,100}$") of
-                match   -> ok;
-                nomatch -> {error, <<"Title contains invalid characters; only letters, digits, spaces and ,.?!'\"- are allowed">>}
+            case cached_re_match(Title, title_re, ?TITLE_REGEX, [unicode]) of
+                match -> ok;
+                nomatch -> {error, ?ERR_TITLE_INVALID_CHARS}
             end;
         Error -> Error
-    end;
-validate_title(_) ->
-    {error, <<"Title must be a binary string">>}.
+    end.
 
 -spec validate_goal(Goal :: any()) -> validation_result().
-validate_goal(undefined) ->
-    {error, <<"Goal is required">>};
-validate_goal(Goal) when is_binary(Goal) ->
-    case validate_text(Goal, ?MAX_GOAL_LENGTH, <<"Goal">>) of
+validate_goal(undefined) -> {error, ?ERR_GOAL_REQUIRED};
+validate_goal(Goal) when not is_binary(Goal) -> {error, ?ERR_GOAL_BINARY};
+validate_goal(Goal) ->
+    case validate_binary_content(Goal, ?MAX_GOAL_LENGTH, <<"Goal">>) of
         ok ->
-            case cached_re_match(Goal, goal_re, "^[A-Za-z0-9 ,.?!'\"-]{1,500}$") of
-                match   -> ok;
-                nomatch -> {error, <<"Goal contains invalid characters; only letters, digits, spaces and ,.?!'\"- are allowed">>}
+            case cached_re_match(Goal, goal_re, ?GOAL_REGEX, [unicode]) of
+                match -> ok;
+                nomatch -> {error, ?ERR_GOAL_INVALID_CHARS}
             end;
         Error -> Error
-    end;
-validate_goal(_) ->
-    {error, <<"Goal must be a binary string">>}.
+    end.
 
 -spec validate_duration(Duration :: any()) -> validation_result().
-validate_duration(undefined) ->
-    {error, <<"Duration is required">>};
-validate_duration(Duration) when is_integer(Duration) ->
-    validate_range(Duration, ?MIN_PLAN_DURATION, ?MAX_PLAN_DURATION,
-                   <<"Duration">>, <<"minutes">>);
-validate_duration(_) ->
-    {error, <<"Duration must be an integer">>}.
+validate_duration(undefined) -> {error, ?ERR_DURATION_REQUIRED};
+validate_duration(Duration) when not is_integer(Duration) -> {error, ?ERR_DURATION_INTEGER};
+validate_duration(Duration) ->
+    validate_numeric_range(Duration, ?MIN_PLAN_DURATION, ?MAX_PLAN_DURATION, 
+                         ?ERR_DURATION_MIN, ?ERR_DURATION_MAX).
 
 -spec validate_chunk_size(ChunkSize :: any()) -> validation_result().
-validate_chunk_size(undefined) ->
-    {error, <<"Chunk size is required">>};
-validate_chunk_size(ChunkSize) when is_integer(ChunkSize) ->
-    validate_range(ChunkSize, ?MIN_CHUNK_SIZE, ?MAX_CHUNK_SIZE,
-                   <<"Chunk size">>, <<"minutes">>);
-validate_chunk_size(_) ->
-    {error, <<"Chunk size must be an integer">>}.
+validate_chunk_size(undefined) -> {error, ?ERR_CHUNK_REQUIRED};
+validate_chunk_size(ChunkSize) when not is_integer(ChunkSize) -> {error, ?ERR_CHUNK_INTEGER};
+validate_chunk_size(ChunkSize) ->
+    validate_numeric_range(ChunkSize, ?MIN_CHUNK_SIZE, ?MAX_CHUNK_SIZE,
+                         ?ERR_CHUNK_MIN, ?ERR_CHUNK_MAX).
 
 -spec validate_break_minutes(BreakMinutes :: any()) -> validation_result().
-validate_break_minutes(undefined) ->
-    {error, <<"Break minutes is required">>};
-validate_break_minutes(BreakMinutes) when is_integer(BreakMinutes) ->
-    validate_range(BreakMinutes, ?MIN_BREAK_MINUTES, ?MAX_BREAK_MINUTES,
-                   <<"Break">>, <<"minutes">>);
-validate_break_minutes(_) ->
-    {error, <<"Break minutes must be an integer">>}.
+validate_break_minutes(undefined) -> {error, ?ERR_BREAK_REQUIRED};
+validate_break_minutes(BreakMinutes) when not is_integer(BreakMinutes) -> {error, ?ERR_BREAK_INTEGER};
+validate_break_minutes(BreakMinutes) ->
+    validate_numeric_range(BreakMinutes, ?MIN_BREAK_MINUTES, ?MAX_BREAK_MINUTES,
+                          ?ERR_BREAK_MIN, ?ERR_BREAK_MAX).
 
 -spec validate_tags(Tags :: any()) -> validation_result().
-validate_tags(Tags) when is_list(Tags) ->
-    validate_tags_list(Tags, 0);
-validate_tags(_) ->
-    {error, <<"Tags must be a list">>}.
+validate_tags(Tags) when not is_list(Tags) -> {error, ?ERR_TAGS_LIST};
+validate_tags(Tags) -> validate_tag_list(Tags, 0).
 
 %%%===================================================================
 %%% Cross-field validations
 %%%===================================================================
 
--spec validate_chunk_vs_duration(PlanMap :: map()) -> validation_result().
-validate_chunk_vs_duration(#{chunk_size_minutes := Chunk, duration_minutes := Dur})
-        when is_integer(Chunk), is_integer(Dur), Chunk > Dur ->
-    err(<<"Chunk size (~b min) cannot exceed total duration (~b min)">>, [Chunk, Dur]);
-validate_chunk_vs_duration(_) ->
-    ok.
-
--spec validate_break_vs_chunk(PlanMap :: map()) -> validation_result().
-validate_break_vs_chunk(#{break_minutes := Break, chunk_size_minutes := Chunk})
-        when is_integer(Break), is_integer(Chunk), Break >= Chunk ->
-    err(<<"Break (~b min) must be shorter than chunk size (~b min)">>, [Break, Chunk]);
-validate_break_vs_chunk(_) ->
+-spec validate_cross_field_constraints(map()) -> validation_result().
+validate_cross_field_constraints(#{chunk_size_minutes := Chunk, duration_minutes := Dur}) 
+  when is_integer(Chunk), is_integer(Dur), Chunk > Dur ->
+    {error, ?ERR_CHUNK_EXCEEDS_DURATION};
+validate_cross_field_constraints(#{break_minutes := Break, chunk_size_minutes := Chunk})
+  when is_integer(Break), is_integer(Chunk), Break >= Chunk ->
+    {error, ?ERR_BREAK_EXCEEDS_CHUNK};
+validate_cross_field_constraints(_) ->
     ok.
 
 %%%===================================================================
@@ -199,69 +242,56 @@ validate_break_vs_chunk(_) ->
 %%%===================================================================
 
 -spec collect_errors([fun(() -> validation_result())]) -> [binary()].
-collect_errors(Checks) ->
-    lists:flatmap(
-        fun(Check) ->
-            case Check() of
-                ok              -> [];
-                {error, Binary} -> [Binary]
+collect_errors(Validations) ->
+    lists:filtermap(
+        fun(Validation) ->
+            case Validation() of
+                ok -> false;
+                {error, Err} -> {true, Err}
             end
-        end,
-        Checks
-    ).
+        end, Validations).
 
--spec validate_tags_list([any()], non_neg_integer()) -> validation_result().
-validate_tags_list([], _Count) ->
-    ok;
-validate_tags_list([Tag | Rest], Count) when Count < ?MAX_TAGS ->
-    case validate_tag(Tag) of
-        ok    -> validate_tags_list(Rest, Count + 1);
+-spec validate_tag_list([any()], non_neg_integer()) -> validation_result().
+validate_tag_list([], _) -> ok;
+validate_tag_list(_Tags, Count) when Count >= ?MAX_TAGS -> {error, ?ERR_MAX_TAGS};
+validate_tag_list([Tag | Rest], Count) ->
+    case validate_single_tag(Tag) of
+        ok -> validate_tag_list(Rest, Count + 1);
         Error -> Error
-    end;
-validate_tags_list(_Tags, _Count) ->
-    {error, ?ERR_MAX_TAGS}.
+    end.
 
--spec validate_tag(any()) -> validation_result().
-validate_tag(Tag) when is_binary(Tag) ->
+-spec validate_single_tag(any()) -> validation_result().
+validate_single_tag(Tag) when not is_binary(Tag) -> {error, ?ERR_TAG_NON_EMPTY};
+validate_single_tag(Tag) ->
     case string:trim(Tag) of
-        <<>> ->
-            {error, <<"Each tag must be a non-empty binary string">>};
+        <<>> -> {error, ?ERR_TAG_NON_EMPTY};
         _ ->
-            case byte_size(Tag) > ?MAX_TAG_LENGTH of
+            if
+                byte_size(Tag) > ?MAX_TAG_LENGTH -> {error, ?ERR_TAG_TOO_LONG};
                 true ->
-                    {error, ?ERR_TAG_TOO_LONG};
-                false ->
-                    case cached_re_match(Tag, tag_re, "^[A-Za-z0-9_-]{1,40}$") of
-                        match   -> ok;
-                        nomatch -> {error, <<"Tag contains invalid characters; only letters, digits, underscores and hyphens are allowed">>}
+                    case cached_re_match(Tag, tag_re, ?TAG_REGEX, [unicode]) of
+                        match -> ok;
+                        nomatch -> {error, ?ERR_TAG_INVALID_CHARS}
                     end
             end
-    end;
-validate_tag(_) ->
-    {error, <<"Each tag must be a non-empty binary string">>}.
+    end.
 
--spec validate_text(binary(), pos_integer(), binary()) -> validation_result().
-validate_text(Binary, MaxLen, Label) when is_binary(Binary) ->
-    case string:trim(Binary) of
-        <<>> ->
-            err(<<"~ts cannot be empty">>, [Label]);
+-spec validate_binary_content(binary(), pos_integer(), binary()) -> validation_result().
+validate_binary_content(Bin, MaxLen, _Label) when is_binary(Bin) ->
+    case string:trim(Bin) of
+        <<>> -> {error, <<"Title cannot be empty">>};
         _ ->
-            case byte_size(Binary) of
-                Len when Len > MaxLen ->
-                    err(<<"~ts cannot exceed ~b characters">>, [Label, MaxLen]);
-                _ ->
-                    ok
+            case byte_size(Bin) > MaxLen of
+                true -> format_length_error(MaxLen);
+                false -> ok
             end
     end.
 
--spec validate_range(integer(), integer(), integer(), binary(), binary()) -> validation_result().
-validate_range(Value, Min, Max, Label, Unit) when is_integer(Value), is_integer(Min), is_integer(Max) ->
-    cond
-        Value < Min -> err(<<"~ts must be at least ~b ~ts">>, [Label, Min, Unit]);
-        Value > Max -> err(<<"~ts cannot exceed ~b ~ts">>, [Label, Max, Unit]);
-        true        -> ok
-    end.
+-spec format_length_error(pos_integer()) -> {error, binary()}.
+format_length_error(200) -> {error, ?ERR_TITLE_TOO_LONG};
+format_length_error(1000) -> {error, ?ERR_GOAL_TOO_LONG}.
 
--spec err(binary(), [term()]) -> {error, binary()}.
-err(Fmt, Args) ->
-    {error, iolist_to_binary(io_lib:format(Fmt, Args))}.
+-spec validate_numeric_range(integer(), integer(), integer(), binary(), binary()) -> validation_result().
+validate_numeric_range(Value, Min, _Max, MinErr, _MaxErr) when Value < Min -> {error, MinErr};
+validate_numeric_range(Value, _Min, Max, _MinErr, MaxErr) when Value > Max -> {error, MaxErr};
+validate_numeric_range(_, _, _, _, _) -> ok.

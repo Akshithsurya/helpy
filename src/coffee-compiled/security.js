@@ -610,20 +610,30 @@
       }
 
       // ── Hashing ────────────────────────────────────────────────────────────────
-      hash(data, salt = null, pepper = null) {
-        return this._hash(data, salt, pepper, false);
+      async hash(data, salt = null, pepper = null) {
+        const fnName = 'hash';
+        try {
+          if (!isString(data)) throw new HashingError(`${fnName}() input must be a string`);
+          const saltBuf = parseSalt(salt, this._saltLength);
+          const input = this._pepperInput(data, pepper);
+          const derived = await scryptAsync(input, saltBuf, this._scryptKeyLength, this._scryptOptions);
+          if (!(isBuffer(derived) && derived.length === this._scryptKeyLength)) {
+            throw new HashingError('scrypt produced unexpected output');
+          }
+          return `${saltBuf.toString('hex')}:${derived.toString('hex')}`;
+        } catch (err) {
+          if (err instanceof SecurityError) throw err;
+          this.logger.error(`[SecurityManager.${fnName}] failed:`, err != null ? err.message : void 0);
+          throw new HashingError((err != null ? err.message : void 0) || 'Hashing failed', err);
+        }
       }
 
       hashSync(data, salt = null, pepper = null) {
         return this._hash(data, salt, pepper, true);
       }
 
-      async _scryptDerive(fnName, input, saltBuf, sync) {
-        if (sync) {
-          return crypto.scryptSync(input, saltBuf, this._scryptKeyLength, this._scryptOptions);
-        } else {
-          return (await scryptAsync(input, saltBuf, this._scryptKeyLength, this._scryptOptions));
-        }
+      _scryptDerive(fnName, input, saltBuf, sync) {
+        return crypto.scryptSync(input, saltBuf, this._scryptKeyLength, this._scryptOptions);
       }
 
       _hash(data, salt, pepper, sync) {

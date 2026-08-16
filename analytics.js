@@ -327,8 +327,9 @@ class AnalyticsManager {
   _calculateCurrentStreak() {
     let streak = 0;
     let currentDate = new Date();
+    let maxDays = 3650; // Safety cap of 10 years max
 
-    while (true) {
+    while (maxDays-- > 0) {
       const dayKey = this._getDayKey(currentDate);
       const dayStats = this.analyticsData.dailyStats[dayKey];
 

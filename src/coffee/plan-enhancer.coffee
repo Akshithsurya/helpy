@@ -12,56 +12,47 @@ CONST = require './plan-enhancer-constants'
 } = CONST
 
 # ── Module-level constants (previously magic numbers) ─────────────────
-
-MEMO_MAX_SIZE    = 500
-MEMO_EVICT_COUNT = 100
-STREAK_MAX_DAYS  = 366
-MICRO_FIRST_MIN  = 2   # prioritize-first cap for first micro-task
-CACHE_DEFAULT_MAX_SIZE = 500
-CACHE_DEFAULT_TTL_MS = 300000
-WASM_TIMEOUT_MS    = 50
-WASM_COOLDOWN_MS   = 30000
+MODULE_CONSTANTS = Object.freeze
+  MEMO_MAX_SIZE:    500
+  MEMO_EVICT_COUNT: 100
+  STREAK_MAX_DAYS:  366
+  MICRO_FIRST_MIN:  2   # prioritize-first cap for first micro-task
+  CACHE_DEFAULT_MAX_SIZE: 500
+  CACHE_DEFAULT_TTL_MS: 300000
+  WASM_TIMEOUT_MS:    50
+  WASM_COOLDOWN_MS:   30000
 
 # ── Module-level regexes (compiled once) ──────────────────────────────
-
-EMOJI_REGEX      = /[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}]/gu
-WHITESPACE_REGEX = /\s+/g
+MODULE_REGEXES = Object.freeze
+  EMOJI:      /[\u{1F000}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}]/gu
+  WHITESPACE: /\s+/g
 
 # ── Module-level preset lookups (built once on load) ──────────────────
-
-PRESET_NAMES_SORTED = Object.freeze(
-  PRESETS.slice().sort((a, b) -> b.name.length - a.name.length).map (p) -> p.name
-)
-
-PRESET_NAME_LOOKUP = Object.freeze(
-  PRESETS.reduce ((acc, p) -> acc[p.name] = p; acc), {}
-)
-
-PRESET_BY_DURATION_BREAK = Object.freeze(
-  PRESETS.reduce ((acc, p) -> acc["#{p.duration}|#{p.break}"] = p; acc), {}
-)
-
-PRESET_REGEXES = Object.freeze(
-  PRESETS.reduce ((acc, p) ->
+PRESET_LOOKUPS = do ->
+  # Sort presets by name length descending for matching priority
+  sortedPresets = PRESETS.slice().sort (a, b) -> b.name.length - a.name.length
+  
+  namesSorted = Object.freeze sortedPresets.map (p) -> p.name
+  nameLookup  = Object.freeze sortedPresets.reduce ((acc, p) -> acc[p.name] = p; acc), {}
+  byDurationBreak = Object.freeze PRESETS.reduce ((acc, p) -> acc["#{p.duration}|#{p.break}"] = p; acc), {})
+  regexes = Object.freeze PRESETS.reduce ((acc, p) ->
     acc[p.name] = new RegExp("(^|[^a-z0-9])#{p.name.replace(/_/g, '[_\\s-]?')}([^a-z0-9]|$)", 'i')
     acc
-  ), {}
-)
+  ), {})
 
-MUSIC_PRESET_ID_LOOKUP = Object.freeze(
-  MUSIC_PRESETS.reduce ((acc, p) -> acc[p.id] = p; acc), {}
-)
+  { namesSorted, nameLookup, byDurationBreak, regexes }
 
-MUSIC_PRESET_IDS_SORTED = Object.freeze(
-  MUSIC_PRESETS.slice().sort((a, b) -> b.id.length - a.id.length).map (p) -> p.id
-)
+MUSIC_LOOKUPS = do ->
+  sortedMusic = MUSIC_PRESETS.slice().sort (a, b) -> b.id.length - a.id.length
+  idsSorted   = Object.freeze sortedMusic.map (p) -> p.id
+  idLookup    = Object.freeze MUSIC_PRESETS.reduce ((acc, p) -> acc[p.id] = p; acc), {})
+  { idsSorted, idLookup }
 
 # ── Shared LRU-bounded map factory (eliminates duplicated cache+evict pairs) ──
-
-_lruMap = (maxSize = MEMO_MAX_SIZE, evictCount = MEMO_EVICT_COUNT) ->
+createLruMap = (maxSize = MODULE_CONSTANTS.MEMO_MAX_SIZE, evictCount = MODULE_CONSTANTS.MEMO_EVICT_COUNT) ->
   map = new Map()
   {
-    get:   (key) ->
+    get: (key) ->
       return unless map.has(key)
       # Re-insert to mark as recently used (True LRU behavior)
       val = map.get(key)
@@ -69,7 +60,7 @@ _lruMap = (maxSize = MEMO_MAX_SIZE, evictCount = MEMO_EVICT_COUNT) ->
       map.set(key, val)
       val
 
-    set:   (key, val) ->
+    set: (key, val) ->
       map.delete(key) if map.has(key) # Prevent duplicate keys growing the map
       map.set key, val
       if map.size > maxSize
@@ -83,38 +74,43 @@ _lruMap = (maxSize = MEMO_MAX_SIZE, evictCount = MEMO_EVICT_COUNT) ->
     clear:            -> map.clear(); return
   }
 
-_memoCache  = _lruMap()
-_matchCache = _lruMap()
+_memoCache  = createLruMap()
+_matchCache = createLruMap()
 
 # ── Module-level Wasm circuit breaker ─────────────────────────────────
-
-_wasmAvailable      = true
-_wasmAvailableUntil = 0
+_wasmState =
+  available:      true
+  availableUntil: 0
 
 # ── Module-level helpers (reduce repetition across methods) ───────────
+StringUtils =
+  str: (v, fallback = '') ->
+    if typeof v is 'string' and v.length > 0 then v else fallback
 
-_str = (v, fallback = '') ->
-  if typeof v is 'string' and v.length > 0 then v else fallback
+  safeStringify: (obj) ->
+    try JSON.stringify(obj) catch then String(obj ? '')
 
-_optInt = (opts, key, fallback) ->
-  if _isPlainObject(opts) and _isPositiveInt(opts[key]) then opts[key] else fallback
+TypeUtils =
+  optInt: (opts, key, fallback) ->
+    if _isPlainObject(opts) and _isPositiveInt(opts[key]) then opts[key] else fallback
 
-_tasksOf = (plan) ->
-  if plan?.tasks? and Array.isArray(plan.tasks) then plan.tasks else []
+  safeOpts: (opts) ->
+    if _isPlainObject(opts) then opts else {}
 
-_safeOpts = (opts) ->
-  if _isPlainObject(opts) then opts else {}
+PlanUtils =
+  tasksOf: (plan) ->
+    if plan?.tasks? and Array.isArray(plan.tasks) then plan.tasks else []
 
-# Unified duration extractor — checks both `durationMinutes` and `duration`,
-# normalising the inconsistent field naming across the codebase.
-_taskDur = (t) ->
-  if _isPositiveInt(t?.durationMinutes) then t.durationMinutes
-  else if _isPositiveInt(t?.duration) then t.duration
-  else 0
+  taskDur: (t) ->
+    # Unified duration extractor — checks both `durationMinutes` and `duration`,
+    # normalising the inconsistent field naming across the codebase.
+    if _isPositiveInt(t?.durationMinutes) then t.durationMinutes
+    else if _isPositiveInt(t?.duration) then t.duration
+    else 0
 
-# Reusable day-key formatter for streak calculation.
-_dayKey = (date) ->
-  "#{date.getUTCFullYear()}-#{date.getUTCMonth()}-#{date.getUTCDate()}"
+  dayKey: (date) ->
+    # Reusable day-key formatter for streak calculation.
+    "#{date.getUTCFullYear()}-#{String(date.getUTCMonth()).padStart(2, '0')}-#{String(date.getUTCDate()).padStart(2, '0')}"
 
 # Sensory reminder defaults — frozen once, shared across all instances.
 SENSORY_DEFAULTS = Object.freeze [
@@ -124,14 +120,9 @@ SENSORY_DEFAULTS = Object.freeze [
   { id: 'sensory-1',    type: 'sensory-break', message: 'Look 20 ft away for 20 seconds (20-20-20)', intervalMinutes: 40, enabled: true }
 ]
 
-REQUIRED_LOGGER_METHODS = ['debug', 'warn', 'error', 'info']
-
-# Safe JSON stringification to prevent circular reference crashes
-_safeStringify = (obj) ->
-  try JSON.stringify(obj) catch then String(obj ? '')
+REQUIRED_LOGGER_METHODS = Object.freeze ['debug', 'warn', 'error', 'info']
 
 # ── Main class ────────────────────────────────────────────────────────
-
 class PlanEnhancer
 
   ### cyrb53: fast deterministic 53-bit string hash (cache keys, checksums). ###
@@ -148,13 +139,13 @@ class PlanEnhancer
     (4294967296 * (2097151 & h2) + (h1 >>> 0)) >>> 0
 
   constructor: (@wasmModule = null, opts = {}) ->
-    opts = _safeOpts opts
+    opts = TypeUtils.safeOpts opts
     @_configureLogger opts.logger
     @messages = @_mergeMessages opts.messages
-    @cache = new SimpleCache (opts.cacheMaxSize ? CACHE_DEFAULT_MAX_SIZE), (opts.defaultCacheTtlMs ? CACHE_DEFAULT_TTL_MS)
+    @cache = new SimpleCache (opts.cacheMaxSize ? MODULE_CONSTANTS.CACHE_DEFAULT_MAX_SIZE), (opts.defaultCacheTtlMs ? MODULE_CONSTANTS.CACHE_DEFAULT_TTL_MS)
+    @_activeWasmCalls = 0
 
   # ── Private setup ─────────────────────────────────────────────────
-
   _configureLogger: (custom) ->
     if custom? and typeof custom is 'object' and
        REQUIRED_LOGGER_METHODS.every (m) -> typeof custom[m] is 'function'
@@ -163,7 +154,12 @@ class PlanEnhancer
       try
         @logger = require '../../utils/logger'
       catch
-        @logger = console
+        @logger = Object.assign {}, console, {
+          debug: -> console.debug?.apply(console, arguments)
+          warn:  -> console.warn?.apply(console, arguments)
+          error: -> console.error?.apply(console, arguments)
+          info:  -> console.info?.apply(console, arguments)
+        }
 
   _mergeMessages: (overrides) ->
     base =
@@ -192,7 +188,6 @@ class PlanEnhancer
     Object.freeze base
 
   # ── Cache helpers ─────────────────────────────────────────────────
-
   getCacheStats: -> @cache.stats()
   clearCache:   -> @cache.clear(); return
 
@@ -205,14 +200,12 @@ class PlanEnhancer
     result
 
   # ── Text utilities ────────────────────────────────────────────────
-
   removeEmojis: (text) ->
     return '' unless typeof text is 'string' and text.length > 0
     cacheKey = "emoji:#{PlanEnhancer.cyrb53 text}"
-    @_cachedOr cacheKey, -> text.replace(EMOJI_REGEX, '').replace(WHITESPACE_REGEX, ' ').trim()
+    @_cachedOr cacheKey, -> text.replace(MODULE_REGEXES.EMOJI, '').replace(MODULE_REGEXES.WHITESPACE, ' ').trim()
 
   # ── Confidence / plan computation ─────────────────────────────────
-
   _computeConfidence: (duration, usedWasm, cs, bd) ->
     mk = "conf:#{duration}:#{usedWasm}:#{cs}:#{bd}"
     return cached if (cached = _memoCache.get mk)?
@@ -231,16 +224,16 @@ class PlanEnhancer
       return @_fallbackPlanWith DEFAULTS.chunkSize, DEFAULTS.breakDuration,
         'Invalid duration; using defaults.', 0.3
 
-    opts = _safeOpts opts
-    cs = _optInt opts, 'chunkSize',     DEFAULTS.chunkSize
-    bd = _optInt opts, 'breakDuration', DEFAULTS.breakDuration
+    opts = TypeUtils.safeOpts opts
+    cs = TypeUtils.optInt opts, 'chunkSize',     DEFAULTS.chunkSize
+    bd = TypeUtils.optInt opts, 'breakDuration', DEFAULTS.breakDuration
 
     cacheKey = "plan:#{duration}:#{cs}:#{bd}"
 
     return cached if (cached = @cache.get cacheKey)?
 
     now = Date.now()
-    if not _wasmAvailable and now < _wasmAvailableUntil
+    if not _wasmState.available and now < _wasmState.availableUntil
       return @_cacheAndReturn cacheKey, @_fallbackPlanWith cs, bd,
         'Wasm cooldown; using pure-JS preset.',
         @_computeConfidence duration, false, cs, bd
@@ -261,8 +254,8 @@ class PlanEnhancer
         confidence: @_computeConfidence duration, true, fc, fb
 
     catch err
-      _wasmAvailable = false
-      _wasmAvailableUntil = Date.now() + WASM_COOLDOWN_MS
+      _wasmState.available = false
+      _wasmState.availableUntil = Date.now() + MODULE_CONSTANTS.WASM_COOLDOWN_MS
       @logger.warn '[PlanEnhancer.generateOptimizedPlan] Wasm failed/timeout; fallback + 30s cooldown.', err?.message
       @_cacheAndReturn cacheKey, @_fallbackPlanWith cs, bd,
         'Wasm raised an error or timed out; pure-JS fallback.',
@@ -272,7 +265,7 @@ class PlanEnhancer
       Uses Promise.race to enforce timeout cleanly without manual timer cleanup. ###
   _callWasm: (duration, cs, bd) ->
     timeoutPromise = new Promise (resolve, reject) ->
-      setTimeout (-> reject new Error('timeout')), WASM_TIMEOUT_MS
+      setTimeout (-> reject new Error('Wasm execution timeout')), MODULE_CONSTANTS.WASM_TIMEOUT_MS
 
     execPromise = new Promise (resolve, reject) =>
       try
@@ -289,12 +282,11 @@ class PlanEnhancer
     Promise.race [execPromise, timeoutPromise]
 
   fallbackPlan: (opts = {}) ->
-    cs = _optInt opts, 'chunkSize',     DEFAULTS.chunkSize
-    bd = _optInt opts, 'breakDuration', DEFAULTS.breakDuration
+    cs = TypeUtils.optInt opts, 'chunkSize',     DEFAULTS.chunkSize
+    bd = TypeUtils.optInt opts, 'breakDuration', DEFAULTS.breakDuration
     { chunkSize: cs, breakDuration: bd, optimized: false }
 
   # ── Presets ───────────────────────────────────────────────────────
-
   recommendPreset: (userBehaviorData) ->
     avg = if userBehaviorData? and _isNumber(userBehaviorData.averageSession)
       userBehaviorData.averageSession
@@ -303,31 +295,30 @@ class PlanEnhancer
     return cached if (cached = _matchCache.get mk)?
 
     matched = null
-    for name in PRESET_NAMES_SORTED
-      p = PRESET_NAME_LOOKUP[name]
+    for name in PRESET_LOOKUPS.namesSorted
+      p = PRESET_LOOKUPS.nameLookup[name]
       if avg < p.maxAvg
         matched = p
         break
-    result = matched ? PRESET_NAME_LOOKUP[PRESET_NAMES_SORTED[1]]
+    result = matched ? PRESET_LOOKUPS.nameLookup[PRESET_LOOKUPS.namesSorted[1]]
     _matchCache.set mk, result
 
   listPresets: ->
-    for p in PRESETS
+    PRESETS.map (p) ->
       desc = p.description ? @messages.presets[p.name] ? p.name
       Object.assign {}, p, description: desc
 
   # ── Task decomposition ────────────────────────────────────────────
-
   decomposeTask: (task, chunkSize = DEFAULTS.chunkSize) ->
     return [] unless _isPlainObject(task) and _isPositiveInt(task.duration)
     cs = if _isPositiveInt(chunkSize) then chunkSize else DEFAULTS.chunkSize
     
     # Safe stringify prevents crashes on circular references
-    cacheKey = "decompose:#{PlanEnhancer.cyrb53 _safeStringify(task)}:#{cs}"
+    cacheKey = "decompose:#{PlanEnhancer.cyrb53 StringUtils.safeStringify(task)}:#{cs}"
 
     @_cachedOr cacheKey, =>
       total = task.duration
-      title = _str(task.title, 'Task')
+      title = StringUtils.str(task.title, 'Task')
       n     = Math.ceil total / cs
       rem   = total % cs
 
@@ -339,9 +330,8 @@ class PlanEnhancer
         completed: false
 
   # ── Efficiency scoring ────────────────────────────────────────────
-
   calculateEfficiencyScore: (plan) ->
-    tasks = _tasksOf plan
+    tasks = PlanUtils.tasksOf plan
     return 0 unless tasks.length
     completed = tasks.filter (t) -> t?.completed is true
     return 0 unless completed.length
@@ -361,27 +351,25 @@ class PlanEnhancer
       else []
 
   # ── Progress estimation ───────────────────────────────────────────
-
   estimatePlanProgress: (plan, elapsedMs) ->
-    tasks = _tasksOf plan
+    tasks = PlanUtils.tasksOf plan
     return 0 unless _isNumber(elapsedMs) and elapsedMs >= 0
 
-    totalMs      = tasks.reduce ((sum, t) -> sum + _taskDur(t) * 60000), 0
+    totalMs      = tasks.reduce ((sum, t) -> sum + PlanUtils.taskDur(t) * 60000), 0
     return 0 unless totalMs > 0
 
-    completedMs  = tasks.reduce ((sum, t) -> sum + if t?.completed then _taskDur(t) * 60000 else 0), 0
+    completedMs  = tasks.reduce ((sum, t) -> sum + if t?.completed then PlanUtils.taskDur(t) * 60000 else 0), 0
     remainingMs  = totalMs - completedMs
-    unaccounted  = Math.max 0, elapsedMs - completedMs
+    unaccounted  = Math.max(0, elapsedMs - completedMs)
     progressMs   = completedMs + Math.min(remainingMs, unaccounted)
     Math.min 100, Math.round (progressMs / totalMs) * 100
 
   # ── Conflict detection ────────────────────────────────────────────
-
   detectTaskConflicts: (tasks, opts = {}) ->
     tasks = [] unless Array.isArray tasks
-    opts  = _safeOpts opts
+    opts  = TypeUtils.safeOpts opts
 
-    total = tasks.reduce ((sum, t) -> sum + _taskDur(t)), 0
+    total = tasks.reduce ((sum, t) -> sum + PlanUtils.taskDur(t)), 0
 
     dated = tasks
       .map (t, i) ->
@@ -396,18 +384,17 @@ class PlanEnhancer
       aEnd = if a.scheduledEnd?
         new Date(a.scheduledEnd).getTime()
       else
-        aStart + _taskDur(a) * 60000
+        aStart + PlanUtils.taskDur(a) * 60000
 
       for j in [(i + 1)...dated.length]
         { startTime: bStart } = dated[j]
         break if bStart >= aEnd
         overlaps.push [idxA, dated[j].i]
 
-    db = _optInt opts, 'dailyBudgetMinutes', null
+    db = TypeUtils.optInt opts, 'dailyBudgetMinutes', null
     { overlaps, overBudget: db? and total > db, totalDuration: total }
 
   # ── Streak calculation ────────────────────────────────────────────
-
   calculateStreak: (planHistory) ->
     return { current: 0, longest: 0 } unless Array.isArray planHistory
 
@@ -417,13 +404,13 @@ class PlanEnhancer
       continue unless ts
       d = new Date ts
       continue if isNaN d.getTime()
-      days.add _dayKey d
+      days.add PlanUtils.dayKey d
 
     today = new Date()
     cur = 0
 
-    for offset in [0...STREAK_MAX_DAYS]
-      key = _dayKey new Date(today.getTime() - offset * MS_PER_DAY)
+    for offset in [0...MODULE_CONSTANTS.STREAK_MAX_DAYS]
+      key = PlanUtils.dayKey new Date(today.getTime() - offset * MS_PER_DAY)
       if days.has key
         cur++
       else if offset is 0
@@ -448,7 +435,6 @@ class PlanEnhancer
     { current: cur, longest }
 
   # ── Motivation ────────────────────────────────────────────────────
-
   generateMotivationalQuote: (efficiencyScore, salt) ->
     score  = if _isNumber(efficiencyScore) then Math.max(0, Math.min(100, efficiencyScore)) else 50
     bucket = if score < 40 then 'low' else if score < 75 then 'medium' else 'high'
@@ -462,7 +448,6 @@ class PlanEnhancer
     q[idx]
 
   # ── Plan merging ──────────────────────────────────────────────────
-
   mergePlans: (planA, planB) ->
     a = if _isPlainObject planA then planA else {}
     b = if _isPlainObject planB then planB else {}
@@ -480,7 +465,7 @@ class PlanEnhancer
       id = t.id ? "task_#{PlanEnhancer.cyrb53(t.title ? 'task', seen.size).toString(36)}"
       continue if seen.has id
       seen.add id
-      m.durationMinutes += _taskDur t
+      m.durationMinutes += PlanUtils.taskDur t
       m.tasks.push Object.assign {}, t, { id }
 
     aTg = if Array.isArray a.tags then a.tags.filter((s) -> typeof s is 'string') else []
@@ -489,21 +474,20 @@ class PlanEnhancer
     m
 
   # ── Break suggestions ─────────────────────────────────────────────
-
   suggestBreakPoint: (plan, progressPct) ->
-    tasks = _tasksOf plan
+    tasks = PlanUtils.tasksOf plan
     return null unless tasks.length
 
     pct = if _isNumber progressPct then Math.max(0, Math.min(100, progressPct)) else 0
     ft  = tasks.filter (t) -> t?.isBreak isnt true
     return null unless ft.length
 
-    tf     = ft.reduce ((sum, t) -> sum + _taskDur(t)), 0
+    tf     = ft.reduce ((sum, t) -> sum + PlanUtils.taskDur(t)), 0
     target = tf * (pct / 100)
     accum  = 0
 
     for t, i in tasks when t?.isBreak isnt true
-      d = _taskDur t
+      d = PlanUtils.taskDur t
       if accum + d >= target
         return
           taskIndex:       i
@@ -513,74 +497,29 @@ class PlanEnhancer
 
     li = tasks.length - 1
     taskIndex:       li
-    minutesIntoTask: _taskDur tasks[li]
+    minutesIntoTask: PlanUtils.taskDur tasks[li]
     reason:          'After final task'
 
   # ── Micro-task decomposition ──────────────────────────────────────
-
   decomposeToMicroTasks: (task, maxMinutes = 5, opts = {}) ->
     return [] unless _isPlainObject(task) and _isPositiveInt(task.duration)
     mm   = if _isPositiveInt(maxMinutes) then maxMinutes else 5
-    opts = _safeOpts opts
+    opts = TypeUtils.safeOpts opts
     pf   = opts.prioritizeFirst is true
 
     total     = task.duration
-    title     = _str(task.title, 'Task')
+    title     = StringUtils.str(task.title, 'Task')
     nm        = Math.ceil total / mm
     seed      = PlanEnhancer.cyrb53(title, Date.now()).toString(36)
     mt        = []
     remaining = total
 
     for i in [0...nm]
-      d = if pf and i is 0 then Math.min(MICRO_FIRST_MIN, remaining) else Math.min mm, remaining
-      break if d <= 0
-      mt.push
-        id:               "micro-#{seed}-#{i}"
-        description:      @messages.microStepFmt title, i
-        estimatedMinutes: d
-        completed:        false
+      d = if pf and i is 0 then Math.min(MODULE_CONSTANTS.MICRO_FIRST_MIN, remaining) else Math.min mm, remaining
       remaining -= d
-
+      mt.push
+        id:       "micro_#{seed}_#{i}"
+        title:    @messages.microStepFmt(title, i)
+        duration: d
+        completed: false
     mt
-
-  # ── Sensory reminders ─────────────────────────────────────────────
-
-  getSensoryReminders: (opts = {}) ->
-    opts = _safeOpts opts
-    list = SENSORY_DEFAULTS.map (r) -> Object.assign {}, r
-
-    if _isPlainObject opts.enabledOverrides
-      for r in list when opts.enabledOverrides.hasOwnProperty(r.id)
-        r.enabled = opts.enabledOverrides[r.id] is true
-
-    if typeof opts.filterByType is 'string' and opts.filterByType.length > 0
-      list = list.filter (r) -> r.type is opts.filterByType
-
-    list
-
-  # ── Transition checklists ─────────────────────────────────────────
-
-  createTransitionChecklist: (fromTask, toTask, opts = {}) ->
-    opts = _safeOpts opts
-    items = [
-      { id: 'item-1', text: @messages.transitionChecklist.saveWork,        completed: false }
-      { id: 'item-2', text: @messages.transitionChecklist.closeTabs,       completed: false }
-      { id: 'item-3', text: @messages.transitionChecklist.gatherMaterials, completed: false }
-      { id: 'item-4', text: @messages.transitionChecklist.shortBreak,      completed: false }
-    ]
-
-    if Array.isArray opts.customItems
-      for item in opts.customItems when typeof item is 'string' and item.length > 0
-        id = "custom-#{PlanEnhancer.cyrb53(item, items.length).toString(36)}"
-        items.push { id, text: item, completed: false }
-
-    if typeof opts.name is 'string' and opts.name.length > 0
-      name: opts.name
-      items: Object.freeze(items)
-    else
-      name: @messages.transitionNameFmt fromTask, toTask
-      items: Object.freeze(items)
-
-# ── Module Export ─────────────────────────────────────────────────────
-
-module.exports = PlanEnhancer

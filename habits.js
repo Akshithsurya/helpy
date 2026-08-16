@@ -221,8 +221,9 @@ class HabitManager {
   _calculateCurrentStreak(id) {
     let streak = 0;
     let currentDate = startOfDay(new Date());
+    let maxDays = 3650; // Safety cap of 10 years max
 
-    while (true) {
+    while (maxDays-- > 0) {
       if (this.isHabitCompleted(id, currentDate)) {
         streak++;
         currentDate = addDays(currentDate, -1);

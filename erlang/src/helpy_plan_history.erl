@@ -2,17 +2,20 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, stop/0,
-         save_plan/1, get_plan/1, take_plan/1,
+-export([start_link/0, stop/0, child_spec/0,
+         save_plan/1, save_plan_async/1,
+         get_plan/1, take_plan/1,
          list_plans/0, list_ids/0, list_entries/0,
          plan_exists/1, count/0,
-         delete_plan/1, clear/0, child_spec/0]).
+         delete_plan/1, delete_plan_async/1,
+         clear/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
 -define(TABLE, ?MODULE).
+-define(CALL_TIMEOUT, 5000).
 
 -type plan()    :: helpy_plan_service:plan().
 -type plan_id() :: binary().
@@ -44,53 +47,70 @@ child_spec() ->
       modules  => [?MODULE]}.
 
 %% Reads directly from ETS — no gen_server round-trip.
--spec get_plan(plan_id()) -> {ok, plan()} | {error, not_found}.
+-spec get_plan(plan_id()) -> {ok, plan()} | {error, not_found | unavailable}.
 get_plan(PlanId) ->
-    case ets:lookup(?TABLE, PlanId) of
-        [#entry{plan = Plan}] -> {ok, Plan};
-        []                    -> {error, not_found}
-    end.
+    with_table(
+      fun() ->
+              case ets:lookup(?TABLE, PlanId) of
+                  [#entry{plan = Plan}] -> {ok, Plan};
+                  []                    -> {error, not_found}
+              end
+      end).
 
 %% Atomically retrieve and delete a plan.
 %% Must go through the gen_server because the table is protected.
--spec take_plan(plan_id()) -> {ok, plan()} | {error, not_found}.
+-spec take_plan(plan_id()) -> {ok, plan()} | {error, not_found | unavailable}.
 take_plan(PlanId) ->
-    gen_server:call(?MODULE, {take, PlanId}).
+    call({take, PlanId}).
 
 %% O(1) existence check — no data transferred.
 -spec plan_exists(plan_id()) -> boolean().
 plan_exists(PlanId) ->
-    ets:member(?TABLE, PlanId).
+    case ets:whereis(?TABLE) of
+        undefined -> false;
+        _Tid      -> ets:member(?TABLE, PlanId)
+    end.
 
-%% Projection happens inside ETS via match spec.
+%% Projections pushed down into ETS via match spec.
 -spec list_plans() -> [plan()].
 list_plans() ->
-    ets:select(?TABLE, [{#entry{id = '_', plan = '$1'}, [], ['$1']}]).
+    select([{#entry{id = '_', plan = '$1'}, [], ['$1']}]).
 
 -spec list_ids() -> [plan_id()].
 list_ids() ->
-    ets:select(?TABLE, [{#entry{id = '$1', plan = '_'}, [], ['$1']}]).
+    select([{#entry{id = '$1', plan = '_'}, [], ['$1']}]).
 
 -spec list_entries() -> [{plan_id(), plan()}].
 list_entries() ->
-    ets:select(?TABLE, [{#entry{id = '$1', plan = '$2'}, [], [{{'$1', '$2'}}]}]).
+    select([{#entry{id = '$1', plan = '$2'}, [], [{{'$1', '$2'}}]}]).
 
 %% O(1) size lookup.
 -spec count() -> non_neg_integer().
 count() ->
-    ets:info(?TABLE, size).
+    case ets:info(?TABLE, size) of
+        undefined -> 0;
+        N         -> N
+    end.
 
 -spec save_plan(plan()) -> ok | {error, term()}.
 save_plan(Plan) ->
-    gen_server:call(?MODULE, {save, Plan}).
+    call({save, Plan}).
+
+-spec save_plan_async(plan()) -> ok.
+save_plan_async(Plan) ->
+    cast({save, Plan}).
 
 -spec delete_plan(plan_id()) -> ok.
 delete_plan(PlanId) ->
-    gen_server:call(?MODULE, {delete, PlanId}).
+    call({delete, PlanId}).
+
+-spec delete_plan_async(plan_id()) -> ok.
+delete_plan_async(PlanId) ->
+    cast({delete, PlanId}).
 
 -spec clear() -> ok.
 clear() ->
-    gen_server:call(?MODULE, clear).
+    call(clear).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -105,18 +125,18 @@ init([]) ->
     {reply, term(), state()}.
 handle_call({save, Plan}, _From, State) ->
     Reply = case validate_plan(Plan) of
-        {ok, PlanId} ->
-            ets:insert(?TABLE, #entry{id = PlanId, plan = Plan}),
-            ok;
-        {error, Reason} ->
-            {error, Reason}
-    end,
+                {ok, PlanId} ->
+                    ets:insert(?TABLE, #entry{id = PlanId, plan = Plan}),
+                    ok;
+                {error, Reason} ->
+                    {error, Reason}
+            end,
     {reply, Reply, State};
 handle_call({take, PlanId}, _From, State) ->
     Reply = case ets:take(?TABLE, PlanId) of
-        [#entry{plan = Plan}] -> {ok, Plan};
-        []                    -> {error, not_found}
-    end,
+                [#entry{plan = Plan}] -> {ok, Plan};
+                []                    -> {error, not_found}
+            end,
     {reply, Reply, State};
 handle_call({delete, PlanId}, _From, State) ->
     ets:delete(?TABLE, PlanId),
@@ -128,6 +148,15 @@ handle_call(_Request, _From, State) ->
     {reply, {error, unknown_call}, State}.
 
 -spec handle_cast(term(), state()) -> {noreply, state()}.
+handle_cast({save, Plan}, State) ->
+    case validate_plan(Plan) of
+        {ok, PlanId} -> ets:insert(?TABLE, #entry{id = PlanId, plan = Plan});
+        {error, _}   -> ok
+    end,
+    {noreply, State};
+handle_cast({delete, PlanId}, State) ->
+    ets:delete(?TABLE, PlanId),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -147,9 +176,41 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-%% Uses ets:whereis/1 to check for a stale table explicitly, rather than
-%% relying on try/catch for control flow. Handles the supervisor-restart
-%% race where ETS cleanup hasn't completed before init runs.
+%% Wraps gen_server:call/3 so callers get a graceful error if the
+%% server isn't running or the call doesn't return in time.
+-spec call(term()) -> term().
+call(Request) ->
+    try
+        gen_server:call(?MODULE, Request, ?CALL_TIMEOUT)
+    catch
+        exit:{noproc, _} -> {error, unavailable};
+        exit:{normal, _} -> {error, unavailable};
+        exit:{timeout, _} -> {error, timeout}
+    end.
+
+-spec cast(term()) -> ok.
+cast(Msg) ->
+    gen_server:cast(?MODULE, Msg).
+
+%% Runs a read against the ETS table only if it currently exists.
+-spec with_table(fun(() -> T)) -> T | {error, unavailable} when T :: term().
+with_table(Fun) ->
+    case ets:whereis(?TABLE) of
+        undefined -> {error, unavailable};
+        _Tid      -> Fun()
+    end.
+
+-spec select(ets:match_spec()) -> [term()].
+select(Spec) ->
+    case ets:whereis(?TABLE) of
+        undefined -> [];
+        _Tid      -> ets:select(?TABLE, Spec)
+    end.
+
+%% Uses ets:whereis/1 to check for a stale table explicitly, rather
+%% than relying on try/catch for control flow. Handles the rare
+%% supervisor-restart race where ETS cleanup hasn't completed before
+%% init runs.
 -spec ensure_table() -> ets:tid().
 ensure_table() ->
     Opts = [named_table, set, protected,
@@ -158,20 +219,17 @@ ensure_table() ->
     case ets:whereis(?TABLE) of
         undefined ->
             ets:new(?TABLE, Opts);
-        _Existing ->
+        _Tid ->
             ets:delete(?TABLE),
             ets:new(?TABLE, Opts)
     end.
 
 -spec validate_plan(term()) -> {ok, plan_id()} | {error, term()}.
-validate_plan(Plan) when is_map(Plan) ->
-    case maps:find(id, Plan) of
-        {ok, PlanId} when is_binary(PlanId), PlanId /= <<>> ->
-            {ok, PlanId};
-        {ok, _BadId} ->
-            {error, invalid_id};
-        error ->
-            {error, missing_id}
-    end;
+validate_plan(#{id := PlanId}) when is_binary(PlanId), PlanId =/= <<>> ->
+    {ok, PlanId};
+validate_plan(#{id := _BadId}) ->
+    {error, invalid_id};
+validate_plan(#{}) ->
+    {error, missing_id};
 validate_plan(_) ->
     {error, not_a_map}.

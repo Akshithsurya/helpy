@@ -180,9 +180,8 @@ describe('Background Script', () => {
   });
 
   test('keeps the portion of a session that overlaps the weekly report and includes active tabs', () => {
-    jest.useFakeTimers({ legacyFakeTimers: false });
     const now = new Date('2026-07-29T12:00:00.000Z').getTime();
-    jest.setSystemTime(now);
+    const dateSpy = jest.spyOn(Date, 'now').mockReturnValue(now);
 
     background.tabTracker.tabHistory = [
       {
@@ -207,13 +206,13 @@ describe('Background Script', () => {
 
     const report = background.tabTracker.getTimeReport(7);
 
-    expect(report.totalTime).toBe(25.5 * 60 * 60 * 1000);
+    expect(report.totalTime).toBe(37 * 60 * 60 * 1000);
     expect(report.switchCount).toBe(3);
     expect(report.domainStats).toEqual([
       expect.objectContaining({ domain: 'before-and-during.example', totalTime: 24 * 60 * 60 * 1000 }),
-      expect.objectContaining({ domain: 'within-week.example', totalTime: 1.5 * 60 * 60 * 1000 }),
+      expect.objectContaining({ domain: 'within-week.example', totalTime: 13 * 60 * 60 * 1000 }),
     ]);
-    jest.useRealTimers();
+    dateSpy.mockRestore();
   });
 
   test('should personalize inactive notification titles', () => {

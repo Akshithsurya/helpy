@@ -4,22 +4,96 @@ set -euo pipefail
 # Health check script for Helpy Plan Erlang service
 
 # Configuration Constants (centralized for easy maintenance)
-readonly METRICS_TIMEOUT=5
-readonly ERROR_WINDOW_LINES=100
-readonly ERROR_CRITICAL_THRESHOLD=10
+# Allow environment variable overrides for runtime configuration
+readonly METRICS_TIMEOUT=${METRICS_TIMEOUT:-5}
+readonly ERROR_WINDOW_LINES=${ERROR_WINDOW_LINES:-100}
+readonly ERROR_CRITICAL_THRESHOLD=${ERROR_CRITICAL_THRESHOLD:-10}
 readonly REQUIRED_FUNCS=("log_info" "log_error" "log_warn" "is_node_running")
 readonly SCRIPT_NAME=$(basename "$0")
-readonly REQUIRED_TOOLS=("curl" "tail" "grep")
+readonly REQUIRED_TOOLS=("curl" "tail" "grep" "jq")
+readonly METRICS_ENDPOINT=${METRICS_ENDPOINT:-"/metrics"}
+readonly LOG_FILE_PATH=${LOG_FILE_PATH:-"helpy_plan.log"}
+readonly JSON_OUTPUT=${JSON_OUTPUT:-"${GENERATE_JSON:-false}"}
 
 # Resolve script directory and load common utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 COMMON_FILE="$SCRIPT_DIR/common.sh"
 
-# Global health state tracker
-HEALTHY=true
-PASS_COUNT=0
-WARN_COUNT=0
-ERROR_COUNT=0
+# Global health state tracker - encapsulated to avoid global state pollution
+declare -Ag HEALTH_STATE=(
+    ["healthy"]="true"
+    ["pass"]="0"
+    ["warn"]="0"
+    ["error"]="0"
+)
+
+# Add structured error codes for monitoring integration
+declare -Ar ERROR_CODES=(
+    ["MISSING_TOOL"]=1
+    ["MISSING_COMMON"]=2
+    ["MISSING_FUNCTION"]=3
+    ["INVALID_CONFIG"]=4
+    ["SERVICE_UNHEALTHY"]=5
+)
+
+# Show usage instructions for the script
+show_usage() {
+    cat <<EOF
+Usage: $SCRIPT_NAME [OPTIONS]
+
+Health check script for Helpy Plan Erlang service.
+
+Options:
+    -h, --help          Show this help message and exit
+    -j, --json          Output machine-readable JSON report
+    -v, --verbose       Enable verbose logging
+    -q, --quiet         Suppress all non-essential output
+    --metrics-timeout N Override metrics endpoint timeout (default: $METRICS_TIMEOUT)
+    --error-window N    Override log analysis line window (default: $ERROR_WINDOW_LINES)
+    --error-threshold N Override critical error threshold (default: $ERROR_CRITICAL_THRESHOLD)
+EOF
+}
+
+# Parse command line arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            -j|--json)
+                JSON_OUTPUT="true"
+                shift
+                ;;
+            -v|--verbose)
+                export LOG_LEVEL="debug"
+                shift
+                ;;
+            -q|--quiet)
+                export LOG_LEVEL="error"
+                shift
+                ;;
+            --metrics-timeout)
+                METRICS_TIMEOUT="$2"
+                shift 2
+                ;;
+            --error-window)
+                ERROR_WINDOW_LINES="$2"
+                shift 2
+                ;;
+            --error-threshold)
+                ERROR_CRITICAL_THRESHOLD="$2"
+                shift 2
+                ;;
+            *)
+                echo "ERROR: Unknown argument: $1" >&2
+                show_usage >&2
+                exit "${ERROR_CODES["MISSING_TOOL"]}"
+                ;;
+        esac
+    done
+}
 
 # Validate core system utilities are available before proceeding
 check_required_tools() {
@@ -31,7 +105,7 @@ check_required_tools() {
         fi
     done
     if [[ "$missing" -eq 1 ]]; then
-        exit 1
+        exit "${ERROR_CODES["MISSING_TOOL"]}"
     fi
 }
 
@@ -39,7 +113,7 @@ check_required_tools() {
 load_common_library() {
     if [[ ! -f "$COMMON_FILE" ]]; then
         echo "ERROR: Missing required common.sh at $COMMON_FILE" >&2
-        exit 1
+        exit "${ERROR_CODES["MISSING_COMMON"]}"
     fi
     # shellcheck source=common.sh
     # Disable unbound variable check temporarily for common.sh to handle its own variables
@@ -52,20 +126,20 @@ load_common_library() {
     for func in "${REQUIRED_FUNCS[@]}"; do
         if ! declare -F "$func" &>/dev/null; then
             echo "ERROR: common.sh missing required function: $func" >&2
-            exit 1
+            exit "${ERROR_CODES["MISSING_FUNCTION"]}"
         fi
     done
 
     # Verify required configuration variables are set
     if [[ -z "${LOG_DIR:-}" ]]; then
         echo "ERROR: LOG_DIR variable not defined in common.sh" >&2
-        exit 1
+        exit "${ERROR_CODES["INVALID_CONFIG"]}"
     fi
 
     # Verify config getter function exists (fixed typo in original error message)
     if ! declare -F "helpy_plan_config:get" &>/dev/null; then
         echo "ERROR: helpy_plan_config:get function not available" >&2
-        exit 1
+        exit "${ERROR_CODES["INVALID_CONFIG"]}"
     fi
 }
 
@@ -73,38 +147,32 @@ load_common_library() {
 # Escape JSON special characters in string values to prevent invalid output
 json_escape() {
     local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//\//\\/}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf "%s" "$s"
+    jq -R . <<<"$s"
 }
 
 generate_json_report() {
     local status="healthy"
-    if [[ "$HEALTHY" != true ]]; then
+    if [[ "${HEALTH_STATE["healthy"]}" != "true" ]]; then
         status="unhealthy"
     fi
-    # Escape all string values to ensure valid JSON output
-    local escaped_script_name
-    local escaped_status
-    escaped_script_name=$(json_escape "$SCRIPT_NAME")
-    escaped_status=$(json_escape "$status")
-    
-    cat <<EOF
-{
-  "script": "$escaped_script_name",
-  "timestamp": $(date +%s),
-  "status": "$escaped_status",
-  "checks": {
-    "passed": $PASS_COUNT,
-    "warnings": $WARN_COUNT,
-    "errors": $ERROR_COUNT
-  }
-}
-EOF
+    # Use jq to construct valid JSON automatically, eliminating escape bugs
+    jq -n \
+        --arg script "$SCRIPT_NAME" \
+        --arg status "$status" \
+        --argjson timestamp "$(date +%s)" \
+        --argjson passed "${HEALTH_STATE["pass"]}" \
+        --argjson warnings "${HEALTH_STATE["warn"]}" \
+        --argjson errors "${HEALTH_STATE["error"]}" \
+        '{
+            script: $script,
+            timestamp: $timestamp,
+            status: $status,
+            checks: {
+                passed: $passed,
+                warnings: $warnings,
+                errors: $errors
+            }
+        }'
 }
 
 # Helper function to safely update health state and counters
@@ -116,16 +184,16 @@ record_check_result() {
     case "$status" in
         pass)
             log_info "$check_name: $message"
-            ((PASS_COUNT++))
+            ((HEALTH_STATE["pass"]++))
             ;;
         warn)
             log_warn "$check_name: $message"
-            ((WARN_COUNT++))
+            ((HEALTH_STATE["warn"]++))
             ;;
         error)
             log_error "$check_name: $message"
-            HEALTHY=false
-            ((ERROR_COUNT++))
+            HEALTH_STATE["healthy"]="false"
+            ((HEALTH_STATE["error"]++))
             ;;
     esac
 }
@@ -184,7 +252,7 @@ check_http_server() {
     if command -v curl &>/dev/null; then
         # Capture curl output and exit code separately for better error reporting
         local http_status
-        http_status=$(curl -s -m "$METRICS_TIMEOUT" -o /dev/null -w "%{http_code}" "http://localhost:$http_port/metrics" 2>/dev/null || echo "000")
+        http_status=$(curl -s -m "$METRICS_TIMEOUT" -o /dev/null -w "%{http_code}" "http://localhost:$http_port$METRICS_ENDPOINT" 2>/dev/null || echo "000")
         if [[ "$http_status" =~ ^(200|500)$ ]]; then
             record_check_result "[$current_check/$total_checks] HTTP server check" "pass" "HTTP server is responding on port $http_port (status: $http_status)"
         else
@@ -215,47 +283,61 @@ check_log_errors() {
     fi
 }
 
-# Start health check report
-echo "=== Helpy Plan Service Health Check ==="
-echo "Run time: $(date -Iseconds)"
-echo ""
+# Main execution flow with argument parsing
+main() {
+    parse_arguments "$@"
 
-# Pre-flight validation
-check_required_tools
-load_common_library
+    # Start health check report
+    if [[ "${LOG_LEVEL:-info}" != "error" ]]; then
+        echo "=== Helpy Plan Service Health Check ==="
+        echo "Run time: $(date -Iseconds)"
+        echo ""
+    fi
 
-# Initialize derived paths
-LOG_FILE="$LOG_DIR/helpy_plan.log"
+    # Pre-flight validation
+    check_required_tools
+    load_common_library
 
-# Register all health checks
-CHECKS=()
-add_health_check check_node_status
-add_health_check check_log_file
-add_health_check check_http_server
-add_health_check check_log_errors
+    # Initialize derived paths
+    LOG_FILE="$LOG_DIR/$LOG_FILE_PATH"
 
-# Run all health checks
-run_health_checks
+    # Register all health checks
+    CHECKS=()
+    add_health_check check_node_status
+    add_health_check check_log_file
+    add_health_check check_http_server
+    add_health_check check_log_errors
 
-# Final health status report
-echo ""
-echo "--- Summary ---"
-echo "Passed checks: $PASS_COUNT"
-echo "Warnings: $WARN_COUNT"
-echo "Critical errors: $ERROR_COUNT"
-echo ""
+    # Run all health checks
+    run_health_checks
 
-# Output JSON report for monitoring systems
-if [[ "${GENERATE_JSON:-false}" == "true" ]]; then
-    echo "--- Machine-readable report ---"
-    generate_json_report
-    echo ""
-fi
+    # Final health status report
+    if [[ "${LOG_LEVEL:-info}" != "error" ]]; then
+        echo ""
+        echo "--- Summary ---"
+        echo "Passed checks: ${HEALTH_STATE["pass"]}"
+        echo "Warnings: ${HEALTH_STATE["warn"]}"
+        echo "Critical errors: ${HEALTH_STATE["error"]}"
+        echo ""
+    fi
 
-if [[ "$HEALTHY" == true ]]; then
-    log_info "Service is HEALTHY"
-    exit 0
-else
-    log_error "Service is UNHEALTHY"
-    exit 1
+    # Output JSON report for monitoring systems
+    if [[ "$JSON_OUTPUT" == "true" ]]; then
+        [[ "${LOG_LEVEL:-info}" != "error" ]] && echo "--- Machine-readable report ---"
+        generate_json_report
+        [[ "${LOG_LEVEL:-info}" != "error" ]] && echo ""
+    fi
+
+    if [[ "${HEALTH_STATE["healthy"]}" == "true" ]]; then
+        log_info "Service is HEALTHY"
+        exit 0
+    else
+        log_error "Service is UNHEALTHY"
+        exit "${ERROR_CODES["SERVICE_UNHEALTHY"]}"
+    fi
+}
+
+# Start main execution only if script is run directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+    main "$@"
 fi

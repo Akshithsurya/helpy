@@ -647,16 +647,15 @@ expressApp.post('/api/pomodoro', (req, res) => {
   }
 });
 
-let isFocusShieldActive = false;
-
 expressApp.get('/api/shield-state', (req, res) => {
   try {
-    const rules = blockScheduler ? blockScheduler.getRules() : [];
+    const session = focusSessionManager?.getState();
     res.json({
       success: true,
-      active: isFocusShieldActive,
-      blockedSites: rules.map((r) => r.domain || r.url || r),
+      active: Boolean(session?.active && session?.blockingActive),
+      blockedSites: settingsManager.getSettings().blockedDomains || [],
       currentTask: activeFocusTask || 'Focus Shield Session',
+      session,
       bridge: getBridgeMetadata(),
     });
   } catch (error) {
@@ -666,16 +665,25 @@ expressApp.get('/api/shield-state', (req, res) => {
 
 expressApp.post('/api/shield-state', (req, res) => {
   try {
-    const { active, task } = req.body || {};
-    isFocusShieldActive = Boolean(active);
+    const { active, task, syncOnly, workMinutes, breakMinutes, strict } = req.body || {};
     if (task) activeFocusTask = task;
+    if (!syncOnly && focusSessionManager) {
+      if (active) {
+        focusSessionManager.start({ workMinutes, breakMinutes, strict: strict !== false });
+      } else {
+        focusSessionManager.stop();
+      }
+    }
+    const session = focusSessionManager?.getState();
+    const shieldActive = Boolean(session?.active && session?.blockingActive);
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('shield-state-changed', { active: isFocusShieldActive, task: activeFocusTask });
+      mainWindow.webContents.send('shield-state-changed', { active: shieldActive, task: activeFocusTask });
     }
     res.json({
       success: true,
-      active: isFocusShieldActive,
+      active: shieldActive,
       currentTask: activeFocusTask,
+      session,
       bridge: getBridgeMetadata(),
     });
   } catch (error) {

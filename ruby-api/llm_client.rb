@@ -39,7 +39,7 @@ class LlmClient
     request = Net::HTTP::Post.new(uri)
     request['Content-Type'] = 'application/json'
     request['Authorization'] = "Bearer #{@api_key}"
-    request.body = JSON.generate(
+    request.body = JSON.generate(a
       model: @model,
       messages: normalize_messages(messages),
       temperature: temperature,

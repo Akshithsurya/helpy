@@ -1,88 +1,38 @@
-#include "plan_processor.hpp"
+// ===========================================================================
+// plan_processor.hpp
+// ===========================================================================
+#pragma once
 
-#include <algorithm>
-#include <array>
-#include <atomic>
-#include <charconv>
-#include <chrono>
-#include <cctype>
-#include <cstdint>
-#include <cstdio>
-#include <cstddef>
-#include <ctime>
-#include <filesystem>
-#include <format>
-#include <fstream>
 #include <expected>
-#include <memory>
-#include <mutex>
-#include <ranges>
-#include <shared_mutex>
-#include <span>
+#include <filesystem>
 #include <string>
 #include <string_view>
-#include <system_error>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
-namespace {
-
 // ---------------------------------------------------------------------------
-// StringBuilder – append-only string builder.
+// Data types
 // ---------------------------------------------------------------------------
 
-class StringBuilder {
-public:
-    StringBuilder() = default;
-    explicit StringBuilder(std::size_t capacity) { data_.reserve(capacity); }
+struct PlanTask {
+    std::string id;
+    std::string title;
+    int  duration_minutes = 0;
+    bool completed        = false;
+    bool is_break         = false;
+};
 
-    StringBuilder& operator<<(std::string_view s) { data_ += s; return *this; }
-    StringBuilder& operator<<(const char* s)      { if (s) data_.append(s); return *this; }
-    StringBuilder& operator<<(char c)             { data_.push_back(c); return *this; }
-    StringBuilder& operator<<(bool v)             { data_.append(v ? "true" : "false"); return *this; }
-
-    template <std::integral T>
-    StringBuilder& operator<<(T v) { return append_int(v); }
-
-    StringBuilder& operator<<(double v) {
-        char buf[64];
-        const int n = std::snprintf(buf, sizeof(buf), "%.2f", v);
-        if (n > 0) data_.append(buf, static_cast<std::size_t>(n));
-        return *this;
-    }
-
-    // std::format-based append. Forwards args as const lvalues to avoid the
-    // C++20 make_format_args lifetime pitfall with prvalues.
-    template <typename... Args>
-    StringBuilder& format(std::string_view fmt, const Args&... args) {
-        data_ += std::vformat(fmt, std::make_format_args(args...));
-        return *this;
-    }
-
-    StringBuilder& append(std::string_view s)              { data_ += s; return *this; }
-    StringBuilder& append(const char* s, std::size_t len)  { data_.append(s, len); return *this; }
-
-    void reserve(std::size_t n) { data_.reserve(n); }
-    void clear() noexcept       { data_.clear(); }
-
-    [[nodiscard]] bool        empty() const noexcept { return data_.empty(); }
-    [[nodiscard]] const char* c_str()  const noexcept { return data_.c_str(); }
-    [[nodiscard]] std::size_t size()   const noexcept { return data_.size(); }
-    [[nodiscard]] std::string_view view() const noexcept { return data_; }
-    [[nodiscard]] std::string release() { return std::move(data_); }
-
-private:
-    template <typename T>
-    StringBuilder& append_int(T v) {
-        char buf[24];
-        const auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), v);
-        if (ec == std::errc())
-            data_.append(buf, static_cast<std::size_t>(ptr - buf));
-        return *this;
-    }
-
-    std::string data_;
+struct FullPlan {
+    std::string id;
+    std::string title;
+    std::string goal;
+    int  duration_minutes   = 0;
+    int  chunk_size_minutes = 0;
+    int  break_minutes      = 0;
+    std::string status;
+    std::string created_at;
+    std::string source;
+    std::vector<std::string> tags;
+    std::vector<PlanTask>    tasks;
 };
 
 // ---------------------------------------------------------------------------
@@ -102,8 +52,151 @@ enum class PlanError {
 template <typename T>
 using PlanResult = std::expected<T, PlanError>;
 
+[[nodiscard]] constexpr std::string_view plan_error_message(PlanError e) noexcept {
+    switch (e) {
+        case PlanError::InvalidDuration:      return "Invalid duration";
+        case PlanError::InvalidChunkSize:     return "Invalid chunk size";
+        case PlanError::InvalidBreakDuration: return "Invalid break duration";
+        case PlanError::InvalidPreset:        return "Invalid preset";
+        case PlanError::PlanNotFound:         return "Plan not found";
+        case PlanError::ParsingError:         return "Parsing error";
+        case PlanError::IOError:              return "I/O error";
+    }
+    return "Unknown error";
+}
+
 // ---------------------------------------------------------------------------
-// JSON helpers
+// Public API
+// ---------------------------------------------------------------------------
+
+namespace PlanProcessor {
+
+[[nodiscard]] FullPlan   create_plan(std::string_view args_str, std::string source);
+[[nodiscard]] std::vector<PlanTask> generate_tasks(const FullPlan& plan);
+[[nodiscard]] std::string plan_to_json(const FullPlan& plan);
+
+[[nodiscard]] PlanResult<FullPlan>              get_plan(std::string_view id);
+[[nodiscard]] PlanResult<std::vector<FullPlan>> get_all_plans();
+PlanResult<void> delete_plan(std::string_view id);
+PlanResult<void> save_plans(const std::filesystem::path& path);
+
+[[nodiscard]] std::vector<std::string_view> get_preset_names();
+
+}  // namespace PlanProcessor
+
+// ===========================================================================
+// plan_processor.cpp
+// ===========================================================================
+#include "plan_processor.hpp"
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <ctime>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <ranges>
+#include <shared_mutex>
+#include <span>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace {
+
+using namespace std::literals::string_view_literals;
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+inline constexpr int MIN_PLAN_DURATION     = 5;
+inline constexpr int MAX_PLAN_DURATION     = 240;
+inline constexpr int DEFAULT_PLAN_DURATION = 30;
+inline constexpr int MIN_CHUNK_SIZE        = 1;
+inline constexpr int MAX_CHUNK_SIZE        = 60;
+inline constexpr int DEFAULT_CHUNK_SIZE    = 15;
+inline constexpr int MIN_BREAK_MINUTES     = 1;
+inline constexpr int MAX_BREAK_MINUTES     = 30;
+inline constexpr int DEFAULT_BREAK_MINUTES = 5;
+
+inline constexpr std::array<std::string_view, 5> TASK_DESCRIPTORS = {
+    "Start strong", "Keep going", "Making progress", "Almost there", "Final push"
+};
+
+// ---------------------------------------------------------------------------
+// StringBuilder — append-only string builder with minimal allocation overhead
+// ---------------------------------------------------------------------------
+
+class StringBuilder {
+public:
+    StringBuilder() = default;
+    explicit StringBuilder(std::size_t capacity) { data_.reserve(capacity); }
+
+    StringBuilder(const StringBuilder&)            = delete;
+    StringBuilder& operator=(const StringBuilder&) = delete;
+    StringBuilder(StringBuilder&&) noexcept            = default;
+    StringBuilder& operator=(StringBuilder&&) noexcept = default;
+
+    StringBuilder& operator<<(std::string_view s) { data_ += s;       return *this; }
+    StringBuilder& operator<<(const char* s)      { if (s) data_.append(s); return *this; }
+    StringBuilder& operator<<(char c)             { data_.push_back(c); return *this; }
+    StringBuilder& operator<<(bool v)             { data_.append(v ? "true" : "false"); return *this; }
+
+    template <std::integral T>
+    StringBuilder& operator<<(T v) {
+        char buf[24];
+        const auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), v);
+        if (ec == std::errc())
+            data_.append(buf, static_cast<std::size_t>(ptr - buf));
+        return *this;
+    }
+
+    StringBuilder& operator<<(double v) {
+        char buf[64];
+        if (auto [ptr, ec] = std::to_chars(buf, buf + sizeof(buf), v,
+                                            std::chars_format::fixed, 2);
+            ec == std::errc()) {
+            data_.append(buf, static_cast<std::size_t>(ptr - buf));
+        } else {
+            const int n = std::snprintf(buf, sizeof(buf), "%.2f", v);
+            if (n > 0) data_.append(buf, static_cast<std::size_t>(n));
+        }
+        return *this;
+    }
+
+    /// Writes formatted text directly into the buffer.
+    /// Forwards args as const lvalues to avoid the C++20
+    /// make_format_args lifetime pitfall with prvalues.
+    template <typename... Args>
+    StringBuilder& format(std::string_view fmt, const Args&... args) {
+        std::vformat_to(std::back_inserter(data_), fmt,
+                        std::make_format_args(args...));
+        return *this;
+    }
+
+    StringBuilder& append(std::string_view s)             { data_ += s; return *this; }
+    StringBuilder& append(const char* s, std::size_t len) { data_.append(s, len); return *this; }
+
+    void   reserve(std::size_t n)       { data_.reserve(n); }
+    void   clear() noexcept             { data_.clear(); }
+
+    [[nodiscard]] bool              empty() const noexcept { return data_.empty(); }
+    [[nodiscard]] std::size_t       size()  const noexcept { return data_.size(); }
+    [[nodiscard]] std::string_view  view()  const noexcept { return data_; }
+    [[nodiscard]] std::string       release()     noexcept { return std::move(data_); }
+
+private:
+    std::string data_;
+};
+
+// ---------------------------------------------------------------------------
+// JSON utilities
 // ---------------------------------------------------------------------------
 
 struct JsonSep {
@@ -111,12 +204,12 @@ struct JsonSep {
     void next(StringBuilder& sb) { if (!first) sb << ','; first = false; }
 };
 
+inline constexpr char HEX_DIGITS[] = "0123456789abcdef";
+
 void json_escape(StringBuilder& sb, std::string_view s) {
     const auto* const data = s.data();
     const std::size_t  size = s.size();
     std::size_t start = 0;
-
-    constexpr char hex_chars[] = "0123456789abcdef";
 
     for (std::size_t p = 0; p < size; ++p) {
         const unsigned char c = static_cast<unsigned char>(data[p]);
@@ -134,8 +227,8 @@ void json_escape(StringBuilder& sb, std::string_view s) {
             case '\t': sb.append(R"(\t)");  break;
             default: {
                 char buf[6] = "\\u00";
-                buf[3] = hex_chars[(c >> 4) & 0xF];
-                buf[4] = hex_chars[c & 0xF];
+                buf[3] = HEX_DIGITS[(c >> 4) & 0xF];
+                buf[4] = HEX_DIGITS[c & 0xF];
                 sb.append(buf, 6);
                 break;
             }
@@ -145,7 +238,9 @@ void json_escape(StringBuilder& sb, std::string_view s) {
     if (start < size) sb.append(data + start, size - start);
 }
 
-void json_kv_string(StringBuilder& sb, std::string_view key, std::string_view value) {
+// Overloaded key-value writers — cleaner than separate named functions.
+
+void json_kv(StringBuilder& sb, std::string_view key, std::string_view value) {
     sb << '"';
     json_escape(sb, key);
     sb << "\":\"";
@@ -153,25 +248,36 @@ void json_kv_string(StringBuilder& sb, std::string_view key, std::string_view va
     sb << '"';
 }
 
-void json_kv_int(StringBuilder& sb, std::string_view key, int value) {
+void json_kv(StringBuilder& sb, std::string_view key, const char* value) {
+    json_kv(sb, key, value ? std::string_view{value} : ""sv);
+}
+
+void json_kv(StringBuilder& sb, std::string_view key, bool value) {
+    sb << '"';
+    json_escape(sb, key);
+    sb << "\":" << (value ? "true"sv : "false"sv);
+}
+
+template <std::integral T>
+void json_kv(StringBuilder& sb, std::string_view key, T value) {
     sb << '"';
     json_escape(sb, key);
     sb << "\":" << value;
 }
 
-void json_kv_bool(StringBuilder& sb, std::string_view key, bool value) {
+void json_kv(StringBuilder& sb, std::string_view key, double value) {
     sb << '"';
     json_escape(sb, key);
-    sb << "\":" << (value ? "true" : "false");
+    sb << "\":" << value;
 }
 
 template <typename T, typename F>
-void json_serialize_array(StringBuilder& sb, std::span<const T> elements, F&& serialize_element) {
+void json_array(StringBuilder& sb, std::span<const T> elements, F&& serialize) {
     bool first = true;
     for (const auto& elem : elements) {
         if (!first) sb << ',';
         first = false;
-        serialize_element(sb, elem);
+        serialize(sb, elem);
     }
 }
 
@@ -189,22 +295,22 @@ constexpr std::string_view trim_view(std::string_view s) noexcept {
     return s;
 }
 
-[[nodiscard]] int parse_int(std::string_view sv, int default_val) noexcept {
+/// Parses an integer from a string view, returning default_val on failure.
+/// Requires the *entire* string to be consumed (no trailing garbage).
+[[nodiscard]] int parse_int_or(std::string_view sv, int default_val) noexcept {
     if (sv.empty()) return default_val;
     int result = 0;
     const auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), result);
-    return ec == std::errc() ? result : default_val;
+    return (ec == std::errc() && ptr == sv.data() + sv.size()) ? result : default_val;
 }
 
-// Splits on ',' and trims each piece. Plain loop keeps it portable across
-// compilers whose views::split subrange isn't string_view-constructible.
 void parse_tags_into(std::string_view tags_str, std::vector<std::string>& out) {
     std::size_t start = 0;
     while (start <= tags_str.size()) {
-        std::size_t comma = tags_str.find(',', start);
-        const std::size_t end = (comma == std::string_view::npos) ? tags_str.size() : comma;
-        auto tag = trim_view(tags_str.substr(start, end - start));
-        if (!tag.empty()) out.emplace_back(tag);
+        const std::size_t comma = tags_str.find(',', start);
+        const std::size_t end   = (comma == std::string_view::npos) ? tags_str.size() : comma;
+        if (auto tag = trim_view(tags_str.substr(start, end - start)); !tag.empty())
+            out.emplace_back(tag);
         if (comma == std::string_view::npos) break;
         start = comma + 1;
     }
@@ -214,16 +320,6 @@ void parse_tags_into(std::string_view tags_str, std::vector<std::string>& out) {
 // Presets
 // ---------------------------------------------------------------------------
 
-constexpr int MIN_PLAN_DURATION     = 5;
-constexpr int MAX_PLAN_DURATION     = 240;
-constexpr int DEFAULT_PLAN_DURATION = 30;
-constexpr int MIN_CHUNK_SIZE        = 1;
-constexpr int MAX_CHUNK_SIZE        = 60;
-constexpr int DEFAULT_CHUNK_SIZE    = 15;
-constexpr int MIN_BREAK_MINUTES     = 1;
-constexpr int MAX_BREAK_MINUTES     = 30;
-constexpr int DEFAULT_BREAK_MINUTES = 5;
-
 struct Preset {
     std::string_view name;
     std::string_view title;
@@ -231,7 +327,7 @@ struct Preset {
     std::string_view goal;
 };
 
-constexpr std::array<Preset, 17> DEFAULT_PRESETS = {{
+inline constexpr std::array<Preset, 17> DEFAULT_PRESETS = {{
     {"work",      "Work Session",       60, "Focus on work tasks"},
     {"study",     "Study Session",      45, "Focus on studying"},
     {"focus",     "Deep Focus",         25, "Deep focus session"},
@@ -257,12 +353,10 @@ constexpr std::array<Preset, 17> DEFAULT_PRESETS = {{
     return nullptr;
 }
 
-[[nodiscard]] std::vector<std::string_view> get_all_preset_names() {
-    std::vector<std::string_view> names;
-    names.reserve(DEFAULT_PRESETS.size());
-    for (const auto& p : DEFAULT_PRESETS)
-        names.push_back(p.name);
-    return names;
+[[nodiscard]] std::vector<std::string_view> all_preset_names() {
+    return DEFAULT_PRESETS
+         | std::views::transform(&Preset::name)
+         | std::ranges::to<std::vector>();
 }
 
 // ---------------------------------------------------------------------------
@@ -286,10 +380,8 @@ struct MatchResult {
 };
 
 [[nodiscard]] constexpr MatchResult match_option(
-    std::string_view tok,
-    std::string_view name,
-    std::string_view next_tok,
-    bool has_next) noexcept
+    std::string_view tok, std::string_view name,
+    std::string_view next_tok, bool has_next) noexcept
 {
     // --key=value  (value must be non-empty)
     if (tok.starts_with(name) &&
@@ -302,34 +394,36 @@ struct MatchResult {
     return {};
 }
 
-// Tokenizer that ALSO unescapes \" and \\ inside quoted strings.
 [[nodiscard]] std::vector<std::string> tokenize(std::string_view s) {
     std::vector<std::string> tokens;
-    tokens.reserve(16);
-    std::size_t i = 0;
+    tokens.reserve(static_cast<std::size_t>(
+        std::ranges::count_if(s, [](unsigned char c) { return is_space(c); })) + 1);
 
+    std::size_t i = 0;
     while (i < s.size()) {
+        // Skip leading whitespace
         while (i < s.size() && is_space(static_cast<unsigned char>(s[i]))) ++i;
         if (i >= s.size()) break;
 
         const char ch = s[i];
         if (ch == '"' || ch == '\'') {
+            // Quoted token with backslash escaping
             ++i;  // skip opening quote
             std::string token;
             token.reserve(16);
             while (i < s.size() && s[i] != ch) {
                 if (s[i] == '\\' && i + 1 < s.size() &&
                     (s[i + 1] == ch || s[i + 1] == '\\')) {
-                    token.push_back(s[i + 1]);  // unescape
+                    token.push_back(s[i + 1]);
                     i += 2;
                 } else {
-                    token.push_back(s[i]);
-                    ++i;
+                    token.push_back(s[i++]);
                 }
             }
             if (i < s.size()) ++i;  // skip closing quote
             tokens.push_back(std::move(token));
         } else {
+            // Bare token
             const std::size_t start = i;
             while (i < s.size() && !is_space(static_cast<unsigned char>(s[i]))) ++i;
             tokens.emplace_back(s.data() + start, i - start);
@@ -341,29 +435,30 @@ struct MatchResult {
 [[nodiscard]] ParsedPlanArgs parse_plan_arguments(std::string_view args_str) {
     ParsedPlanArgs r;
     auto tokens = tokenize(trim_view(args_str));
-    std::vector<std::string> title_parts;
+
+    std::vector<std::string_view> title_parts;
     title_parts.reserve(tokens.size());
 
     for (std::size_t i = 0; i < tokens.size(); ++i) {
         const std::string_view tok  = tokens[i];
         const bool has_next         = i + 1 < tokens.size();
-        const std::string_view next = has_next ? std::string_view{tokens[i + 1]} : std::string_view{};
+        const std::string_view next = has_next ? std::string_view{tokens[i + 1]} : ""sv;
         bool consumed_next = false;
 
         if (auto m = match_option(tok, "--goal", next, has_next)) {
             r.goal = m.value;
             consumed_next = m.consumed_next;
         } else if (auto m = match_option(tok, "--chunk", next, has_next)) {
-            r.chunk_size_minutes = parse_int(m.value, r.chunk_size_minutes);
+            r.chunk_size_minutes = parse_int_or(m.value, r.chunk_size_minutes);
             consumed_next = m.consumed_next;
         } else if (auto m = match_option(tok, "--break", next, has_next)) {
-            r.break_minutes = parse_int(m.value, r.break_minutes);
+            r.break_minutes = parse_int_or(m.value, r.break_minutes);
             consumed_next = m.consumed_next;
         } else if (auto m = match_option(tok, "--tags", next, has_next)) {
             parse_tags_into(m.value, r.tags);
             consumed_next = m.consumed_next;
         } else if (auto m = match_option(tok, "--duration", next, has_next)) {
-            const int d = parse_int(m.value, 0);
+            const int d = parse_int_or(m.value, 0);
             if (d > 0) r.duration_minutes = std::clamp(d, MIN_PLAN_DURATION, MAX_PLAN_DURATION);
             consumed_next = m.consumed_next;
         } else if (const Preset* p = find_preset(tok)) {
@@ -371,19 +466,20 @@ struct MatchResult {
             r.duration_minutes  = p->duration;
             if (r.goal.empty()) r.goal = std::string(p->goal);
         } else {
-            title_parts.push_back(tokens[i]);
+            title_parts.push_back(tok);
         }
 
         if (consumed_next) ++i;
     }
 
+    // Assemble title from remaining parts; standalone numeric tokens
+    // are treated as duration overrides.
     StringBuilder title_sb;
     bool have_title = false;
-    for (const auto& part : title_parts) {
-        if (!part.empty() && std::isdigit(static_cast<unsigned char>(part[0]))) {
+    for (const auto part : title_parts) {
+        if (!part.empty() && part[0] >= '0' && part[0] <= '9') {
             int d;
-            const auto [ptr, ec] =
-                std::from_chars(part.data(), part.data() + part.size(), d);
+            const auto [ptr, ec] = std::from_chars(part.data(), part.data() + part.size(), d);
             if (ec == std::errc() && ptr == part.data() + part.size() && d > 0) {
                 r.duration_minutes = std::clamp(d, MIN_PLAN_DURATION, MAX_PLAN_DURATION);
                 continue;
@@ -394,9 +490,10 @@ struct MatchResult {
         have_title = true;
     }
 
-    if (have_title)         r.title = title_sb.release();
+    if (have_title)           r.title = title_sb.release();
     else if (r.title.empty()) r.title = "Planned session";
 
+    // Final clamping
     r.chunk_size_minutes = std::clamp(r.chunk_size_minutes, MIN_CHUNK_SIZE, MAX_CHUNK_SIZE);
     r.break_minutes      = std::clamp(r.break_minutes,      MIN_BREAK_MINUTES, MAX_BREAK_MINUTES);
     r.duration_minutes   = std::clamp(r.duration_minutes,   MIN_PLAN_DURATION, MAX_PLAN_DURATION);
@@ -424,15 +521,12 @@ struct MatchResult {
     return (n > 0) ? std::string(buf, n) : std::string{};
 }
 
-// Counters are monotonic and don't guard any other memory; relaxed is enough.
 [[nodiscard]] std::string generate_plan_id() {
     static std::atomic<std::uint64_t> seq{0};
     const auto n  = seq.fetch_add(1, std::memory_order_relaxed);
     const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
-    StringBuilder sb(32);
-    sb.format("plan-{}-{}", ms, n);
-    return sb.release();
+    return std::format("plan-{}-{}", ms, n);
 }
 
 [[nodiscard]] std::uint64_t next_task_group_id() noexcept {
@@ -440,63 +534,59 @@ struct MatchResult {
     return tg_seq.fetch_add(1, std::memory_order_relaxed);
 }
 
-// ---------------------------------------------------------------------------
-// Task descriptor selection
-// ---------------------------------------------------------------------------
-
-constexpr std::array<std::string_view, 5> DESCRIPTORS = {
-    "Start strong", "Keep going", "Making progress", "Almost there", "Final push"
-};
-
 [[nodiscard]] constexpr std::string_view descriptor_for_progress(double fraction) noexcept {
-    if (fraction < 0.0) fraction = 0.0;
-    if (fraction > 1.0) fraction = 1.0;
-    const auto idx = static_cast<std::size_t>(fraction * DESCRIPTORS.size());
-    return DESCRIPTORS[std::min(idx, DESCRIPTORS.size() - 1)];
+    fraction = std::clamp(fraction, 0.0, 1.0);
+    const auto idx = static_cast<std::size_t>(fraction * TASK_DESCRIPTORS.size());
+    return TASK_DESCRIPTORS[std::min(idx, TASK_DESCRIPTORS.size() - 1)];
 }
 
-[[nodiscard]] constexpr bool validate_plan(
-    int total_duration, int chunk_size, int break_duration) noexcept
-{
-    return total_duration >= MIN_PLAN_DURATION && total_duration <= MAX_PLAN_DURATION &&
-           chunk_size     >= MIN_CHUNK_SIZE    && chunk_size     <= total_duration &&
-           break_duration >= MIN_BREAK_MINUTES && break_duration <= MAX_BREAK_MINUTES;
+[[nodiscard]] constexpr bool validate_plan(int total, int chunk, int brk) noexcept {
+    return total >= MIN_PLAN_DURATION && total <= MAX_PLAN_DURATION &&
+           chunk >= MIN_CHUNK_SIZE    && chunk <= total &&
+           brk   >= MIN_BREAK_MINUTES && brk   <= MAX_BREAK_MINUTES;
 }
 
 // ---------------------------------------------------------------------------
-// Plan storage (thread-safe, heterogeneous-lookup unordered_map)
+// Plan storage — thread-safe, heterogeneous-lookup unordered_map
 // ---------------------------------------------------------------------------
 
 struct StringHash {
     using is_transparent = void;
-    using hash_type = std::hash<std::string_view>;
-    std::size_t operator()(std::string_view sv) const noexcept { return hash_type{}(sv); }
-    std::size_t operator()(const std::string& s)      const noexcept { return hash_type{}(s); }
-    std::size_t operator()(const char* s)              const noexcept { return hash_type{}(s); }
+    using hash_type      = std::hash<std::string_view>;
+    auto operator()(std::string_view sv) const noexcept { return hash_type{}(sv); }
+    auto operator()(const std::string& s) const noexcept { return hash_type{}(s); }
+    auto operator()(const char* s)        const noexcept { return hash_type{}(s); }
 };
 
 using PlanMap = std::unordered_map<std::string, FullPlan, StringHash, std::equal_to<>>;
 
 class PlanStore {
 public:
+    PlanStore() = default;
+    PlanStore(const PlanStore&)            = delete;
+    PlanStore& operator=(const PlanStore&) = delete;
+    PlanStore(PlanStore&&)                 = delete;
+    PlanStore& operator=(PlanStore&&)      = delete;
+
     void add_plan(FullPlan plan) {
         std::unique_lock lock(mutex_);
-        const std::string id = plan.id;
+        std::string id = plan.id;  // copy key before moving value
         plans_[std::move(id)] = std::move(plan);
     }
 
     [[nodiscard]] PlanResult<FullPlan> get_plan(std::string_view id) const {
         std::shared_lock lock(mutex_);
-        auto it = plans_.find(id);
-        if (it == plans_.end()) return std::unexpected(PlanError::PlanNotFound);
-        return it->second;
+        if (auto it = plans_.find(id); it != plans_.end())
+            return it->second;
+        return std::unexpected(PlanError::PlanNotFound);
     }
 
     [[nodiscard]] PlanResult<std::vector<FullPlan>> get_all_plans() const {
         std::shared_lock lock(mutex_);
         std::vector<FullPlan> result;
         result.reserve(plans_.size());
-        for (const auto& [_, plan] : plans_) result.push_back(plan);
+        for (const auto& [_, plan] : plans_)
+            result.push_back(plan);
         return result;
     }
 
@@ -509,17 +599,27 @@ public:
         return std::unexpected(PlanError::PlanNotFound);
     }
 
+    /// Snapshots the plans under the lock, then performs file I/O without
+    /// holding the lock — preventing other threads from blocking on slow
+    /// disk writes.
     [[nodiscard]] PlanResult<void> save_to_file(const std::filesystem::path& path) const {
-        std::shared_lock lock(mutex_);
-        std::ofstream file(path);
+        std::vector<FullPlan> snapshot;
+        {
+            std::shared_lock lock(mutex_);
+            snapshot.reserve(plans_.size());
+            for (const auto& [_, plan] : plans_)
+                snapshot.push_back(plan);
+        }
+
+        std::ofstream file(path, std::ios::trunc);
         if (!file.is_open()) return std::unexpected(PlanError::IOError);
 
         file << '[';
         bool first = true;
-        for (const auto& [_, plan] : plans_) {
+        for (const auto& plan : snapshot) {
             if (!first) file << ',';
             first = false;
-            file << plan_to_json(plan);
+            file << PlanProcessor::plan_to_json(plan);
         }
         file << ']';
         file.flush();
@@ -532,17 +632,18 @@ private:
     PlanMap plans_;
 };
 
+PlanStore& global_store() {
+    static PlanStore store;
+    return store;
+}
+
 }  // namespace
 
 // ===========================================================================
-// Public API
+// Public API implementation
 // ===========================================================================
 
 namespace PlanProcessor {
-
-namespace {
-    PlanStore global_plan_store;
-}
 
 [[nodiscard]] FullPlan create_plan(std::string_view args_str, std::string source) {
     ParsedPlanArgs parsed = parse_plan_arguments(args_str);
@@ -560,7 +661,7 @@ namespace {
     plan.created_at         = make_iso_timestamp();
     plan.tasks              = generate_tasks(plan);
 
-    global_plan_store.add_plan(plan);
+    global_store().add_plan(plan);
     return plan;
 }
 
@@ -581,20 +682,13 @@ namespace {
     while (remaining > 0) {
         const int dur = std::min(chunk, remaining);
         const double progress = static_cast<double>(elapsed) / static_cast<double>(total);
-        const std::string_view desc = descriptor_for_progress(progress);
+        const auto desc = descriptor_for_progress(progress);
 
         PlanTask t;
-        {
-            StringBuilder id_sb;
-            id_sb.format("task-{}-{}", group_id, idx);
-            t.id = id_sb.release();
-        }
-        {
-            StringBuilder title_sb;
-            if (!plan.goal.empty()) title_sb.format("{}: {}", desc, plan.goal);
-            else                    title_sb.format("{} - Part {}", desc, idx + 1);
-            t.title = title_sb.release();
-        }
+        t.id               = std::format("task-{}-{}", group_id, idx);
+        t.title            = plan.goal.empty()
+                               ? std::format("{} - Part {}", desc, idx + 1)
+                               : std::format("{}: {}", desc, plan.goal);
         t.duration_minutes = dur;
         t.completed        = false;
         t.is_break         = false;
@@ -606,15 +700,11 @@ namespace {
 
         if (remaining > 0 && brk > 0) {
             PlanTask b;
-            {
-                StringBuilder bid_sb;
-                bid_sb.format("task-{}-{}-break", group_id, idx);
-                b.id = bid_sb.release();
-            }
-            b.title             = "Take a break";
-            b.duration_minutes  = brk;
-            b.completed         = false;
-            b.is_break          = true;
+            b.id               = std::format("task-{}-{}-break", group_id, idx);
+            b.title            = "Take a break";
+            b.duration_minutes = brk;
+            b.completed        = false;
+            b.is_break         = true;
             tasks.push_back(std::move(b));
             ++idx;
         }
@@ -632,19 +722,19 @@ namespace {
 
     sb << '{';
     JsonSep sep;
-    sep.next(sb); json_kv_string(sb, "id",               plan.id);
-    sep.next(sb); json_kv_string(sb, "title",            plan.title);
-    sep.next(sb); json_kv_string(sb, "goal",             plan.goal);
-    sep.next(sb); json_kv_int   (sb, "durationMinutes",  plan.duration_minutes);
-    sep.next(sb); json_kv_int   (sb, "chunkSizeMinutes", plan.chunk_size_minutes);
-    sep.next(sb); json_kv_int   (sb, "breakMinutes",     plan.break_minutes);
-    sep.next(sb); json_kv_string(sb, "status",           plan.status);
-    sep.next(sb); json_kv_string(sb, "createdAt",        plan.created_at);
-    sep.next(sb); json_kv_string(sb, "source",           plan.source);
+    sep.next(sb); json_kv(sb, "id",               plan.id);
+    sep.next(sb); json_kv(sb, "title",            plan.title);
+    sep.next(sb); json_kv(sb, "goal",             plan.goal);
+    sep.next(sb); json_kv(sb, "durationMinutes",  plan.duration_minutes);
+    sep.next(sb); json_kv(sb, "chunkSizeMinutes", plan.chunk_size_minutes);
+    sep.next(sb); json_kv(sb, "breakMinutes",     plan.break_minutes);
+    sep.next(sb); json_kv(sb, "status",           plan.status);
+    sep.next(sb); json_kv(sb, "createdAt",        plan.created_at);
+    sep.next(sb); json_kv(sb, "source",           plan.source);
 
     sep.next(sb);
     sb << "\"tags\":[";
-    json_serialize_array(sb, std::span<const std::string>(plan.tags),
+    json_array(sb, std::span<const std::string>(plan.tags),
         [](StringBuilder& asb, const std::string& tag) {
             asb << '"';
             json_escape(asb, tag);
@@ -654,15 +744,15 @@ namespace {
 
     sep.next(sb);
     sb << "\"tasks\":[";
-    json_serialize_array(sb, std::span<const PlanTask>(plan.tasks),
+    json_array(sb, std::span<const PlanTask>(plan.tasks),
         [](StringBuilder& asb, const PlanTask& task) {
             asb << '{';
             JsonSep ts;
-            ts.next(asb); json_kv_string(asb, "id",              task.id);
-            ts.next(asb); json_kv_string(asb, "title",           task.title);
-            ts.next(asb); json_kv_int   (asb, "durationMinutes", task.duration_minutes);
-            ts.next(asb); json_kv_bool  (asb, "completed",       task.completed);
-            ts.next(asb); json_kv_bool  (asb, "isBreak",         task.is_break);
+            ts.next(asb); json_kv(asb, "id",              task.id);
+            ts.next(asb); json_kv(asb, "title",           task.title);
+            ts.next(asb); json_kv(asb, "durationMinutes", task.duration_minutes);
+            ts.next(asb); json_kv(asb, "completed",       task.completed);
+            ts.next(asb); json_kv(asb, "isBreak",         task.is_break);
             asb << '}';
         });
     sb << ']';
@@ -672,23 +762,23 @@ namespace {
 }
 
 [[nodiscard]] PlanResult<FullPlan> get_plan(std::string_view id) {
-    return global_plan_store.get_plan(id);
+    return global_store().get_plan(id);
 }
 
 [[nodiscard]] PlanResult<std::vector<FullPlan>> get_all_plans() {
-    return global_plan_store.get_all_plans();
+    return global_store().get_all_plans();
 }
 
 PlanResult<void> delete_plan(std::string_view id) {
-    return global_plan_store.delete_plan(id);
+    return global_store().delete_plan(id);
 }
 
 PlanResult<void> save_plans(const std::filesystem::path& path) {
-    return global_plan_store.save_to_file(path);
+    return global_store().save_to_file(path);
 }
 
 [[nodiscard]] std::vector<std::string_view> get_preset_names() {
-    return get_all_preset_names();
+    return all_preset_names();
 }
 
 }  // namespace PlanProcessor

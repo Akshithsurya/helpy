@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <charconv>
 #include <chrono>
+#include <cmath>
 #include <ctime>
 #include <format>
 #include <map>
@@ -17,6 +18,8 @@
 #include <vector>
 
 namespace PlanProcessor {
+
+using namespace std::string_view_literals;
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 namespace config {
@@ -54,6 +57,8 @@ enum class ScheduleStrategy {
 // ─── Internal helpers ────────────────────────────────────────────────────────
 namespace detail {
 
+// ─── Time helpers ────────────────────────────────────────────────────────────
+
 [[nodiscard]] inline std::tm safe_localtime(std::time_t t) noexcept {
     std::tm local{};
 #if defined(_WIN32)
@@ -64,11 +69,18 @@ namespace detail {
     return local;
 }
 
+// ─── String-view helpers ─────────────────────────────────────────────────────
+
 [[nodiscard]] constexpr std::string_view trim_view(std::string_view s) noexcept {
     const auto first = s.find_first_not_of(" \t\n\r");
     if (first == std::string_view::npos) return {};
     const auto last = s.find_last_not_of(" \t\n\r");
     return s.substr(first, last - first + 1);
+}
+
+// "" for singular (count == 1), "s" otherwise — for English noun pluralization.
+[[nodiscard]] constexpr std::string_view plural_suffix(int count) noexcept {
+    return count == 1 ? ""sv : "s"sv;
 }
 
 [[nodiscard]] constexpr std::size_t
@@ -94,25 +106,34 @@ find_unescaped_quote(std::string_view s, std::size_t from) noexcept {
     return std::string_view::npos;
 }
 
+// ─── JSON unescaping ─────────────────────────────────────────────────────────
+
+// Maps a JSON escape letter to its literal value. Unknown escapes
+// pass through unchanged (matches the lenient behavior below).
+[[nodiscard]] constexpr char decode_escape(char c) noexcept {
+    switch (c) {
+        case '"':  return '"';
+        case '\\': return '\\';
+        case '/':  return '/';
+        case 'n':  return '\n';
+        case 't':  return '\t';
+        case 'r':  return '\r';
+        case 'b':  return '\b';
+        case 'f':  return '\f';
+        default:   return c;
+    }
+}
+
 // Unescape a JSON string body. Handles \" \\ \/ \n \t \r \b \f.
+// A dangling trailing backslash is silently dropped.
 // \uXXXX is NOT supported — the 'u' and following hex digits are emitted
-// literally.  Extend here if full Unicode support becomes necessary.
+// literally. Extend here if full Unicode support becomes necessary.
 inline void append_unescaped(std::string& out, std::string_view raw) {
     out.reserve(out.size() + raw.size());
     bool escaping = false;
     for (const char c : raw) {
         if (escaping) {
-            switch (c) {
-                case '"':  out.push_back('"');  break;
-                case '\\': out.push_back('\\'); break;
-                case '/':  out.push_back('/');  break;
-                case 'n':  out.push_back('\n'); break;
-                case 't':  out.push_back('\t'); break;
-                case 'r':  out.push_back('\r'); break;
-                case 'b':  out.push_back('\b'); break;
-                case 'f':  out.push_back('\f'); break;
-                default:   out.push_back(c);    break;  // unknown — keep literal
-            }
+            out.push_back(decode_escape(c));
             escaping = false;
         } else if (c == '\\') {
             escaping = true;
@@ -123,9 +144,6 @@ inline void append_unescaped(std::string& out, std::string_view raw) {
 }
 
 // ─── Value extraction ────────────────────────────────────────────────────────
-// Each extractor returns std::optional<T> where T carries both the decoded
-// value and the position immediately past the closing delimiter — far
-// clearer than returning a pair whose position field uses npos as a sentinel.
 
 struct QuotedValue {
     std::string content;
@@ -194,63 +212,64 @@ parse_int(std::string_view s) noexcept {
 }
 
 // ─── Flat JSON object parser ─────────────────────────────────────────────────
+
 struct ParsedPlan {
     std::map<std::string, std::string> fields;
     std::vector<std::string>           tags;
 };
 
-// Single-pass parser for flat JSON objects.  String, array, and bare values
-// are recognised.  Arrays are fully decoded only for the "tags" key — all
-// other arrays are skipped without extracting their string contents, which
-// avoids unnecessary heap allocations on fields we never inspect.
+// Parses a flat JSON object (no nested objects) into key/value fields plus
+// a dedicated `tags` array. Unknown array values are skipped. Malformed
+// input stops parsing gracefully and returns whatever was collected so far.
 [[nodiscard]] inline ParsedPlan parse_plan(std::string_view raw_json) {
     ParsedPlan result;
 
     std::size_t pos = 0;
     while ((pos = find_unescaped_quote(raw_json, pos)) != std::string_view::npos) {
-        // ── Key ──
         auto key = extract_quoted_value(raw_json, pos);
-        if (!key) break;
+        if (!key) return result;
 
-        // ── Colon separator ──
         const auto colon = raw_json.find(':', key->next_pos);
-        if (colon == std::string_view::npos) break;
+        if (colon == std::string_view::npos) return result;
 
-        // ── Value ──
         const auto value_start = raw_json.find_first_not_of(" \t\n\r", colon + 1);
-        if (value_start == std::string_view::npos) break;
+        if (value_start == std::string_view::npos) return result;
 
-        const char v0 = raw_json[value_start];
-
-        if (v0 == '"') {
-            auto val = extract_quoted_value(raw_json, value_start);
-            if (!val) break;
-            result.fields.emplace(std::move(key->content), std::move(val->content));
-            pos = val->next_pos;
-        } else if (v0 == '[') {
-            if (key->content == "tags") {
-                auto arr = extract_string_array(raw_json, value_start);
-                if (!arr) break;
-                result.tags = std::move(arr->values);
-                pos = arr->next_pos;
-            } else {
-                // Skip non-tags arrays without decoding their contents.
-                const auto close = find_array_close(raw_json, value_start);
-                if (close == std::string_view::npos) break;
-                pos = close + 1;
-            }
-        } else {
-            // Bare value (number / bool / null)
-            const auto value_end = raw_json.find_first_of(",}", value_start);
-            if (value_end == std::string_view::npos) {
+        switch (raw_json[value_start]) {
+            case '"': {
+                auto val = extract_quoted_value(raw_json, value_start);
+                if (!val) return result;
                 result.fields.emplace(std::move(key->content),
-                    std::string(trim_view(raw_json.substr(value_start))));
+                                      std::move(val->content));
+                pos = val->next_pos;
                 break;
             }
-            result.fields.emplace(std::move(key->content),
-                std::string(trim_view(raw_json.substr(value_start,
-                                                      value_end - value_start))));
-            pos = value_end;
+            case '[': {
+                if (key->content == "tags") {
+                    auto arr = extract_string_array(raw_json, value_start);
+                    if (!arr) return result;
+                    result.tags = std::move(arr->values);
+                    pos = arr->next_pos;
+                } else {
+                    const auto close = find_array_close(raw_json, value_start);
+                    if (close == std::string_view::npos) return result;
+                    pos = close + 1;
+                }
+                break;
+            }
+            default: {
+                const auto value_end = raw_json.find_first_of(",}", value_start);
+                if (value_end == std::string_view::npos) {
+                    result.fields.emplace(std::move(key->content),
+                        std::string(trim_view(raw_json.substr(value_start))));
+                    return result;
+                }
+                result.fields.emplace(std::move(key->content),
+                    std::string(trim_view(raw_json.substr(
+                        value_start, value_end - value_start))));
+                pos = value_end;
+                break;
+            }
         }
     }
 
@@ -299,6 +318,8 @@ struct ParsedPlan {
             }
         }
 
+        // operator[](Key&&) moves the key only when insertion actually occurs,
+        // so this is both concise and allocation-efficient.
         for (auto& tag : parsed.tags) {
             ++tag_counts[std::move(tag)];
         }
@@ -306,22 +327,20 @@ struct ParsedPlan {
 
     if (stats.total_plans > 0) {
         stats.completion_rate =
-            (static_cast<double>(stats.completed_plans) / stats.total_plans) * 100.0;
+            (100.0 * stats.completed_plans) / stats.total_plans;
         stats.average_duration_minutes =
             static_cast<double>(total_duration) / stats.total_plans;
     }
     stats.popular_tags = std::move(tag_counts);
 
-    // Lazily resolve the current hour only when the caller didn't supply one.
-    const int hour = time_of_day.has_value()
-        ? *time_of_day
-        : detail::safe_localtime(
-              std::chrono::system_clock::to_time_t(
-                  std::chrono::system_clock::now())).tm_hour;
+    const int hour = time_of_day.value_or(
+        detail::safe_localtime(
+            std::chrono::system_clock::to_time_t(
+                std::chrono::system_clock::now())).tm_hour);
 
     auto time_suggestions    = generate_time_suggestions(hour);
     auto history_suggestions = generate_history_suggestions(
-        static_cast<int>(stats.average_duration_minutes),
+        static_cast<int>(std::lround(stats.average_duration_minutes)),
         stats.popular_tags);
 
     stats.suggestions.reserve(
@@ -359,21 +378,23 @@ struct ParsedPlan {
     result.remaining_minutes = total_work_minutes % result.optimal_work_minutes;
 
     if (result.num_blocks > 0) {
-        // Build the optional "plus a final N minute block" suffix separately
-        // so the main format string stays readable.
+        // "minute" in "X minute block" is a compound modifier → always singular.
+        // Only the head noun ("block"/"break") gets pluralized.
         const auto suffix = result.remaining_minutes > 0
-            ? std::format(", plus a final {} minute block", result.remaining_minutes)
+            ? std::format(", plus a final {} minute block",
+                          result.remaining_minutes)
             : std::string{};
 
         result.recommendation = std::format(
-            "For {} minutes, we recommend {} block{} of {} minutes work "
+            "For {} minute{}, we recommend {} block{} of {} minute work "
             "with {} minute break{}{}",
             total_work_minutes,
+            detail::plural_suffix(total_work_minutes),
             result.num_blocks,
-            result.num_blocks != 1 ? "s" : "",
+            detail::plural_suffix(result.num_blocks),
             result.optimal_work_minutes,
             result.optimal_break_minutes,
-            result.optimal_break_minutes != 1 ? "s" : "",
+            detail::plural_suffix(result.optimal_break_minutes),
             suffix);
     } else {
         // Work time is shorter than one optimal block — do it all at once.
@@ -382,8 +403,10 @@ struct ParsedPlan {
         result.num_blocks            = 1;
         result.remaining_minutes     = 0;
         result.recommendation = std::format(
-            "For {} minutes, we recommend a single {} minute block",
-            total_work_minutes, total_work_minutes);
+            "For {} minute{}, we recommend a single {} minute block",
+            total_work_minutes,
+            detail::plural_suffix(total_work_minutes),
+            total_work_minutes);
     }
 
     return result;
@@ -414,7 +437,7 @@ struct ParsedPlan {
     std::iota(order.begin(), order.end(), std::size_t{0});
 
     const auto priority_of = [&](std::size_t idx) noexcept {
-        return (idx < priorities.size())
+        return idx < priorities.size()
                    ? priorities[idx]
                    : config::default_priority;
     };
@@ -426,8 +449,10 @@ struct ParsedPlan {
     }
 
     std::vector<std::string> result;
-    result.reserve(order.size());
-    for (const auto idx : order) result.push_back(tasks[idx]);
+    result.reserve(tasks.size());
+    for (const auto i : order) {
+        result.push_back(tasks[i]);
+    }
     return result;
 }
 
@@ -440,6 +465,7 @@ AnalyticsEngine::parse_plan_json(std::string_view raw_json) {
 
 [[nodiscard]] std::vector<std::string>
 AnalyticsEngine::generate_time_suggestions(int hour) {
+    // Hour buckets — index 0 doubles for late-night (both <6 and >=22).
     static constexpr std::string_view messages[] = {
         "Late hours: Consider light tasks only",
         "Morning is a great time for focus work!",
@@ -447,11 +473,13 @@ AnalyticsEngine::generate_time_suggestions(int hour) {
         "Evening: Good for review and planning tasks",
     };
 
-    const auto idx = hour < 6  ? std::size_t{0} :
-                     hour < 12 ? std::size_t{1} :
-                     hour < 17 ? std::size_t{2} :
-                     hour < 22 ? std::size_t{3} :
-                                 std::size_t{0};
+    const auto idx =
+        hour < 6  ? std::size_t{0} :
+        hour < 12 ? std::size_t{1} :
+        hour < 17 ? std::size_t{2} :
+        hour < 22 ? std::size_t{3} :
+                    std::size_t{0};
+
     return {std::string{messages[idx]}};
 }
 
@@ -465,8 +493,8 @@ AnalyticsEngine::generate_history_suggestions(
 
     if (avg_duration > 0) {
         suggestions.emplace_back(std::format(
-            "Your optimal plan duration seems to be around {} minutes",
-            avg_duration));
+            "Your optimal plan duration seems to be around {} minute{}",
+            avg_duration, detail::plural_suffix(avg_duration)));
     }
 
     if (!tag_counts.empty()) {

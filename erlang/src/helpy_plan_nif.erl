@@ -19,7 +19,6 @@ unavailable. Use `nif_loaded/0` to check at runtime.
 
 -on_load(init/0).
 
-%% Declares which functions are replaced by the NIF on successful load.
 -nifs([
     parse_plan/1,
     calculate_stats/1,
@@ -85,24 +84,21 @@ use `nif_loaded/0` to determine whether the NIF is active.
 """.
 -spec init() -> ok.
 init() ->
-    case erlang:load_nif(nif_library_path(), 0) of
-        ok                    -> mark_loaded(true);
-        {error, {reload, _}}  -> mark_loaded(true);
-        {error, {upgrade, _}} -> mark_loaded(true);
+    Loaded = case erlang:load_nif(nif_library_path(), 0) of
+        ok                    -> true;
+        {error, {reload, _}}  -> true;
+        {error, {upgrade, _}} -> true;
         {error, not_present} ->
             logger:warning("NIF ~s not found; using Erlang fallbacks", [?NIF_LIB]),
-            mark_loaded(false);
+            false;
         {error, {load_failed, Reason}} ->
             logger:error("NIF ~s load failed: ~0p", [?NIF_LIB, Reason]),
-            mark_loaded(false);
+            false;
         {error, Reason} ->
             logger:error("NIF ~s unexpected load error: ~0p", [?NIF_LIB, Reason]),
-            mark_loaded(false)
-    end.
-
--spec mark_loaded(boolean()) -> ok.
-mark_loaded(Bool) ->
-    persistent_term:put(?LOADED_KEY, Bool),
+            false
+    end,
+    persistent_term:put(?LOADED_KEY, Loaded),
     ok.
 
 -spec nif_library_path() -> file:filename().
@@ -119,7 +115,7 @@ nif_loaded() ->
     persistent_term:get(?LOADED_KEY, false).
 
 %%------------------------------------------------------------------------------
-%% NIF functions (Erlang fallbacks shown; replaced on NIF load)
+%% NIF functions (Erlang fallbacks; replaced on NIF load)
 %%------------------------------------------------------------------------------
 
 -doc """
@@ -130,7 +126,6 @@ sensible defaults.
 """.
 -spec parse_plan(Input :: binary() | map()) -> binary().
 parse_plan(Input) ->
-    %% Replaced by NIF when loaded; otherwise runs this Erlang fallback.
     jsx:encode(parse_plan_fallback(Input)).
 
 -spec parse_plan_fallback(binary() | map()) -> plan().
@@ -165,12 +160,16 @@ Accepts a list of JSON-encoded plan binaries or maps.
 """.
 -spec calculate_stats(Plans :: [binary() | map()]) -> binary().
 calculate_stats(Plans) ->
-    %% Replaced by NIF when loaded; otherwise runs this Erlang fallback.
     jsx:encode(calculate_stats_fallback(Plans)).
 
 -spec calculate_stats_fallback([binary() | map()]) -> stats().
 calculate_stats_fallback([]) ->
-    empty_stats();
+    #{
+        ?F_TOTAL           => 0,
+        ?F_COMPLETED       => 0,
+        ?F_COMPLETION_RATE => 0.0,
+        ?F_AVG_DURATION    => 0.0
+    };
 calculate_stats_fallback(Plans) when is_list(Plans) ->
     Decoded   = [decode_plan(P) || P <- Plans],
     Total     = length(Decoded),
@@ -181,15 +180,6 @@ calculate_stats_fallback(Plans) when is_list(Plans) ->
         ?F_COMPLETED       => Completed,
         ?F_COMPLETION_RATE => Completed / Total,
         ?F_AVG_DURATION    => lists:sum(Durations) / Total
-    }.
-
--spec empty_stats() -> stats().
-empty_stats() ->
-    #{
-        ?F_TOTAL           => 0,
-        ?F_COMPLETED       => 0,
-        ?F_COMPLETION_RATE => 0.0,
-        ?F_AVG_DURATION    => 0.0
     }.
 
 -spec decode_plan(binary() | map()) -> map().
@@ -231,7 +221,6 @@ Generates a personalized work/break recommendation.
     UserEnergy :: 0..100
 ) -> binary().
 generate_recommendation(TotalAvailable, WorkIntensity, UserEnergy) ->
-    %% Replaced by NIF when loaded; otherwise runs this Erlang fallback.
     jsx:encode(generate_recommendation_fallback(TotalAvailable, WorkIntensity, UserEnergy)).
 
 -spec generate_recommendation_fallback(non_neg_integer(), intensity(), 0..100) -> recommendation().
@@ -244,37 +233,25 @@ generate_recommendation_fallback(TotalAvailable, WorkIntensity, UserEnergy) ->
     }.
 
 -spec pomodoro_intervals(intensity(), 0..100) -> {non_neg_integer(), non_neg_integer()}.
-pomodoro_intervals(Intensity, UserEnergy) ->
-    BaseIntervals = #{
-        low  => {20, 10},
-        medium => {25, 5},
-        high => {45, 10}
-    },
-    EnergyScalers = #{
-        low  => fun(E) -> E < 50 end,
-        high => fun(E) -> E < 70 end
-    },
-    LowEnergyAdjustments = #{
-        low  => {15, 10},
-        high => {30, 5}
-    },
-    Base = maps:get(Intensity, BaseIntervals),
-    case maps:find(Intensity, EnergyScalers) of
-        {ok, Scaler} ->
-            case Scaler(UserEnergy) of
-                true -> maps:get(Intensity, LowEnergyAdjustments);
-                false -> Base
-            end;
-        error ->
-            Base
-    end.
+pomodoro_intervals(low, Energy)  when Energy < 50 -> {15, 10};
+pomodoro_intervals(low, _)                        -> {20, 10};
+pomodoro_intervals(medium, _)                     -> {25, 5};
+pomodoro_intervals(high, Energy) when Energy < 70 -> {30, 5};
+pomodoro_intervals(high, _)                       -> {45, 10}.
 
 -spec recommendation_text(non_neg_integer(), non_neg_integer(), non_neg_integer()) -> binary().
-recommendation_text(Work, Break, TotalAvailable) when Work >= 0, Break >= 0, TotalAvailable >= 0 ->
+recommendation_text(Work, Break, TotalAvailable) ->
     CycleLen = Work + Break,
-    Sessions = if CycleLen =:= 0 -> 0; true -> TotalAvailable div CycleLen end,
+    Sessions = case CycleLen of
+        0 -> 0;
+        _ -> TotalAvailable div CycleLen
+    end,
     SessionText = case Sessions of
         1 -> <<"1 full session fits">>;
-        _ -> <<Sessions/binary, " full sessions fit">>
+        N -> <<(integer_to_binary(N))/binary, " full sessions fit">>
     end,
-    <<Work/binary, " min work / ", Break/binary, " min break — ", SessionText/binary, " in ", TotalAvailable/binary, " min.">>.
+    WorkBin        = integer_to_binary(Work),
+    BreakBin       = integer_to_binary(Break),
+    TotalAvailBin  = integer_to_binary(TotalAvailable),
+    <<WorkBin/binary, " min work / ", BreakBin/binary, " min break — ",
+      SessionText/binary, " in ", TotalAvailBin/binary, " min.">>.

@@ -30,6 +30,23 @@ NODE_NAME="helpy_plan@localhost"
 MAIN_LOG_LINES=15
 ARCHIVED_LOG_LINES=10
 
+# Global warning/error collectors for JSON output
+WARNINGS=()
+ERRORS=()
+
+# Override common logging functions to capture warnings/errors
+log_info() {
+    command log_info "$@"
+}
+log_warn() {
+    WARNINGS+=("$*")
+    command log_warn "$@"
+}
+log_error() {
+    ERRORS+=("$*")
+    command log_error "$@"
+}
+
 # Function to check if the Erlang node is alive via ping
 check_erlang_node() {
     ping_erlang_node "$NODE_NAME" >/dev/null 2>&1
@@ -77,33 +94,26 @@ output_json_status() {
     local is_running="$1"
     local pid="${2:-}"
     local erlang_responsive="${3:-false}"
-    local warnings=()
-    local errors=()
-    
-    # Collect warnings and errors from earlier execution
+    local json_output
+
     if [ "$is_running" = "true" ]; then
-        cat >/tmp/helpy_status.tmp <<EOF
-{
-  "service": "helpy_plan",
-  "running": true,
-  "pid": "$pid",
-  "erlang_responsive": $erlang_responsive,
-  "warnings": $(printf '%s\n' "${warnings[@]}" | jq -R . | jq -s 'map(select(length>0))'),
-  "errors": $(printf '%s\n' "${errors[@]}" | jq -R . | jq -s 'map(select(length>0))')
-}
-EOF
+        json_output=$(jq -n \
+            --arg service "helpy_plan" \
+            --argjson running true \
+            --arg pid "$pid" \
+            --argjson erlang_responsive "$erlang_responsive" \
+            --argjson warnings "$(printf '%s\n' "${WARNINGS[@]}" | jq -R . | jq -s 'map(select(length>0))')" \
+            --argjson errors "$(printf '%s\n' "${ERRORS[@]}" | jq -R . | jq -s 'map(select(length>0))')" \
+            '{service: $service, running: $running, pid: $pid, erlang_responsive: $erlang_responsive, warnings: $warnings, errors: $errors}')
     else
-        cat >/tmp/helpy_status.tmp <<EOF
-{
-  "service": "helpy_plan",
-  "running": false,
-  "warnings": $(printf '%s\n' "${warnings[@]}" | jq -R . | jq -s 'map(select(length>0))'),
-  "errors": $(printf '%s\n' "${errors[@]}" | jq -R . | jq -s 'map(select(length>0))')
-}
-EOF
+        json_output=$(jq -n \
+            --arg service "helpy_plan" \
+            --argjson running false \
+            --argjson warnings "$(printf '%s\n' "${WARNINGS[@]}" | jq -R . | jq -s 'map(select(length>0))')" \
+            --argjson errors "$(printf '%s\n' "${ERRORS[@]}" | jq -R . | jq -s 'map(select(length>0))')" \
+            '{service: $service, running: $running, warnings: $warnings, errors: $errors}')
     fi
-    jq . /tmp/helpy_status.tmp
-    rm -f /tmp/helpy_status.tmp
+    echo "$json_output"
 }
 
 # Parse command line arguments
@@ -129,8 +139,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-echo "=== Helpy Plan Service Status ==="
-echo ""
+# Only print human-readable header if not in JSON mode
+if [ "$JSON_OUTPUT" = "false" ]; then
+    echo "=== Helpy Plan Service Status ==="
+    echo ""
+fi
 
 # Initialize PID variable to prevent unbound variable errors
 PID=""
@@ -212,11 +225,13 @@ if is_node_running; then
         fi
     fi
     
-    if [ "$JSON_OUTPUT" = "true" ] && command -v jq >/dev/null 2>&1; then
-        output_json_status "$RUNNING" "$PID" "$ERLANG_RESPONSIVE"
-    elif [ "$JSON_OUTPUT" = "true" ]; then
-        echo "ERROR: jq is required for JSON output"
-        exit 1
+    if [ "$JSON_OUTPUT" = "true" ]; then
+        if command -v jq >/dev/null 2>&1; then
+            output_json_status "$RUNNING" "$PID" "$ERLANG_RESPONSIVE"
+        else
+            echo "ERROR: jq is required for JSON output"
+            exit 1
+        fi
     fi
     exit 0
 else
@@ -288,11 +303,13 @@ else
         fi
     done
     
-    if [ "$JSON_OUTPUT" = "true" ] && command -v jq >/dev/null 2>&1; then
-        output_json_status "$RUNNING"
-    elif [ "$JSON_OUTPUT" = "true" ]; then
-        echo "ERROR: jq is required for JSON output"
-        exit 1
+    if [ "$JSON_OUTPUT" = "true" ]; then
+        if command -v jq >/dev/null 2>&1; then
+            output_json_status "$RUNNING"
+        else
+            echo "ERROR: jq is required for JSON output"
+            exit 1
+        fi
     fi
     exit 1
 fi

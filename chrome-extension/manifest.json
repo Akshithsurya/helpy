@@ -16,6 +16,8 @@
     "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
+    "http://*/*",
+    "https://*/*",
     "http://localhost:3456/*",
     "http://localhost:8080/*",
     "http://localhost:4567/*",

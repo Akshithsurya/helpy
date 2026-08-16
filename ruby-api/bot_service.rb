@@ -84,6 +84,7 @@ class RubyBotService
   # via `include?`, so partial stems like 'motivat' catch both 'motivate' and
   # 'motivation'. Multi-word phrases like 'how long' are supported.
   INTENT_REGISTRY = [
+    Intent.new(:check_in,        ['check-in', 'check in', 'quick check', 'progress'], :handle_check_in),
     Intent.new(:recommendations, %w[recommend advice suggest],                    :handle_recommendations),
     Intent.new(:analytics,       %w[analytic streak trend performance breakdown], :handle_analytics),
     Intent.new(:wellness,        %w[tired exhaust stress burnout overwhelmed],    :handle_wellness),
@@ -326,6 +327,25 @@ class RubyBotService
       "Step away from the screen, grab a glass of water, " \
       "and take a 10-minute relaxation break!",
       'wellness_coaching'
+    )
+  end
+
+  # Gives a short, concrete reset based on the work the desktop app shares.
+  # This keeps the assistant helpful even when no external LLM is configured.
+  def handle_check_in(context = nil)
+    context ||= {}
+    open_tasks = Array(context[:tasks]).reject { |task| truthy_task_completion?(task) }
+    focused_ms = context.dig(:focus_report, 'todayFocusedMs') || context.dig(:focus_report, :todayFocusedMs)
+    focused_minutes = focused_ms.to_i / 60_000
+    next_task = open_tasks.first
+    next_step = next_task ? "Open #{task_title(next_task).inspect} and define one visible result." : 'Choose one small task and name the finish line.'
+    focus_note = focused_minutes.positive? ? " You have already protected #{focused_minutes} focused minute#{pluralize(focused_minutes)} today." : ''
+
+    respond(
+      "Quick check-in: #{open_tasks.size} open task#{pluralize(open_tasks.size)}.#{focus_note} #{next_step} Then use a 25-minute shielded sprint — no need to solve the whole day at once.",
+      'check_in',
+      action: 'toggle_focus_shield',
+      action_chips: ['Activate Focus Shield', 'Start 25m Focus', 'Plan my next focus session']
     )
   end
 
@@ -587,6 +607,7 @@ class RubyBotService
       plan_statistics: raw[:plan_statistics] || raw['plan_statistics'] || {},
       focus_report: raw[:focus_report] || raw['focus_report'] || {},
       current_plan: raw[:current_plan] || raw['current_plan'],
+      focus_shield_active: raw[:focus_shield_active] || raw['focus_shield_active'],
       source: raw[:source] || raw['source'],
       conversation: Array(raw[:conversation] || raw['conversation']).first(8)
     }

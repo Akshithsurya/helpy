@@ -27,7 +27,6 @@ namespace thresholds {
     constexpr int WARNING_PENALTY          = 10;
     constexpr int INFO_PENALTY             = 2;
 
-    // Capacity heuristics — named instead of inline magic numbers.
     constexpr std::size_t TYPICAL_ISSUE_COUNT      = 8;
     constexpr std::size_t TYPICAL_SUGGESTION_COUNT = 4;
     constexpr std::size_t JSON_BASE_CAPACITY       = 512;
@@ -36,7 +35,43 @@ namespace thresholds {
 
 using namespace std::literals::string_view_literals;
 
-// Lightweight string builder with efficient numeric formatting via std::to_chars.
+// ---------- Severity metadata (single source of truth) ----------
+// Replaces the separate severity_to_string / severity_penalty pair so that
+// name and penalty always stay in sync.
+struct SeverityMeta {
+    std::string_view name;
+    int penalty;
+};
+
+[[nodiscard]] constexpr SeverityMeta severity_info(
+    PlanValidatorEnhanced::ValidationSeverity s) noexcept
+{
+    using S = PlanValidatorEnhanced::ValidationSeverity;
+    switch (s) {
+        case S::ERROR:   return { "error"sv,   thresholds::ERROR_PENALTY };
+        case S::WARNING: return { "warning"sv, thresholds::WARNING_PENALTY };
+        case S::INFO:    return { "info"sv,    thresholds::INFO_PENALTY };
+        default:         return { "success"sv, 0 };
+    }
+}
+
+// ---------- JSON escape helpers ----------
+
+// 256-entry lookup table: true if the byte needs JSON escaping.
+// Replaces the per-character branch in the scan loop with a single indexed load.
+constexpr auto make_escape_table() {
+    std::array<bool, 256> t{};
+    for (int i = 0; i < 0x20; ++i)
+        t[static_cast<std::size_t>(i)] = true;
+    t[static_cast<unsigned char>('"')]  = true;
+    t[static_cast<unsigned char>('\\')] = true;
+    return t;
+}
+
+constexpr auto NEEDS_ESCAPE = make_escape_table();
+
+// ---------- StringBuilder ----------
+
 class StringBuilder {
 public:
     StringBuilder() = default;
@@ -59,7 +94,8 @@ public:
         return *this;
     }
 
-    [[nodiscard]] std::string release() { return std::move(data_); }
+    // std::string's move constructor is noexcept (C++17+), so this can be too.
+    [[nodiscard]] std::string release() noexcept { return std::move(data_); }
 
 private:
     std::string data_;
@@ -68,21 +104,19 @@ private:
 void json_escape(StringBuilder& sb, std::string_view s) {
     constexpr std::string_view hex_chars = "0123456789abcdef"sv;
 
-    const auto* it    = s.data();
-    const auto* end   = s.data() + s.size();
+    const auto* it  = s.data();
+    const auto* end = s.data() + s.size();
 
     while (it != end) {
         const auto* chunk_start = it;
 
-        // Scan forward to the next character that needs escaping.
-        while (it != end) {
-            const auto c = static_cast<unsigned char>(*it);
-            if (c < 0x20 || c == '"' || c == '\\') break;
+        // Fast-scan: skip bytes that don't need escaping (single table lookup
+        // per byte instead of four comparisons).
+        while (it != end && !NEEDS_ESCAPE[static_cast<unsigned char>(*it)])
             ++it;
-        }
 
         if (it != chunk_start)
-            sb.append(std::string_view(chunk_start, static_cast<std::size_t>(it - chunk_start)));
+            sb.append({chunk_start, static_cast<std::size_t>(it - chunk_start)});
 
         if (it == end) [[unlikely]]
             break;
@@ -101,7 +135,7 @@ void json_escape(StringBuilder& sb, std::string_view s) {
                 std::array<char, 6> hex{ '\\','u','0','0','0','0' };
                 hex[4] = hex_chars[(c >> 4) & 0xF];
                 hex[5] = hex_chars[c & 0xF];
-                sb.append(std::string_view(hex.data(), hex.size()));
+                sb.append({hex.data(), hex.size()});
                 break;
             }
         }
@@ -113,32 +147,6 @@ void json_kv_string(StringBuilder& sb, std::string_view key, std::string_view va
     sb << '"' << key << "\":\""sv;
     json_escape(sb, value);
     sb << '"';
-}
-
-[[nodiscard]] constexpr std::string_view severity_to_string(
-    PlanValidatorEnhanced::ValidationSeverity s) noexcept
-{
-    using S = PlanValidatorEnhanced::ValidationSeverity;
-    switch (s) {
-        case S::ERROR:   return "error"sv;
-        case S::WARNING: return "warning"sv;
-        case S::INFO:    return "info"sv;
-        default:         return "success"sv;
-    }
-}
-
-// Extracted so penalty values live in one place and are reusable.
-[[nodiscard]] constexpr int severity_penalty(
-    PlanValidatorEnhanced::ValidationSeverity s) noexcept
-{
-    namespace t = thresholds;
-    using S = PlanValidatorEnhanced::ValidationSeverity;
-    switch (s) {
-        case S::ERROR:   return t::ERROR_PENALTY;
-        case S::WARNING: return t::WARNING_PENALTY;
-        case S::INFO:    return t::INFO_PENALTY;
-        default:         return 0;
-    }
 }
 
 }  // namespace
@@ -236,11 +244,11 @@ void EnhancedValidator::check_goal_clarity(const PlanProcessor::FullPlan& plan,
 int EnhancedValidator::compute_overall_score(
     const std::vector<ValidationIssue>& issues) noexcept
 {
-    const int total_penalty = std::accumulate(
-        issues.begin(), issues.end(), 0,
-        [](int acc, const ValidationIssue& issue) noexcept {
-            return acc + severity_penalty(issue.severity);
-        });
+    // Plain loop is clearer than std::accumulate for a simple sum and avoids
+    // pulling in <numeric>.
+    int total_penalty = 0;
+    for (const auto& issue : issues)
+        total_penalty += severity_info(issue.severity).penalty;
     return std::clamp(thresholds::BASE_SCORE - total_penalty,
                       0, thresholds::BASE_SCORE);
 }
@@ -277,9 +285,9 @@ std::string EnhancedValidator::calculate_quality_score(
     const PlanProcessor::FullPlan& plan)
 {
     const auto report = validate(plan);
-    StringBuilder sb(4);
-    sb << report.score;
-    return sb.release();
+    // std::to_string is simpler and sufficient for a single integer — no need
+    // to spin up a StringBuilder with to_chars just for this.
+    return std::to_string(report.score);
 }
 
 std::vector<std::string> EnhancedValidator::suggest_improvements(
@@ -321,7 +329,7 @@ std::string EnhancedValidator::report_to_json(const ValidationReport& report) co
         sb << ',';
         json_kv_string(sb, "suggestion", issue.suggestion);
         sb << ',';
-        json_kv_string(sb, "severity",   severity_to_string(issue.severity));
+        json_kv_string(sb, "severity",   severity_info(issue.severity).name);
         sb << '}';
     }
 

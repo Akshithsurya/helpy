@@ -2,16 +2,26 @@
 
 declare(strict_types=1);
 
+/**
+ * Service class for managing bot memory, actions, and productivity features
+ * Provides persistent storage, action tracking, random facts, and motivational messages
+ */
 final class BotService
 {
     private const MAX_STORED_ACTIONS       = 100;
     private const RECENT_ACTION_LIMIT      = 10;
+    private const HIGH_ACTIVITY_THRESHOLD  = 10;
+    private const MEDIUM_ACTIVITY_THRESHOLD = 3;
     private const DEFAULT_STORAGE_FILE     = __DIR__ . '/../data/bot_memory.json';
 
     public const ACTION_TASK_COMPLETED    = 'task_completed';
     public const ACTION_TIMER_COMPLETED   = 'timer_completed';
     public const ACTION_FOCUS_STARTED     = 'focus_started';
     public const ACTION_HABIT_LOGGED      = 'habit_logged';
+
+    private const ACTIVITY_LEVEL_HIGH     = 'high_activity';
+    private const ACTIVITY_LEVEL_MEDIUM   = 'medium_activity';
+    private const ACTIVITY_LEVEL_LOW      = 'low_activity';
 
     /** @var list<string> */
     private const VALID_ACTIONS = [
@@ -45,17 +55,17 @@ final class BotService
 
     /** @var array<string, list<string>> */
     private static array $motivations = [
-        'high_activity' => [
+        self::ACTIVITY_LEVEL_HIGH => [
             "You are on absolute fire! Keep pushing boundaries and conquer your goals!",
             "Phenomenal work today! Your focus and discipline are inspiring.",
             "You're making incredible progress! Remember how far you've come."
         ],
-        'medium_activity' => [
+        self::ACTIVITY_LEVEL_MEDIUM => [
             "Great consistency! Every single completed task brings you closer to mastery.",
             "Solid progress! Step by step, you are turning goals into reality.",
             "Keep up the momentum! You're doing great work."
         ],
-        'low_activity' => [
+        self::ACTIVITY_LEVEL_LOW => [
             "Every journey begins with a single small step. Pick one quick task and win today!",
             "Don't worry about being perfect; focus on taking action right now.",
             "A fresh start is always available. You've got this!"
@@ -66,10 +76,18 @@ final class BotService
     private const EMOJI_REGEX = '/[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{FE00}-\x{FE0F}\x{1F1E6}-\x{1F1FF}\x{1F900}-\x{1F9FF}]/u';
 
     private string $storageFile;
+    private bool $isReadOnly = false;
 
-    public function __construct(?string $storageFile = null)
+    /**
+     * Constructor - initializes storage file path and read-only mode flag
+     *
+     * @param string|null $storageFile Optional custom path for storage file
+     * @param bool $readOnly Whether to operate in read-only mode (prevents writes)
+     */
+    public function __construct(?string $storageFile = null, bool $readOnly = false)
     {
         $this->storageFile = $storageFile ?? self::DEFAULT_STORAGE_FILE;
+        $this->isReadOnly = $readOnly;
     }
 
     // ---------- Memory structure helpers ----------
@@ -116,12 +134,12 @@ final class BotService
 
         $fp = @fopen($this->storageFile, 'r');
         if ($fp === false) {
-            return $this->getDefaultMemory();
+            throw new \RuntimeException(sprintf('Unable to read storage file "%s".', $this->storageFile));
         }
 
         try {
             if (!flock($fp, LOCK_SH)) {
-                return $this->getDefaultMemory();
+                throw new \RuntimeException(sprintf('Unable to acquire shared lock on "%s".', $this->storageFile));
             }
 
             $raw = stream_get_contents($fp);
@@ -133,7 +151,7 @@ final class BotService
 
             $decoded = json_decode($raw, true);
             if (!is_array($decoded)) {
-                return $this->getDefaultMemory();
+                throw new \RuntimeException(sprintf('Invalid JSON in storage file "%s".', $this->storageFile));
             }
 
             return $this->mergeMemory($decoded);
@@ -145,6 +163,10 @@ final class BotService
     /** @param array<string, mixed> $memory */
     private function saveMemory(array $memory): void
     {
+        if ($this->isReadOnly) {
+            throw new \RuntimeException('Cannot write to storage in read-only mode.');
+        }
+
         $this->ensureStorageDir();
 
         $fp = @fopen($this->storageFile, 'c+');
@@ -166,12 +188,8 @@ final class BotService
 
             $payload = json_encode(
                 $memory,
-                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
             );
-
-            if ($payload === false) {
-                throw new \RuntimeException('Failed to encode bot memory to JSON.');
-            }
 
             fwrite($fp, $payload);
             fflush($fp);
@@ -331,8 +349,8 @@ final class BotService
     /** @return array<string, mixed> */
     public function getGreeting(): array
     {
-        $hour = (int)(new \DateTimeImmutable())->format('G');
-        $now  = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable();
+        $hour = (int)$now->format('G');
 
         if ($hour < 12) {
             $greeting = 'Good morning';
@@ -349,6 +367,26 @@ final class BotService
         ];
     }
 
+    /**
+     * Clear all stored memory - resets storage to default state
+     *
+     * @return array<string, mixed> Success response
+     * @throws \RuntimeException If in read-only mode or unable to save
+     */
+    public function resetMemory(): array
+    {
+        if ($this->isReadOnly) {
+            throw new \RuntimeException('Cannot reset storage in read-only mode.');
+        }
+
+        $this->saveMemory($this->getDefaultMemory());
+
+        return [
+            'success' => true,
+            'message' => 'Memory has been reset to default state.'
+        ];
+    }
+
     // ---------- Internal helpers ----------
 
     private function assertValidActionType(string $actionType): void
@@ -362,13 +400,13 @@ final class BotService
 
     private function categorizeActivity(int $total): string
     {
-        if ($total >= 10) {
-            return 'high_activity';
+        if ($total >= self::HIGH_ACTIVITY_THRESHOLD) {
+            return self::ACTIVITY_LEVEL_HIGH;
         }
-        if ($total >= 3) {
-            return 'medium_activity';
+        if ($total >= self::MEDIUM_ACTIVITY_THRESHOLD) {
+            return self::ACTIVITY_LEVEL_MEDIUM;
         }
-        return 'low_activity';
+        return self::ACTIVITY_LEVEL_LOW;
     }
 
     /**
@@ -380,5 +418,25 @@ final class BotService
             return '';
         }
         return $items[array_rand($items)];
+    }
+
+    /**
+     * Enable or disable read-only mode
+     *
+     * @param bool $readOnly New read-only state
+     */
+    public function setReadOnly(bool $readOnly): void
+    {
+        $this->isReadOnly = $readOnly;
+    }
+
+    /**
+     * Check current read-only state
+     *
+     * @return bool Current read-only mode status
+     */
+    public function isReadOnly(): bool
+    {
+        return $this->isReadOnly;
     }
 }

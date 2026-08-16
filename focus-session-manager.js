@@ -27,6 +27,7 @@ function defaultState() {
     lockoutUntil: null,
     startedAt: null,
     phaseStartedAt: null,
+    interruptionNotes: [],
   };
 }
 
@@ -123,6 +124,7 @@ class FocusSessionManager {
       lockoutUntil:
         cooldownMinutes > 0 ? new Date(now + Number(cooldownMinutes) * 60000).toISOString() : null,
       startedAt: new Date(now).toISOString(),
+      interruptionNotes: [],
     };
     this._beginPhase('work', now);
     this._persist();
@@ -150,6 +152,12 @@ class FocusSessionManager {
     if (this.state.active && this.state.phase === 'work' && this.state.phaseStartedAt)
       this._recordCompletedWork(this.state.phaseStartedAt, Date.now());
     this.state = defaultState();
+    this._persist();
+    return this._emit();
+  }
+  addInterruptionNote(note) {
+    if (!this.state.active || typeof note !== 'string' || !note.trim()) return this.getState();
+    this.state.interruptionNotes = [...(this.state.interruptionNotes || []), note.trim().slice(0, 500)].slice(-20);
     this._persist();
     return this._emit();
   }

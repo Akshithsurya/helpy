@@ -84,7 +84,7 @@ class SimpleCache
     # Moves an accessed node to the MRU position to maintain LRU order
     return node if node is @head
     @_removeNode(node)
-    @addToHead(node)
+    @_addToHead(node)
 
   _evictExpiredNode: (node, key) ->
     # Internal helper to clean up an expired node
@@ -254,19 +254,19 @@ DEFAULT_MESSAGES = deepFreeze
 
 # ── Scheduling constants ─────────────────────────────────────────────────────
 
-DEFAULTS = Object.freeze
+DEFAULTS = deepFreeze
   chunkSize:     25
   breakDuration: 5
 
-WASM_TARGETS = Object.freeze
+WASM_TARGETS = deepFreeze
   focus: 20
   break: 70
 
-EFFICIENCY_WEIGHTS = Object.freeze
+EFFICIENCY_WEIGHTS = deepFreeze
   completion:   0.7
   timeliness:   0.3
 
-TIP_THRESHOLDS = Object.freeze
+TIP_THRESHOLDS = deepFreeze
   struggling: 0.5
   excelling:  0.9
 
@@ -279,7 +279,7 @@ PRESETS = deepFreeze [
   { name: 'deep_work', duration: 90, break: 20, description: null, maxAvg: Infinity }
 ]
 
-DEFAULT_FOCUS_PROMPTS = Object.freeze [
+DEFAULT_FOCUS_PROMPTS = deepFreeze [
   'Take a 10-second pause and notice your breath.'
   'What is one tiny step you can take right now?'
   'Remember the goal of this session.'
@@ -300,12 +300,12 @@ MUSIC_PRESETS = deepFreeze [
   { id: 'energize',        title: 'Energize Sprint',            duration: 25,  goal: 'Upbeat energy',  musicPreset: 'upbeat',   genre: 'electronic',  source: 'all' }
 ]
 
-MUSIC_GENRES = Object.freeze [
+MUSIC_GENRES = deepFreeze [
   'ambient', 'classical', 'noise', 'binaural', 'electronic', 'lofi',
   'jazz', 'instrumental', 'soundtrack', 'blues', 'folk', 'rock', 'pop'
 ]
 
-MUSIC_SOURCE_TYPES = Object.freeze [ 'local', 'youtube', 'spotify', 'soundcloud', 'all' ]
+MUSIC_SOURCE_TYPES = deepFreeze [ 'local', 'youtube', 'spotify', 'soundcloud', 'all' ]
 
 MUSIC_SLASH_FLAGS = deepFreeze [
   { flag: '--music',    valueHint: '<preset>',    values: (MUSIC_PRESETS.map (p) -> p.id),          description: 'Apply a music focus preset' }

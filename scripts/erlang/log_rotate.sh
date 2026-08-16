@@ -202,7 +202,7 @@ if [ -n "${PID_DIR:-}" ]; then
         SERVICE_PID=$(<"$SERVICE_PID_FILE" tr -d '[:space:]')
         if [[ "$SERVICE_PID" =~ ^[0-9]+$ ]]; then
             # Cross-platform process verification: use ps if /proc is unavailable (macOS)
-            local is_helpy_process=false
+            is_helpy_process=false
             if [ -d "/proc" ]; then
                 # Linux-specific process check
                 if proc_path=$(readlink -f "/proc/$SERVICE_PID/exe" 2>/dev/null) && [[ "$proc_path" == *helpy_plan* ]]; then
@@ -248,4 +248,3 @@ fi
 # Final log size verification to ensure rotation completed successfully
 NEW_LOG_SIZE=$(get_stat_value "$LOG_FILE" "%s" "%z")
 log_info "Log rotation completed successfully. New active log size: $(human_readable "$NEW_LOG_SIZE")"
-

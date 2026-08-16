@@ -1,0 +1,4 @@
+owner: REPLACE_WITH_GITHUB_OWNER
+repo: REPLACE_WITH_GITHUB_REPOSITORY
+provider: github
+updaterCacheDirName: helpy-updater

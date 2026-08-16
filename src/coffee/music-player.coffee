@@ -61,20 +61,23 @@ class EventEmitter
   constructor: -> @_listeners = new Map()
 
   on: (evt, fn) ->
-    return unless _isFunction fn
+    unless _isFunction fn
+      throw new TypeError 'EventEmitter.on expects a function listener'
     evt = String evt
     @_listeners.set evt, new Set() unless @_listeners.has evt
     @_listeners.get(evt).add fn
     => @off evt, fn               # return unsubscribe thunk
 
   off: (evt, fn) ->
-    return unless _isFunction fn
+    unless _isFunction fn
+      throw new TypeError 'EventEmitter.off expects a function listener'
     set = @_listeners.get String evt
     set?.delete fn
     return
 
   once: (evt, fn) ->
-    return unless _isFunction fn
+    unless _isFunction fn
+      throw new TypeError 'EventEmitter.once expects a function listener'
     unsub = @on evt, (payload) =>
       unsub?()
       fn payload
@@ -390,6 +393,12 @@ class MusicPlayer extends EventEmitter
     return null unless _isPlainObject track
     track.streamUrl ? track.url ? track.localPath ? null
 
+  _setTrackInternal: (track) ->
+    @currentTrack = Object.assign {}, track
+    @positionSec = 0
+    @_lastError = null
+    return
+
   # ── Track loading & playback controls ───────────────────────────────
 
   loadTrack: (track) ->
@@ -604,6 +613,12 @@ class MusicPlayer extends EventEmitter
     @emit 'repeat', mode: @repeatMode
     @repeatMode
 
+  # ── Cleanup queue when playback finishes ────────────────────────────
+  _finishQueue: ->
+    @_transition STATES.ENDED
+    @emit 'queueEnded'
+    false
+
   # ── Previous / Next ─────────────────────────────────────────────────
 
   next: (auto = false) ->
@@ -648,6 +663,20 @@ class MusicPlayer extends EventEmitter
       return if @repeatMode is REPEAT.ALL then @playOrder[@playOrder.length - 1] else @playOrder[0]
     Math.max 0, @queueIndex - 1
 
+  _cancelCrossfade: ->
+    return unless @_crossfading
+    @_crossfading = false
+    clearTimeout @_crossfadeTimer if @_crossfadeTimer?
+    @_crossfadeTimer = null
+    # Clean up pending audio if crossfade is aborted
+    try
+      @_pendingAudio?.pause()
+      @_pendingAudio?.removeAttribute 'src'
+      @_pendingAudio?.load()
+    catch then undefined
+    @_pendingAudio = null
+    return
+
   _playIndex: (i) ->
     idx = _clamp (parseInt(i, 10) or 0), 0, Math.max(0, @queue.length - 1)
     @queueIndex = idx
@@ -688,150 +717,77 @@ class MusicPlayer extends EventEmitter
 
     @_crossfading  = true
     @_pendingAudio = pending
-    oldAudio       = @_audio
-    startVol       = if @isMuted then 0 else @volume
-    steps          = 10
-    stepMs         = Math.max 1, Math.floor @CROSSFADE_MS / (steps * 2)
-    phase          = 'out'
-    phaseStep      = 0
-    waitingForPlay = false
-    aborted        = false       # guard against double-finish
 
-    # ── Successful crossfade completion ──────────────────────────────
-    finish = =>
-      return if aborted
-      aborted = true
-      if @_crossfadeTimer?
-        clearInterval @_crossfadeTimer
-        @_crossfadeTimer = null
-      @_crossfading  = false
-      @_pendingAudio = null
-
-      @_swapAudio pending
-      @_setTrackInternal nextTrack
-      try pending.volume = if @isMuted then 0 else @volume
-      @_transition STATES.PLAYING
-      @emit 'crossfade', done: true
-
-    # ── Crossfade failure (e.g. play() rejected) ────────────────────
-    fail = (reason) =>
-      return if aborted
-      aborted = true
-      if @_crossfadeTimer?
-        clearInterval @_crossfadeTimer
-        @_crossfadeTimer = null
-      @_crossfading  = false
-      @_pendingAudio = null
-
-      # Clean up the audio that failed to play
-      try pending.pause()
-      try pending.removeAttribute 'src'
-      try pending.load()
-
-      # Restore old audio volume if it's still active
-      if oldAudio? and not @isMuted
-        try oldAudio.volume = startVol
-
-      @_lastError = "CROSSFADE_FAILED: #{reason ? 'unknown'}"
-      @_transition STATES.ERROR, error: @_lastError
-      @emit 'crossfade', done: false, error: @_lastError
-
-    @_crossfadeTimer = setInterval =>
-      # Bail out if waiting for async play promise or destroyed
-      return if aborted or waitingForPlay or @_destroyed or not @_crossfading
+    # Wait for pending track to be ready before starting crossfade
+    pending.addEventListener 'canplay', =>
+      return unless @_crossfading
+      # Start playback of new track at 0 volume
       try
-        if phase is 'out'
-          phaseStep += 1
-          try oldAudio.volume = Math.max(0, startVol * (1 - phaseStep / steps)) unless @isMuted
-          if phaseStep >= steps
-            try oldAudio.pause()
-            playResult = pending.play()
-            if playResult? and _isFunction playResult.then
-              waitingForPlay = true
-              playResult
-                .then =>
-                  # Ignore if crossfade was cancelled while waiting
-                  return unless @_crossfading and @_pendingAudio is pending
-                  waitingForPlay = false
-                  phase = 'in'
-                  phaseStep = 0
-                .catch (err) =>
-                  return unless @_crossfading and @_pendingAudio is pending
-                  fail "PLAY_REJECTED: #{err?.message ? 'autoplay'}"
-            else
-              phase = 'in'
-              phaseStep = 0
-        else  # phase is 'in'
-          phaseStep += 1
-          tgt = if @isMuted then 0 else @volume
-          try pending.volume = tgt * (phaseStep / steps)
-          if phaseStep >= steps then finish()
+        p = pending.play()
+        if p? and _isFunction p.then
+          p.catch (err) =>
+            @logger.warn '[MusicPlayer._crossfade] failed to start pending track', err?.message
+            @_cancelCrossfade()
+            @loadTrack nextTrack
+            @play()
       catch err
-        @logger.warn '[MusicPlayer.crossfade] step failed', err?.message
-        fail err?.message
-    , stepMs
+        @logger.warn '[MusicPlayer._crossfade] play failed for pending track', err?.message
+        @_cancelCrossfade()
+        @loadTrack nextTrack
+        @play()
+        return
+
+      # Execute volume ramps for crossfade
+      startTime = performance.now()
+      oldAudio = @_audio
+      initialOldVol = if @isMuted then 0 else @volume
+      crossfadeDuration = @CROSSFADE_MS
+
+      # Cancel existing crossfade loop if any
+      cancelAnimationFrame @_crossfadeRaf if @_crossfadeRaf?
+
+      crossfadeStep = (currentTime) =>
+        elapsed = currentTime - startTime
+        progress = Math.min(elapsed / crossfadeDuration, 1)
+
+        # Fade out old track, fade in new track
+        if oldAudio?
+          oldAudio.volume = initialOldVol * (1 - progress)
+        pending.volume = @volume * progress
+
+        if progress < 1
+          @_crossfadeRaf = requestAnimationFrame crossfadeStep
+        else
+          # Crossfade complete - swap to new audio
+          @_swapAudio pending
+          @_setTrackInternal nextTrack
+          @emit 'track', Object.assign {}, @currentTrack
+          @_crossfading = false
+          @_pendingAudio = null
+          @_transition STATES.PLAYING, driver: 'crossfade'
+
+      @_crossfadeRaf = requestAnimationFrame crossfadeStep
+
+    # Timeout in case pending track never loads
+    @_crossfadeTimer = setTimeout =>
+      if @_crossfading
+        @logger.warn '[MusicPlayer._crossfade] timed out waiting for next track'
+        @_cancelCrossfade()
+        @loadTrack nextTrack
+        @play()
+    , 10000 # 10 second timeout
     return
 
-  _cancelCrossfade: ->
-    if @_crossfadeTimer?
-      clearInterval @_crossfadeTimer
-      @_crossfadeTimer = null
-
-    pending = @_pendingAudio
-    if pending?
-      try pending.pause()
-      try pending.removeAttribute 'src'
-      try pending.load()
-      @_pendingAudio = null
-
-    if @_crossfading and @_audio?
-      # Restore volume if not muted
-      unless @isMuted
-        try @_audio.volume = @volume
-    @_crossfading = false
-    return
-
-  # ── Queue end ───────────────────────────────────────────────────────
-
-  _finishQueue: ->
-    try @_audio?.pause()
-    @_transition STATES.ENDED, finished: true
-    false
-
-  # ── Internal setter ─────────────────────────────────────────────────
-
-  _setTrackInternal: (t) ->
-    flat = {}
-    for k, v of t when v isnt undefined
-      flat[k] = v
-    flat.sourceType = t.sourceType ? 'unknown'
-    flat.title      = if _isString(t.title) and t.title.length > 0 then t.title else 'Untitled'
-    @currentTrack = Object.freeze flat
-    @positionSec  = 0
-    @_lastError   = null
-    @currentTrack
-
-  # ── Destroy ─────────────────────────────────────────────────────────
-
+  # ── Destroy method for full cleanup ─────────────────────────────────
   destroy: ->
     return if @_destroyed
     @_destroyed = true
     @_cancelCrossfade()
-    try
-      if @_audio?
-        @_unbindAudioEvents @_audio
-        @_audio.pause()
-        @_audio.removeAttribute 'src'
-        @_audio.load()
-    catch then undefined
-    if @_persistTimer?
-      clearTimeout @_persistTimer
-      @_persistTimer = null
-    @clear()
+    clearTimeout @_persistTimer if @_persistTimer?
+    cancelAnimationFrame @_crossfadeRaf if @_crossfadeRaf?
+    @_unbindAudioEvents @_audio if @_audio?
+    try @_audio?.pause()
+    try @_audio?.removeAttribute 'src'
+    @clear() # Clear all event listeners
+    @emit 'destroyed'
     return
-
-module.exports =
-  MusicPlayer: MusicPlayer
-  EventEmitter: EventEmitter
-  STATES: STATES
-  REPEAT: REPEAT

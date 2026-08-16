@@ -20,33 +20,45 @@ MUSIC   = require './music-player'
 ADAPTERS = require './music-source-adapters'
 
 # --- Internal helpers ----------------------------------------------------
-
+# Guarded type checks with null/undefined safety
 _isString = (v) -> typeof v is 'string'
 _isArray  = Array.isArray
 _isFn     = (v) -> typeof v is 'function'
 
-# Accepts HTMLElement, Document, or any node-like object with addEventListener.
+# Robust node detection supporting browser DOM and SSR environments
 _isNode = (v) ->
   return false unless v?
-  return v instanceof HTMLElement if typeof HTMLElement isnt 'undefined'
-  typeof v is 'object' and typeof v.addEventListener is 'function'
+  # Standard browser HTMLElement check
+  if typeof window isnt 'undefined' and window.HTMLElement?
+    return v instanceof window.HTMLElement
+  # Fallback for node-like event targets (Document, ShadowDOM, SSR mocks)
+  typeof v is 'object' and typeof v.addEventListener is 'function' and typeof v.removeEventListener is 'function'
 
-_clamp = (v, lo, hi) -> Math.max(lo, Math.min(hi, v))
+# Range clamping with type safety
+_clamp = (v, lo, hi) ->
+  v = Number(v) ? lo
+  Math.max(lo, Math.min(hi, v))
 
+# Enhanced string sanitization with XSS protection stripping
 _cleanStr = (v) ->
   return '' unless _isString(v)
-  v.replace(/\s+/g, ' ').trim()
+  v.replace(/\s+/g, ' ')
+   .replace(/[<>]/g, '') # Strip potential HTML injection
+   .trim()
 
-# Safe addEventListener; returns a removable cleanup function or null.
+# Safe event binding with error handling and guaranteed cleanup
 _bindEvent = (el, ev, fn, opts = false) ->
   return null unless _isNode(el) and _isString(ev) and _isFn(fn)
-  try el.addEventListener(ev, fn, opts)
-  ->
-    try el.removeEventListener(ev, fn, opts)
-    return
+  try
+    el.addEventListener(ev, fn, opts)
+    ->
+      try el.removeEventListener(ev, fn, opts)
+      return
+  catch err
+    console?.warn? '[_bindEvent] Failed to attach event listener', err?.message
+    null
 
-# Debounce with leading/trailing control. Suppresses the trailing edge when
-# only a single leading call arrived (matches lodash semantics).
+# Production-grade debounce with proper this binding and edge case handling
 _debounce = (fn, waitMs = 200, opts = {}) ->
   timer    = null
   lastArgs = null
@@ -90,68 +102,75 @@ _debounce = (fn, waitMs = 200, opts = {}) ->
   debounced
 
 # --- Constants -----------------------------------------------------------
+# Centralized configuration with immutability
+SEEK_CONFIG = Object.freeze
+  STEP_SEC:        5
+  VOLUME_STEP:     0.1
+  VOLUME_MIN:      0
+  VOLUME_MAX:      1
+  INPUT_BLOCKLIST: new Set(['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'])
+  VOLUME_ALLOWED:  new Set(['volumeUp', 'volumeDown'])
 
-SEEK_STEP_SEC        = 5
-VOLUME_STEP_FALLBACK = 0.1
-
-# Element tags that should not trigger global shortcuts while focused.
-# Volume keys are exempted so users can adjust without blurring inputs.
-TAGS_THAT_EAT_KEYS = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON']
-VOLUME_KEYS        = new Set(['volumeUp', 'volumeDown'])
-
+# Extensible shortcut schema with metadata for UI generation
 SHORTCUTS = Object.freeze [
-  { keys: ['Space'],                  action: 'toggle',     description: 'Play / Pause' }
-  { keys: ['Ctrl+ArrowRight', 'N'],   action: 'next',       description: 'Next track' }
-  { keys: ['Ctrl+ArrowLeft',  'P'],   action: 'previous',   description: 'Previous track' }
-  { keys: ['M'],                      action: 'mute',       description: 'Mute toggle' }
-  { keys: ['S'],                      action: 'shuffle',    description: 'Shuffle toggle' }
-  { keys: ['R'],                      action: 'repeat',     description: 'Cycle repeat mode' }
-  { keys: ['+', '='],                 action: 'volumeUp',   description: 'Volume up' }
-  { keys: ['-', '_'],                 action: 'volumeDown', description: 'Volume down' }
-  { keys: ['J'],                      action: 'seekBack',   description: "Seek back #{SEEK_STEP_SEC}s" }
-  { keys: ['K'],                      action: 'seekFwd',    description: "Seek forward #{SEEK_STEP_SEC}s" }
+  { keys: ['Space'],                  action: 'toggle',     description: 'Play / Pause',         category: 'playback' }
+  { keys: ['Ctrl+ArrowRight', 'N'],   action: 'next',       description: 'Next track',          category: 'playback' }
+  { keys: ['Ctrl+ArrowLeft',  'P'],   action: 'previous',   description: 'Previous track',      category: 'playback' }
+  { keys: ['M'],                      action: 'mute',       description: 'Mute toggle',         category: 'volume' }
+  { keys: ['S'],                      action: 'shuffle',    description: 'Shuffle toggle',      category: 'queue' }
+  { keys: ['R'],                      action: 'repeat',     description: 'Cycle repeat mode',   category: 'queue' }
+  { keys: ['+', '='],                 action: 'volumeUp',   description: 'Volume up',           category: 'volume' }
+  { keys: ['-', '_'],                 action: 'volumeDown', description: 'Volume down',         category: 'volume' }
+  { keys: ['J'],                      action: 'seekBack',   description: "Seek back #{SEEK_CONFIG.STEP_SEC}s", category: 'playback' }
+  { keys: ['K'],                      action: 'seekFwd',    description: "Seek forward #{SEEK_CONFIG.STEP_SEC}s", category: 'playback' }
 ]
 
 # --- MusicShortcuts ------------------------------------------------------
-
 class MusicShortcuts
   constructor: (@player, opts = {}) ->
-    throw new TypeError('MusicShortcuts requires a MusicPlayer instance') unless @player instanceof MusicPlayer
-    @scope  = opts.scope ? 'global'
-    @target = if _isNode(opts.target)
-      opts.target
-    else if typeof document isnt 'undefined'
-      document
-    else
-      null
-    @custom = if _isFn(opts.customActionHandler) then opts.customActionHandler else null
-    @_keyMap  = @_buildKeyMap(opts.overrides ? null)
-    @_cleanup = null
+    unless @player instanceof MusicPlayer
+      throw new TypeError('MusicShortcuts requires a valid MusicPlayer instance')
+    
+    @scope          = opts.scope ? 'global'
+    @target         = @_resolveTarget(opts.target)
+    @customHandler  = if _isFn(opts.customActionHandler) then opts.customActionHandler else null
+    @keyMap         = @_buildKeyMap(opts.overrides ? {})
+    @_cleanup       = null
+    @_boundHandler  = null
 
+  # Resolve event target with SSR safety
+  _resolveTarget: (customTarget) ->
+    return customTarget if _isNode(customTarget)
+    if typeof document isnt 'undefined' then document else null
+
+  # Merge default and custom shortcuts with deduplication
   _buildKeyMap: (overrides) ->
     entries = SHORTCUTS.slice()
     if _isPlainObject(overrides)
       merged = []
-      seen   = new Set()
+      seen = new Set()
       for name, def of overrides when _isPlainObject(def) and _isArray(def.keys)
         merged.push
           keys:        def.keys.slice()
           action:      name
           description: if _isString(def.description) then def.description else name
+          category:    def.category ? 'custom'
         seen.add(name)
-      entries = (s for s in entries when not seen.has(s.action)).concat(merged)
+      entries = entries.filter((s) -> not seen.has(s.action)).concat(merged)
+    
     map = new Map()
     for s in entries
       for k in s.keys
-        if (norm = @_normalizeKey(k))?
-          map.set(norm, Object.assign({}, s))
+        norm = @_normalizeKey(k)
+        map.set(norm, Object.freeze(s)) if norm?
     map
 
+  # Standardize key combination format for cross-browser compatibility
   _normalizeKey: (raw) ->
     return null unless _isString(raw) and raw.length > 0
     ctrl = alt = shift = meta = false
-    key  = ''
-    for p in raw.split('+').map((x) -> x.trim()).filter((x) -> x.length > 0)
+    key = ''
+    for p in raw.split('+').map((x) -> x.trim()).filter((x) -> x.length)
       switch p.toLowerCase()
         when 'ctrl'  then ctrl  = true
         when 'alt'   then alt   = true
@@ -161,6 +180,7 @@ class MusicShortcuts
     key = ' ' if key.toLowerCase() is 'space'
     Object.freeze { ctrl, alt, shift, meta, key }
 
+  # Match keyboard events against normalized key bindings
   _eventMatches: (e, norm) ->
     norm.ctrl  is !!e.ctrlKey  and
     norm.alt   is !!e.altKey   and
@@ -168,72 +188,96 @@ class MusicShortcuts
     norm.meta  is !!e.metaKey  and
     String(e.key ? '').toLowerCase() is norm.key.toLowerCase()
 
+  # Find matching shortcut for incoming event
   _findBinding: (e) ->
-    for [norm, def] from @_keyMap
+    for [norm, def] from @keyMap
       return def if @_eventMatches(e, norm)
     null
 
+  # Dispatch shortcut action with error handling
   _dispatch: (e, def) ->
     handled = false
     try
-      if @custom? and @custom(def.action, e, @player) is true
+      if @customHandler? and @customHandler(def.action, e, @player) is true
         handled = true
       handled = @_invokeAction(def.action) unless handled
     catch err
-      try console?.warn? '[MusicShortcuts] dispatch failed', def?.action, err?.message
+      console?.warn? '[MusicShortcuts] Dispatch failed', def.action, err?.message
     if handled
-      try e.preventDefault()
-      try e.stopPropagation()
+      e.preventDefault()
+      e.stopPropagation()
     handled
 
+  # Execute core player actions
   _invokeAction: (action) ->
     p = @player
     switch action
-      when 'toggle'   then p.toggle();                                          true
-      when 'next'     then p.next();                                            true
-      when 'previous' then p.previous();                                        true
-      when 'mute'     then p.muteToggle();                                      true
-      when 'shuffle'  then p.setShuffle(not p.shuffle);                         true
+      when 'toggle'   then p.toggle(); true
+      when 'next'     then p.next(); true
+      when 'previous' then p.previous(); true
+      when 'mute'     then p.muteToggle(); true
+      when 'shuffle'  then p.setShuffle(not p.shuffle); true
       when 'repeat'
-        next = switch p.repeatMode
+        nextMode = switch p.repeatMode
           when REPEAT.OFF then REPEAT.ALL
           when REPEAT.ALL then REPEAT.ONE
           else REPEAT.OFF
-        p.setRepeat(next); true
+        p.setRepeat(nextMode); true
       when 'volumeUp'
-        p.setVolume(p.volume + (p.VOLUME_STEP ? VOLUME_STEP_FALLBACK));         true
+        step = p.VOLUME_STEP ? SEEK_CONFIG.VOLUME_STEP
+        p.setVolume(_clamp(p.volume + step, SEEK_CONFIG.VOLUME_MIN, SEEK_CONFIG.VOLUME_MAX)); true
       when 'volumeDown'
-        p.setVolume(p.volume - (p.VOLUME_STEP ? VOLUME_STEP_FALLBACK));         true
+        step = p.VOLUME_STEP ? SEEK_CONFIG.VOLUME_STEP
+        p.setVolume(_clamp(p.volume - step, SEEK_CONFIG.VOLUME_MIN, SEEK_CONFIG.VOLUME_MAX)); true
       when 'seekBack'
-        p.seek(Math.max(0, p.positionSec - SEEK_STEP_SEC));                     true
+        p.seek(Math.max(0, p.positionSec - SEEK_CONFIG.STEP_SEC)); true
       when 'seekFwd'
-        p.seek(p.positionSec + SEEK_STEP_SEC);                                  true
+        dur = @_getSafeDuration()
+        p.seek(_clamp(p.positionSec + SEEK_CONFIG.STEP_SEC, 0, dur)); true
       else false
 
+  # Safely retrieve track duration from multiple player interfaces
+  _getSafeDuration: ->
+    if _isFn(@player.getDuration)
+      d = @player.getDuration()
+      return d if _isNumber(d) and d > 0
+    try
+      audio = @player._audio
+      if audio?.duration and Number.isFinite(Number(audio.duration))
+        return Number(audio.duration)
+    Math.max(0, Number(@player.currentTrack?.durationSec ? 0))
+
+  # Bind keyboard event listeners
   bind: ->
     return @_cleanup if @_cleanup?
     return null unless @target?
 
-    handler = (e) =>
+    @_boundHandler = (e) =>
       def = @_findBinding(e)
       return unless def?
+      # Block shortcuts when typing in inputs, except volume controls
       tagName = String(e.target?.tagName ? '').toUpperCase()
-      return if tagName in TAGS_THAT_EAT_KEYS and def.action not in VOLUME_KEYS
+      return if SEEK_CONFIG.INPUT_BLOCKLIST.has(tagName) and not SEEK_CONFIG.VOLUME_ALLOWED.has(def.action)
       @_dispatch(e, def)
 
-    cleanup = _bindEvent(@target, 'keydown', handler, false)
+    cleanup = _bindEvent(@target, 'keydown', @_boundHandler, false)
     return null unless cleanup?
+
     @_cleanup = ->
       cleanup()
+      @_boundHandler = null
       @_cleanup = null
       return
     @_cleanup
 
+  # List unique bindings for UI display
   listBindings: ->
-    (Object.assign({}, def) for [_n, def] from @_keyMap)
+    uniq = new Map()
+    for [_, def] from @keyMap
+      uniq.set(def.action, Object.assign({}, def))
+    Array.from(uniq.values())
 
 # --- MusicAutocomplete ---------------------------------------------------
-
 class MusicAutocomplete
   @DEFAULT_PRESETS: Object.freeze [
     { id: 'lofi-focus',      type: 'preset', label: 'Lo-fi Focus',         genre: 'ambient' }
@@ -250,66 +294,82 @@ class MusicAutocomplete
   ]
 
   constructor: (opts = {}) ->
-    @searchFn     = if _isFn(opts.searchFn) then opts.searchFn else null
-    @extraPresets = if _isArray(opts.presets) then opts.presets.filter(_isPlainObject) else []
-    @extraGenres  = if _isArray(opts.genres)  then opts.genres.filter(_isString)       else []
-    @cache        = new SimpleCache(200, 180000)
-    @waitMs       = if _isPositiveInt(opts.waitMs) then opts.waitMs else 220
-    @_abortToken  = 0
-    @debounced    = _debounce(@_execute.bind(@), @waitMs, trailing: true, leading: false)
+    @searchFn          = if _isFn(opts.searchFn) then opts.searchFn else null
+    @extraPresets      = if _isArray(opts.presets) then opts.presets.filter(_isPlainObject) else []
+    @extraGenres       = if _isArray(opts.genres)  then opts.genres.filter(_isString)       else []
+    @maxCacheSize      = if _isPositiveInt(opts.cacheSize) then opts.cacheSize else 200
+    @cacheTTL          = if _isPositiveInt(opts.cacheTTL) then opts.cacheTTL else 180000
+    @cache             = new SimpleCache(@maxCacheSize, @cacheTTL)
+    @debounceWait      = if _isPositiveInt(opts.waitMs) then opts.waitMs else 220
+    @maxStaticResults  = if _isPositiveInt(opts.maxStatic) then opts.maxStatic else 20
+    @maxRemoteResults  = if _isPositiveInt(opts.maxRemote) then opts.maxRemote else 50
+    @_abortController  = null # Modern AbortController replacement for token system
+    @debouncedSearch   = _debounce(@_executeSearch.bind(@), @debounceWait, trailing: true, leading: false)
 
+  # Get merged preset list
   listPresets: -> MusicAutocomplete.DEFAULT_PRESETS.concat(@extraPresets)
 
+  # Get merged unique genre list
   listGenres: ->
-    set = new Set(MusicAutocomplete.DEFAULT_GENRES)
-    set.add(g) for g in @extraGenres when _isString(g) and g.length > 0
-    Array.from(set)
+    genreSet = new Set(MusicAutocomplete.DEFAULT_GENRES)
+    genreSet.add(g) for g in @extraGenres when _isString(g) and g.length > 0
+    Array.from(genreSet)
 
-  # Returns a handle with .cancel() and .abort() — abort invalidates any
-  # in-flight async result so callbacks won't fire with stale data.
+  # Get suggestions with stale request prevention
   suggest: (text, onResult) ->
     return unless _isFn(onResult)
-    token       = ++@_abortToken
-    t           = _cleanStr(text)
-    staticItems = if t.length is 0 then @listPresets().slice(0, 6) else @_staticMatches(t)
-    onResult({ source: 'static', items: staticItems })
+    # Abort any in-flight requests
+    @_abortController?.abort()
+    @_abortController = new AbortController()
+    signal = @_abortController.signal
+
+    t = _cleanStr(text)
+    staticItems = if t.length is 0 then @listPresets().slice(0, 6) else @_getStaticMatches(t)
+    onResult({ source: 'static', items: staticItems, signal })
+
     if t.length > 0
-      @debounced t, (res) =>
-        return if token isnt @_abortToken
+      @debouncedSearch(t, (res) =>
+        return if signal.aborted
         onResult(res)
-    { cancel: @debounced.cancel, abort: => ++@_abortToken }
+      )
 
-  _staticMatches: (t) ->
+    { cancel: @debouncedSearch.cancel, abort: => @_abortController?.abort() }
+
+  # Find matching static presets and genres
+  _getStaticMatches: (t) ->
     needle = t.toLowerCase()
-    out = []
+    results = []
+    # Match presets
     for p in @listPresets()
-      hay = "#{p.label} #{p.id} #{p.genre ? ''}".toLowerCase()
-      out.push(p) if hay.includes(needle)
+      haystack = "#{p.label} #{p.id} #{p.genre ? ''}".toLowerCase()
+      results.push(p) if haystack.includes(needle)
+    # Match genres
     for g in @listGenres() when g.toLowerCase().includes(needle)
-      out.push { id: g, type: 'genre', label: "Genre: #{g}", genre: g }
-    out.slice(0, 20)
+      results.push { id: g, type: 'genre', label: "Genre: #{g}", genre: g }
+    results.slice(0, @maxStaticResults)
 
-  _execute: (t, cb) ->
+  # Execute remote search with caching
+  _executeSearch: (t, cb) ->
     t = _cleanStr(t)
     return if t.length is 0
-    key = "ac:#{t.toLowerCase()}"
-    if (cached = @cache.get(key))?
+    cacheKey = "ac:#{t.toLowerCase()}"
+    # Return cached results if available
+    if (cached = @cache.get(cacheKey))?
       try cb({ source: 'cached', items: cached })
       return
-
+    # Process new search results
     done = (items) =>
-      arr  = if _isArray(items) then items else []
-      safe = arr.filter(_isPlainObject).slice(0, 50)
-      @cache.set(key, safe)
-      try cb({ source: 'remote', items: safe })
+      safeItems = (if _isArray(items) then items else []).filter(_isPlainObject).slice(0, @maxRemoteResults)
+      @cache.set(cacheKey, safeItems)
+      try cb({ source: 'remote', items: safeItems })
       return
-
+    # Execute search if function exists
     if _isFn(@searchFn)
       try
-        p = @searchFn(t)
-        if p? and _isFn(p.then)
-          p.then(done).catch(-> done([]))
-        else if _isArray(p) then done(p)
+        promise = @searchFn(t)
+        if promise?.then?
+          promise.then(done).catch(-> done([]))
+        else if _isArray(promise) then done(promise)
         else done([])
       catch
         done([])
@@ -317,203 +377,244 @@ class MusicAutocomplete
       done([])
 
 # --- QueueDragDrop -------------------------------------------------------
-
 class QueueDragDrop
   constructor: (@player, opts = {}) ->
-    throw new TypeError('QueueDragDrop requires MusicPlayer instance') unless @player instanceof MusicPlayer
+    unless @player instanceof MusicPlayer
+      throw new TypeError('QueueDragDrop requires valid MusicPlayer instance')
     @listEl       = if _isNode(opts.listEl) then opts.listEl else null
-    @itemSelector = if _isString(opts.itemSelector) and opts.itemSelector.length > 0
+    @itemSelector = if _isString(opts.itemSelector) and opts.itemSelector.length
       opts.itemSelector
     else
       '[data-track-index]'
-    @_cleanup = null
+    @_cleanup     = null
+    @_dragState   = null
 
+  # Bind drag and drop event listeners
   bind: ->
     return @_cleanup if @_cleanup?
     return null unless @listEl?
 
-    draggingIndex = null
-    hoverIndex    = null
+    @_dragState = { draggingIndex: null, hoverIndex: null }
 
     onDragStart = (e) =>
-      idx = @_indexFromEvent(e)
+      idx = @_getIndexFromEvent(e)
       unless idx?
-        try e.preventDefault()
+        e.preventDefault()
         return
-      draggingIndex = idx
-      try e.dataTransfer.effectAllowed = 'move'
-      try e.dataTransfer.setData('text/plain', String(idx))
-      try e.target?.classList.add('music-dragging')
+      @_dragState.draggingIndex = idx
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', String(idx))
+      e.target?.classList.add('music-dragging')
       return
 
     onDragEnd = (e) =>
-      try e?.target?.classList.remove('music-dragging')
-      @_clearHoverClasses()
-      draggingIndex = null
-      hoverIndex    = null
+      e.target?.classList.remove('music-dragging')
+      @_clearHoverStates()
+      @_dragState = { draggingIndex: null, hoverIndex: null }
       return
 
     onDragOver = (e) =>
-      try e.preventDefault()
-      idx = @_indexFromEvent(e)
-      if idx? and idx isnt hoverIndex
-        @_setHover(idx)
-        hoverIndex = idx
-      try e.dataTransfer.dropEffect = 'move'
+      e.preventDefault()
+      idx = @_getIndexFromEvent(e)
+      if idx? and idx isnt @_dragState.hoverIndex
+        @_setDropTarget(idx)
+        @_dragState.hoverIndex = idx
+      e.dataTransfer.dropEffect = 'move'
       false
 
     onDrop = (e) =>
-      try e.preventDefault()
-      fromIdx = draggingIndex
+      e.preventDefault()
+      fromIdx = @_dragState.draggingIndex
       fromIdx ?= parseInt(String(e.dataTransfer?.getData('text/plain') ? '-1'), 10)
-      toIdx   = @_indexFromEvent(e)
+      toIdx   = @_getIndexFromEvent(e)
+      # Validate indices and execute reorder
       if Number.isFinite(fromIdx) and Number.isFinite(toIdx) and
          fromIdx isnt toIdx and fromIdx >= 0 and toIdx >= 0
         @player.reorderQueue(fromIdx, toIdx)
-        try @player.emit?('queueReordered', { from: fromIdx, to: toIdx })
-      @_clearHoverClasses()
-      draggingIndex = null
-      hoverIndex    = null
+        @player.emit?.('queueReordered', { from: fromIdx, to: toIdx })
+      @_clearHoverStates()
+      @_dragState = { draggingIndex: null, hoverIndex: null }
       false
 
+    # Aggregate cleanup functions
     cleanups = [
       _bindEvent(@listEl, 'dragstart', onDragStart, false)
       _bindEvent(@listEl, 'dragend',   onDragEnd,   false)
       _bindEvent(@listEl, 'dragover',  onDragOver,  false)
       _bindEvent(@listEl, 'drop',      onDrop,      false)
     ]
+
     if null in cleanups
       c?() for c in cleanups
       return null
 
     @_cleanup = ->
       c?() for c in cleanups
-      @_clearHoverClasses()
+      @_clearHoverStates()
+      @_dragState = null
       @_cleanup = null
       return
     @_cleanup
 
-  _indexFromEvent: (e) ->
+  # Extract track index from event target
+  _getIndexFromEvent: (e) ->
     node = e.target
     while node?
-      if (idx = node.getAttribute?('data-track-index'))?
-        n = parseInt(idx, 10)
-        return n if Number.isFinite(n) and n >= 0
+      if (idxStr = node.getAttribute?.('data-track-index'))?
+        idx = parseInt(idxStr, 10)
+        return idx if Number.isFinite(idx) and idx >= 0
       node = node.parentElement
     null
 
-  _setHover: (idx) ->
+  # Set visual drop target state
+  _setDropTarget: (idx) ->
     return unless @listEl?
-    @_clearHoverClasses()
-    target = @listEl.querySelectorAll(@itemSelector)[idx]
-    target?.classList.add('music-drop-target')
+    @_clearHoverStates()
+    items = @listEl.querySelectorAll(@itemSelector)
+    items[idx]?.classList.add('music-drop-target') if idx < items.length
     return
 
-  _clearHoverClasses: ->
+  # Reset all drag visual states
+  _clearHoverStates: ->
     return unless @listEl?
     try
       for el in @listEl.querySelectorAll('.music-drop-target, .music-dragging')
-        el.classList.remove('music-drop-target')
-        el.classList.remove('music-dragging')
+        el.classList.remove('music-drop-target', 'music-dragging')
     return
 
 # --- ProgressSeek --------------------------------------------------------
-
 class ProgressSeek
   constructor: (@player, opts = {}) ->
-    throw new TypeError('ProgressSeek requires MusicPlayer instance') unless @player instanceof MusicPlayer
+    unless @player instanceof MusicPlayer
+      throw new TypeError('ProgressSeek requires valid MusicPlayer instance')
     @trackEl         = if _isNode(opts.trackEl) then opts.trackEl else null
     @fillEl          = if _isNode(opts.fillEl)  then opts.fillEl  else null
-    @debouncedRender = _debounce(@_renderFill.bind(@), 50, trailing: true)
+    @bufferEl        = if _isNode(opts.bufferEl) then opts.bufferEl else null
+    @renderThrottle  = if _isPositiveInt(opts.renderDelay) then opts.renderDelay else 50
+    @debouncedRender = _debounce(@_updateUI.bind(@), @renderThrottle, trailing: true)
     @_cleanup        = null
+    @_playerCleanups = []
 
+  # Bind progress bar interactions
   bind: ->
     return @_cleanup if @_cleanup?
     return null unless @trackEl?
+    # Make focusable for keyboard navigation
+    @trackEl.setAttribute('tabindex', '0') unless @trackEl.getAttribute('tabindex')?
 
+    # Pointer interaction handler
     onPointerDown = (e) =>
       return unless @trackEl?
-      @_seekFromEvent(e)
-      @_renderFill()
+      @_seekFromPointerEvent(e)
+      @_updateUI()
       return
 
+    # Keyboard seek handler
     onKeyDown = (e) =>
       switch e.key
         when 'ArrowLeft'
-          @player.seek(Math.max(0, @player.positionSec - SEEK_STEP_SEC))
-          try e.preventDefault()
+          @player.seek(Math.max(0, @player.positionSec - SEEK_CONFIG.STEP_SEC))
+          e.preventDefault()
         when 'ArrowRight'
-          @player.seek(@player.positionSec + SEEK_STEP_SEC)
-          try e.preventDefault()
+          dur = @_getCurrentDuration()
+          @player.seek(_clamp(@player.positionSec + SEEK_CONFIG.STEP_SEC, 0, dur))
+          e.preventDefault()
       return
 
-    onPos   = (info) => @debouncedRender(info); return
-    onTrack = => @_renderFill(); return
-    onState = => @_renderFill(); return
+    # Player event handlers
+    onPositionUpdate = (info) => @debouncedRender(info); return
+    onTrackChange    = => @_updateUI(); return
+    onStateChange    = => @_updateUI(); return
+    onBufferUpdate   = => @_updateUI(); return
 
+    # Aggregate DOM event cleanups
     cleanups = [
       _bindEvent(@trackEl, 'pointerdown', onPointerDown, false)
       _bindEvent(@trackEl, 'keydown',     onKeyDown,     false)
-      _bindEvent(@trackEl, 'click',       ((e) -> try e.preventDefault(); return), false)
+      _bindEvent(@trackEl, 'click',       ((e) -> e.preventDefault(); return), false)
     ]
 
-    playerCleanups = []
+    # Attach player event listeners
     try
-      @player.on('position', onPos)
-      @player.on('track',    onTrack)
-      @player.on('state',    onState)
-      playerCleanups.push => try @player.off('position', onPos)
-      playerCleanups.push => try @player.off('track',    onTrack)
-      playerCleanups.push => try @player.off('state',    onState)
-    catch
+      @player.on('position', onPositionUpdate)
+      @player.on('track',    onTrackChange)
+      @player.on('state',    onStateChange)
+      @player.on('buffer',   onBufferUpdate) if @player.addEventListener?
+      # Register player cleanup functions
+      @_playerCleanups.push => @player.off('position', onPositionUpdate)
+      @_playerCleanups.push => @player.off('track',    onTrackChange)
+      @_playerCleanups.push => @player.off('state',    onStateChange)
+      @_playerCleanups.push => @player.off('buffer',   onBufferUpdate) if @player.removeEventListener?
+    catch err
       c?() for c in cleanups
-      c?() for c in playerCleanups
+      c?() for c in @_playerCleanups
+      @_playerCleanups = []
       return null
 
     if null in cleanups
       c?() for c in cleanups
-      c?() for c in playerCleanups
+      c?() for c in @_playerCleanups
+      @_playerCleanups = []
       return null
 
-    @_renderFill()
+    @_updateUI()
 
+    # Main cleanup function
     @_cleanup = ->
       c?() for c in cleanups
-      c?() for c in playerCleanups
+      c?() for c in @_playerCleanups
+      @_playerCleanups = []
       @_cleanup = null
       return
     @_cleanup
 
-  _seekFromEvent: (e) ->
+  # Calculate seek position from pointer event
+  _seekFromPointerEvent: (e) ->
     return unless @trackEl?
-    rect    = @trackEl.getBoundingClientRect()
-    clientX = e.clientX ? e.touches?[0]?.clientX ? rect.left
-    ratio   = _clamp((clientX - rect.left) / rect.width, 0, 1)
-    dur     = @_currentDuration()
+    rect = @trackEl.getBoundingClientRect()
+    clientX = e.clientX ? e.touches?.[0]?.clientX ? rect.left
+    ratio = _clamp((clientX - rect.left) / rect.width, 0, 1)
+    dur = @_getCurrentDuration()
     @player.seek(Math.floor(ratio * dur)) if dur > 0
     return
 
-  _currentDuration: ->
+  # Safely get current track duration
+  _getCurrentDuration: ->
     if _isFn(@player.getDuration)
       d = @player.getDuration()
       return d if _isNumber(d) and d > 0
     try
       audio = @player._audio
-      if audio? and Number.isFinite(Number(audio.duration))
+      if audio?.duration and Number.isFinite(Number(audio.duration))
         return Number(audio.duration)
     Math.max(0, Number(@player.currentTrack?.durationSec ? 0))
 
-  _renderFill: (info = null) ->
-    return unless @fillEl? and @trackEl?
+  # Calculate buffer progress ratio
+  _getBufferRatio: ->
+    return 0 unless @bufferEl?
     try
-      dur   = @_currentDuration()
-      pos   = if _isNumber(info?.positionSec) then info.positionSec else @player.positionSec
-      ratio = if dur > 0 then _clamp(pos / dur, 0, 1) else 0
-      @fillEl.style.width = "#{Math.round(ratio * 10000) / 100}%"
+      if _isFn(@player.getBuffered)
+        buffered = @player.getBuffered()
+        return _clamp(buffered, 0, 1) if _isNumber(buffered)
+      audio = @player._audio
+      if audio?.buffered?.length > 0
+        end = audio.buffered.end(audio.buffered.length - 1)
+        return _clamp(end / audio.duration, 0, 1) if audio.duration > 0
+    0
+
+  # Update all progress bar UI elements
+  _updateUI: (info = null) ->
+    return unless @trackEl?
+    try
+      dur = @_getCurrentDuration()
+      pos = if _isNumber(info?.positionSec) then info.positionSec else @player.positionSec
+      posRatio = if dur > 0 then _clamp(pos / dur, 0, 1) else 0
+      @fillEl.style.width = "#{Math.round(posRatio * 10000) / 100}%" if @fillEl?
+      bufRatio = @_getBufferRatio()
+      @bufferEl.style.width = "#{Math.round(bufRatio * 10000) / 100}%" if @bufferEl?
     return
 
 # --- SimpleTooltips ------------------------------------------------------
-
 class SimpleTooltips
   constructor: (scope, opts = {}) ->
     @scope = if _isNode(scope)
@@ -522,109 +623,87 @@ class SimpleTooltips
       document.body
     else
       null
-    @delayMs  = if _isPositiveInt(opts.delayMs) then opts.delayMs else 300
-    @tipClass = if _isString(opts.className) and opts.className.length > 0
+    @showDelayMs  = if _isPositiveInt(opts.showDelayMs) then opts.showDelayMs else 300
+    @hideDelayMs  = if _isPositiveInt(opts.hideDelayMs) then opts.hideDelayMs else 80
+    @tooltipClass = if _isString(opts.className) and opts.className.length
       opts.className
     else
       'music-tooltip'
-    @tip        = null
-    @_hideTimer = null
-    @_showTimer = null
-    @_activeEl  = null
-    @_cleanup   = null
+    @activeTooltip = null
+    @_hideTimer    = null
+    @_showTimer    = null
+    @_activeTarget = null
+    @_cleanup      = null
 
+  # Initialize tooltip event listeners
   bind: ->
     return @_cleanup if @_cleanup? or not @scope?
 
-    showEv = (e) =>
-      el = e.target
-      return unless el?.getAttribute?
-      text = el.getAttribute('data-tooltip')
-      return unless _isString(text) and text.length > 0
-      clearTimeout(@_hideTimer) if @_hideTimer?; @_hideTimer = null
+    # Show tooltip after delay
+    showTooltip = (e) =>
+      target = e.currentTarget
+      text = target?.getAttribute?.('data-tooltip')
+      return unless _isString(text) and text.length
+      @_clearTimers()
+      @_activeTarget = target
+      @_showTimer = setTimeout(=> @_createTooltip(text, target), @showDelayMs)
+      return
+
+    # Hide tooltip after delay
+    hideTooltip = =>
+      @_clearTimers()
+      @_hideTimer = setTimeout(=> @_destroyTooltip(), @hideDelayMs)
+      return
+
+    # Cleanup timeouts to prevent memory leaks
+    @_clearTimers = ->
       clearTimeout(@_showTimer) if @_showTimer?
-      @_showTimer = setTimeout (=> @_show(el, text)), @delayMs
+      clearTimeout(@_hideTimer) if @_hideTimer?
+      @_showTimer = @_hideTimer = null
       return
 
-    hideEv = =>
-      clearTimeout(@_showTimer) if @_showTimer?; @_showTimer = null
-      @_hideTimer = setTimeout (=> @_hide()), 80
+    # Create tooltip element
+    @_createTooltip = (text, target) =>
+      @_destroyTooltip()
+      rect = target.getBoundingClientRect()
+      tip = document.createElement('div')
+      tip.className = @tooltipClass
+      tip.textContent = text
+      # Position tooltip above target
+      tip.style.cssText = """
+        position: fixed;
+        left: #{rect.left + rect.width/2}px;
+        top: #{rect.top - 10}px;
+        transform: translate(-50%, -100%);
+        z-index: 9999;
+      """
+      document.body.appendChild(tip)
+      @activeTooltip = tip
       return
 
-    events = [
-      ['mouseover', showEv, true]
-      ['mouseout',  hideEv, true]
-      ['focusin',   showEv, true]
-      ['focusout',  hideEv, true]
+    # Remove tooltip element
+    @_destroyTooltip = =>
+      @activeTooltip?.remove()
+      @activeTooltip = null
+      @_activeTarget = null
+      return
+
+    # Attach delegated event listeners
+    cleanups = [
+      _bindEvent(@scope, 'mouseenter', showTooltip, true)
+      _bindEvent(@scope, 'focusin',   showTooltip, true)
+      _bindEvent(@scope, 'mouseleave', hideTooltip, true)
+      _bindEvent(@scope, 'focusout',  hideTooltip, true)
     ]
-    cleanups = for [ev, fn, useCapture] in events
-      _bindEvent(@scope, ev, fn, useCapture)
+
     if null in cleanups
       c?() for c in cleanups
       return null
 
     @_cleanup = ->
-      clearTimeout(@_showTimer) if @_showTimer?; @_showTimer = null
-      clearTimeout(@_hideTimer) if @_hideTimer?; @_hideTimer = null
       c?() for c in cleanups
-      @_hide()
+      @_clearTimers()
+      @_destroyTooltip()
       @_cleanup = null
       return
     @_cleanup
-
-  _ensureTip: ->
-    return @tip if @tip?
-    return null unless typeof document isnt 'undefined'
-    try
-      t = document.createElement('span')
-      t.setAttribute('role', 'tooltip')
-      t.className          = @tipClass
-      t.style.position     = 'absolute'
-      t.style.pointerEvents = 'none'
-      t.style.zIndex       = '99999'
-      t.style.display      = 'none'
-      document.body.appendChild(t)
-      @tip = t
-    catch
-      null
-
-  _show: (el, text) ->
-    return unless _isNode(el)
-    return unless (tip = @_ensureTip())?
-    @_activeEl = el
-    try
-      tip.textContent   = text
-      tip.style.display = 'block'
-      r       = el.getBoundingClientRect()
-      scrollY = window.scrollY ? window.pageYOffset ? 0
-      scrollX = window.scrollX ? window.pageXOffset ? 0
-      top     = scrollY + r.top - tip.offsetHeight - 8
-      left    = scrollX + r.left + (r.width / 2) - (tip.offsetWidth / 2)
-      maxLeft = (window.innerWidth ? document.documentElement.clientWidth) - tip.offsetWidth - 4
-      left    = _clamp(left, 4, Math.max(4, maxLeft))
-      top     = scrollY + r.bottom + 8 if top < scrollY
-      tip.style.top  = "#{Math.floor(top)}px"
-      tip.style.left = "#{Math.floor(left)}px"
-    return
-
-  _hide: ->
-    return unless @tip?
-    try
-      @tip.style.display = 'none'
-      @tip.textContent   = ''
-    @_activeEl = null
-    return
-
-# --- Exports -------------------------------------------------------------
-
-module.exports = {
-  SHORTCUTS
-  MusicShortcuts
-  MusicAutocomplete
-  QueueDragDrop
-  ProgressSeek
-  SimpleTooltips
-  _musicDebounce: _debounce
-  _musicUiClean:  _cleanStr
-  _musicUiBind:   _bindEvent
-}

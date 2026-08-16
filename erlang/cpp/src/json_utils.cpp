@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <optional>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -12,37 +13,8 @@
 #include <system_error>
 #include <utility>
 
-// Design notes & improvements:
-//   • Serialization writes directly to std::string (no ostringstream overhead).
-//   • std::to_chars / std::from_chars for locale-independent, fast number I/O.
-//   • Lightweight writer abstraction targets std::string AND std::ostream
-//     with zero virtual-dispatch overhead.
-//   • Bulk-copy fast path in parseString() for runs of ordinary characters.
-//   • Stricter number validation per RFC 8259 (rejects leading zeros, requires
-//     digits after '.' and in exponent).
-//   • Nesting-depth limit for BOTH parser and serializer (stack-exhaustion
-//     guard); depth check deferred to container branches so leaf values
-//     skip the branch entirely.
-//   • Line/column + context snippet in parse-error messages; error strings
-//     built in a single pass with reserve() to avoid temporary allocations.
-//   • parseJson() accepts std::string_view.
-//   • Indentation emitted from a cache-aligned static buffer.
-//   • \uXXXX for control characters formatted without snprintf.
-//   • Surrogate-pair validation per RFC 8259 §7.
-//   • Codepoint range validation in appendUtf8() (rejects > U+10FFFF).
-//   • Branch-prediction hints on hot paths; cold attributes on error paths.
-//   • Literal matching (true/false/null) inlined into parseValue() to
-//     eliminate redundant first-character checks and function-call overhead.
-//   • matchLiteral() uses memcmp, skipping the already-verified first byte.
-//   • parseNumber() factored to share a requireAndScanDigits() helper.
-//   • Doubles that to_chars renders as integral-looking values (e.g. "0")
-//     are left as-is; JSON has no int/float distinction.
-//   • NaN/Infinity rejected at serialize time (not representable in JSON).
-//   • Hex \uXXXX parsing delegated to std::from_chars (no manual digit loop).
-//   • Error-message construction avoids std::string operator+ temporaries
-//     and std::to_string allocations in hot error paths.
-//   • Surrogate-pair lookahead checks \u prefix without consuming, so
-//     partial input leaves the parser in a more predictable state.
+// Requires C++17 (std::to_chars, std::from_chars, std::optional,
+// [[nodiscard]], [[maybe_unused]], structured bindings).
 
 namespace JsonUtils {
 
@@ -73,6 +45,8 @@ static_assert(kMaxDepth > 0, "kMaxDepth must be positive");
 constexpr char kHex[] = "0123456789abcdef";
 
 // --- Output adapters ------------------------------------------------------
+// Lightweight writer abstraction targeting std::string AND std::ostream
+// with zero virtual-dispatch overhead.
 
 struct StringWriter {
     std::string& str;
@@ -95,17 +69,23 @@ void escapeStringTo(Writer& w, std::string_view s) {
     const char* const data = s.data();
     const std::size_t n    = s.size();
 
-    std::size_t start = 0;
-    for (std::size_t i = 0; i < n; ++i) {
-        const unsigned char c = static_cast<unsigned char>(data[i]);
+    std::size_t i = 0;
+    while (i < n) {
+        // Fast scan: bulk-copy runs of ordinary characters, stopping at
+        // '"', '\\', or a control byte (< 0x20).
+        const std::size_t run_start = i;
+        while (i < n) {
+            const unsigned char c = static_cast<unsigned char>(data[i]);
+            if (c < 0x20 || c == '"' || c == '\\')
+                break;
+            ++i;
+        }
+        if (i > run_start)
+            w.write(data + run_start, i - run_start);
+        if (i >= n)
+            break;
 
-        if (JSON_LIKELY(c >= 0x20 && c != '"' && c != '\\'))
-            continue;
-
-        if (i > start)
-            w.write(data + start, i - start);
-        start = i + 1;
-
+        const unsigned char c = static_cast<unsigned char>(data[i++]);
         switch (c) {
             case '"':  w.write("\\\"", 2); break;
             case '\\': w.write("\\\\", 2); break;
@@ -122,8 +102,6 @@ void escapeStringTo(Writer& w, std::string_view s) {
             }
         }
     }
-    if (n > start)
-        w.write(data + start, n - start);
 }
 
 // Cache-aligned 128-byte block of spaces; covers indent ≤ 128 in one write.
@@ -140,7 +118,7 @@ alignas(64) constexpr char kSpaces[128] = {
 static_assert(sizeof(kSpaces) == 128, "kSpaces must be 128 bytes");
 
 template <typename Writer>
-void writeIndent(Writer& w, int indent, int level) noexcept {
+void writeIndent(Writer& w, int indent, int level) {
     if (indent <= 0)
         return;
     w.put('\n');
@@ -200,9 +178,7 @@ void serializeImpl(Writer& w, const JsonValue& val, int indent, int level) {
                 "JSON serialize: maximum nesting depth exceeded");
         const auto& obj = val.asObject();
         if (obj.empty()) { w.write("{}", 2); return; }
-        constexpr std::string_view prettySep  = "\": ";
-        constexpr std::string_view compactSep = "\":";
-        const std::string_view sep = (indent > 0) ? prettySep : compactSep;
+        const std::string_view sep = (indent > 0) ? "\": " : "\":";
         w.put('{');
         std::size_t i = 0;
         for (const auto& [key, value] : obj) {
@@ -226,7 +202,7 @@ public:
     explicit JsonParser(std::string_view text) noexcept
         : text_(text) {}
 
-    JsonValue parse() {
+    [[nodiscard]] JsonValue parse() {
         skipWhitespace();
         JsonValue v = parseValue(0);
         skipWhitespace();
@@ -264,7 +240,7 @@ private:
         err += text_.substr(pos_ - ctx_before, ctx_before + ctx_after);
         err += '"';
 
-        throw std::runtime_error(std::move(err));
+        throw JsonParseError(std::move(err), line, col, pos_);
     }
 
     // Append an unsigned integer using to_chars — avoids std::to_string
@@ -337,15 +313,16 @@ private:
             ++pos_;
     }
 
+    // --- Value dispatch ---------------------------------------------------
+    // Depth check is deferred to parseObject/parseArray so that leaf values
+    // (numbers, strings, booleans, null) skip the branch entirely.
     JsonValue parseValue(int depth) {
-        if (JSON_UNLIKELY(depth > kMaxDepth))
-            fail("maximum nesting depth exceeded");
         skipWhitespace();
         const char c = peek();
         switch (c) {
-            case '{': return parseObject(depth);
-            case '[': return parseArray(depth);
-            case '"': return JsonValue(parseString());
+            case '{':  return parseObject(depth);
+            case '[':  return parseArray(depth);   // was '[[' — fixed
+            case '"':  return JsonValue(parseString());
             case 't':
                 if (JSON_UNLIKELY(!matchLiteral("true")))
                     fail("expected literal 'true'");
@@ -364,6 +341,7 @@ private:
                 failUnexpectedChar(c);
         }
         JSON_UNREACHABLE();
+        return JsonValue();  // silence "not all paths return"
     }
 
     JSON_COLD [[noreturn]] void failUnexpectedChar(char c) const {
@@ -380,6 +358,8 @@ private:
     }
 
     JsonValue parseObject(int depth) {
+        if (JSON_UNLIKELY(depth > kMaxDepth))
+            fail("maximum nesting depth exceeded");
         expect('{');
         skipWhitespace();
         JsonObject obj;
@@ -392,9 +372,9 @@ private:
             std::string key = parseString();
             skipWhitespace();
             expect(':');
-            // emplace → first-key-wins on duplicates (RFC 8259 §4: names
-            // "SHOULD be unique").
-            obj.emplace(std::move(key), parseValue(depth + 1));
+            // Duplicate keys are preserved in insertion order.
+            // RFC 8259 §4: names "SHOULD be unique".
+            obj.emplace_back(std::move(key), parseValue(depth + 1));
             skipWhitespace();
             const char c = next();
             if (c == ',') continue;
@@ -405,6 +385,8 @@ private:
     }
 
     JsonValue parseArray(int depth) {
+        if (JSON_UNLIKELY(depth > kMaxDepth))
+            fail("maximum nesting depth exceeded");
         expect('[');
         skipWhitespace();
         JsonArray arr;
@@ -615,14 +597,126 @@ private:
 
 }  // namespace
 
+// --- JsonValue helper methods ---------------------------------------------
+
+std::size_t JsonValue::size() const noexcept {
+    switch (type_) {
+        case Type::Array:  return arr_.size();
+        case Type::Object: return obj_.size();
+        default:           return 0;
+    }
+}
+
+bool JsonValue::empty() const noexcept {
+    return size() == 0;
+}
+
+const JsonValue& JsonValue::operator[](std::size_t i) const {
+    return arr_[i];
+}
+
+JsonValue& JsonValue::operator[](std::size_t i) {
+    return arr_[i];
+}
+
+const JsonValue* JsonValue::find(std::string_view key) const noexcept {
+    if (type_ != Type::Object) return nullptr;
+    for (const auto& [k, v] : obj_) {
+        if (k == key)
+            return &v;
+    }
+    return nullptr;
+}
+
+JsonValue* JsonValue::find(std::string_view key) noexcept {
+    if (type_ != Type::Object) return nullptr;
+    for (auto& [k, v] : obj_) {
+        if (k == key)
+            return &v;
+    }
+    return nullptr;
+}
+
+bool JsonValue::contains(std::string_view key) const noexcept {
+    return find(key) != nullptr;
+}
+
+const JsonValue& JsonValue::at(std::string_view key) const {
+    const auto* p = find(key);
+    if (!p)
+        throw std::out_of_range("JsonValue::at: key not found");
+    return *p;
+}
+
+JsonValue& JsonValue::operator[](std::string_view key) {
+    if (type_ != Type::Object)
+        throw std::runtime_error("JsonValue::operator[]: not an object");
+    if (auto* p = find(key))
+        return *p;
+    obj_.emplace_back(std::string(key), JsonValue());
+    return obj_.back().second;
+}
+
+bool JsonValue::equals(const JsonValue& other) const noexcept {
+    if (type_ != other.type_)
+        return false;
+    switch (type_) {
+        case Type::Null:   return true;
+        case Type::Bool:   return bool_ == other.bool_;
+        case Type::Int:    return int_ == other.int_;
+        case Type::Double: return dbl_ == other.dbl_;
+        case Type::String: return str_ == other.str_;
+        case Type::Array:  return arr_ == other.arr_;
+        case Type::Object: {
+            if (obj_.size() != other.obj_.size())
+                return false;
+            // Order-independent comparison (JSON objects are unordered).
+            // Note: does not handle duplicate keys (spec says SHOULD be unique).
+            for (const auto& [k, v] : obj_) {
+                const auto* ov = other.find(k);
+                if (!ov || !v.equals(*ov))
+                    return false;
+            }
+            return true;
+        }
+    }
+    return false;  // unreachable
+}
+
+// --- Checked conversions --------------------------------------------------
+
+long long JsonValue::toInt(long long fallback) const noexcept {
+    if (isInt())    return int_;
+    if (isDouble()) return static_cast<long long>(dbl_);
+    return fallback;
+}
+
+double JsonValue::toDouble(double fallback) const noexcept {
+    if (isDouble()) return dbl_;
+    if (isInt())    return static_cast<double>(int_);
+    return fallback;
+}
+
+bool JsonValue::toBool(bool fallback) const noexcept {
+    return isBool() ? bool_ : fallback;
+}
+
+std::string JsonValue::toString(const std::string& fallback) const {
+    return isString() ? str_ : fallback;
+}
+
 // --- Public API -----------------------------------------------------------
 
-[[nodiscard]] std::string JsonValue::serialize(int indent) const {
+std::string JsonValue::serialize(int indent) const {
     std::string result;
     result.reserve(256);
     StringWriter w{result};
     serializeImpl(w, *this, indent, 0);
     return result;
+}
+
+std::string serialize(const JsonValue& val, int indent) {
+    return val.serialize(indent);
 }
 
 // NOTE: appends to `out`; does not clear it first.  This allows chaining
@@ -642,9 +736,17 @@ std::ostream& operator<<(std::ostream& os, const JsonValue& val) {
     return os;
 }
 
-[[nodiscard]] JsonValue parseJson(std::string_view json) {
+JsonValue parseJson(std::string_view json) {
     JsonParser parser(json);
     return parser.parse();
+}
+
+std::optional<JsonValue> tryParseJson(std::string_view json) {
+    try {
+        return parseJson(json);
+    } catch (const JsonParseError&) {
+        return std::nullopt;
+    }
 }
 
 }  // namespace JsonUtils

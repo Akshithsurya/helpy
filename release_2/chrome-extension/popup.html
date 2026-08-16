@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helpy Tab Tracker</title>
+    <style>
+      /* ==========================================================
+         HELPY POPUP — Unified Modern Warm Design System
+         ========================================================== */
+
+      /* --- 1. DESIGN TOKENS ------------------------------------ */
+      :root {
+        --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-hand: "Segoe Print", "Bradley Hand", cursive;
+        --bg-base: #faf7f0;
+        --bg-card: rgba(255, 252, 246, 0.88);
+        --bg-card-hover: rgba(255, 252, 246, 0.96);
+        --bg-input: rgba(255, 252, 246, 0.7);
+        --text-primary: #1b2e28;
+        --text-secondary: #5a6e65;
+        --text-muted: #8b9d95;
+
+        --accent-warm: #d4683a;
+        --accent-warm-soft: rgba(212, 104, 58, 0.12);
+        --accent-warm-glow: rgba(212, 104, 58, 0.2);
+        --accent-green: #2a7a56;
+        --accent-green-soft: rgba(42, 122, 86, 0.1);
+        --accent-red: #c45050;
+        --accent-red-soft: rgba(196, 80, 80, 0.1);
+
+        --border-soft: rgba(27, 46, 40, 0.12);
+        --border-medium: rgba(27, 46, 40, 0.2);
+        --shadow-card: 0 1px 3px rgba(27, 46, 40, 0.06), 0 4px 12px rgba(27, 46, 40, 0.04);
+        --shadow-card-hover: 0 2px 8px rgba(27, 46, 40, 0.08), 0 8px 24px rgba(27, 46, 40, 0.06);
+        --shadow-button: 0 1px 3px rgba(27, 46, 40, 0.1);
+
+        --font-display: 'Caveat', cursive;
+        --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        --duration-fast: 0.15s;
+        --duration-normal: 0.25s;
+        --duration-slow: 0.4s;
+
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-pill: 999px;
+      }
+
+      /* --- 2. DARK MODE TOKENS --------------------------------- */
+      body.dark {
+        --bg-base: #141a17;
+        --bg-card: rgba(30, 42, 37, 0.92);
+        --bg-card-hover: rgba(36, 50, 44, 0.96);
+        --bg-input: rgba(24, 34, 30, 0.8);
+        --text-primary: #f0ede6;
+        --text-secondary: #a8b5ad;
+        --text-muted: #6e7f76;
+
+        --accent-warm: #e8845a;
+        --accent-warm-soft: rgba(232, 132, 90, 0.15);
+        --accent-warm-glow: rgba(232, 132, 90, 0.25);
+        --accent-green: #3dbe7a;
+        --accent-green-soft: rgba(61, 190, 122, 0.12);
+        --accent-red: #e06060;
+        --accent-red-soft: rgba(224, 96, 96, 0.12);
+
+        --border-soft: rgba(240, 237, 230, 0.08);
+        --border-medium: rgba(240, 237, 230, 0.14);
+        --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+        --shadow-card-hover: 0 2px 8px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.2);
+        --shadow-button: 0 1px 3px rgba(0, 0, 0, 0.25);
+      }
+
+      /* --- 3. GLOBAL RESET ------------------------------------- */
+      *, *::before, *::after { box-sizing: border-box; }
+      * { margin: 0; padding: 0; }
+      *::selection { background: var(--accent-warm); color: #fff; }
+
+      /* FIX: Lock the html element to the exact popup dimensions. */
+      html {
+        width: 704px; /* Increased by 60% from 440px */
+        height: 600px;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- 4. BODY --------------------------------------------- */
+      body {
+        width: 704px; /* Increased by 60% from 440px */
+        height: 600px;
+        padding: 20px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-gutter: stable;
+        overscroll-behavior: none;
+        font-family: var(--font-body);
+        font-size: 0.88rem;
+        line-height: 1.55;
+        color: var(--text-primary);
+        background-color: var(--bg-base);
+        background-image:
+          radial-gradient(circle at 85% 5%, var(--accent-warm-soft) 0%, transparent 35%),
+          radial-gradient(circle at 10% 95%, var(--accent-green-soft) 0%, transparent 30%);
+        transition: background-color var(--duration-slow) var(--ease-out),
+                    color var(--duration-slow) var(--ease-out);
+      }
+
+      body::before {
+        content: '';
+        position: fixed;
+        z-index: 0;
+        width: 320px; /* Scaled up to match new width */
+        height: 320px; /* Scaled up to match new width */
+        top: -160px;
+        right: -112px;
+        border-radius: 50%;
+        pointer-events: none;
+        background: radial-gradient(circle, var(--accent-warm-glow) 0%, transparent 68%);
+        opacity: 0.7;
+        transform: translateZ(0);
+      }
+
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.03) 100%);
+        transform: translateZ(0);
+      }
+      body.dark::after {
+        background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.15) 100%);
+      }
+
+      body > div:not(.sr-only) { position: relative; z-index: 1; }
+
+      .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+      /* --- 5. SCROLLBAR ---------------------------------------- */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: var(--radius-pill); }
+      ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+      /* --- 6. HEADER ------------------------------------------- */
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin: 2px 0 24px;
+        animation: fadeSlideDown var(--duration-slow) var(--ease-out) both;
+      }
+
+      .eyebrow {
+        font: 800 0.68rem/1 var(--font-body);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent-green);
+        margin-bottom: 6px;
+      }
+
+      h1 {
+        font-family: var(--font-display);
+        font-size: 2.8rem;
+        font-weight: 700;
+        line-height: 0.95;
+        letter-spacing: -0.04em;
+        color: var(--text-primary);
+        margin: 4px 0 8px;
+        transform: rotate(-1deg) translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+      }
+
+      .subtitle {
+        font-size: 0.82rem;
+        line-height: 1.45;
+        color: var(--text-secondary);
+        max-width: 448px; /* Scaled up by 60% */
+      }
+
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .quick-glance {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 12px;
+        margin: -8px 0 16px;
+        padding: 12px 16px;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, var(--bg-card), var(--bg-input));
+        box-shadow: var(--shadow-card);
+        animation: cardSlideIn var(--duration-slow) var(--ease-spring) both;
+        animation-delay: 45ms;
+      }
+      .quick-glance-label {
+        display: block;
+        margin-bottom: 4px;
+        font: 800 0.68rem/1 var(--font-body);
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .quick-glance-value { font: 700 .92rem/1.3 var(--font-body); }
+      .tab-count {
+        display: inline-flex;
+        min-width: 48px;
+        min-height: 38px;
+        padding: 6px 10px;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-pill);
+        background: var(--accent-green-soft);
+        color: var(--accent-green);
+        font: 800 .82rem var(--font-body);
+        transition: transform var(--duration-normal) var(--ease-spring), background var(--duration-normal) var(--ease-out);
+      }
+      .tab-count.is-updating { transform: scale(1.15) rotate(-3deg); }
+
+      .lang-switcher {
+        width: auto !important;
+        min-height: 36px;
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font: 600 0.78rem var(--font-body);
+        cursor: pointer;
+        box-shadow: var(--shadow-button);
+        transition: all var(--duration-fast) var(--ease-out);
+        margin-bottom: 0;
+      }
+      .lang-switcher:hover { border-color: var(--accent-warm); }
+
+      .dark-mode-btn {
+        width: 36px !important;
+        height: 36px !important;
+        min-height: 36px;
+        padding: 0 !important;
+        border: 1px solid var(--border-medium) !important;
+        border-radius: var(--radius-sm) !important;
+        background: var(--bg-card) !important;
+        color: var(--text-primary) !important;
+        box-shadow: var(--shadow-button) !important;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--duration-fast) var(--ease-out) !important;
+        transform: none !important;
+      }
+      .dark-mode-btn:hover {
+        border-color: var(--accent-warm) !important;
+        transform: scale(1.05) !important;
+        box-shadow: var(--shadow-card) !important;
+      }
+
+      /* --- 7. SECTIONS / CARDS --------------------------------- */
+      .section {
+        position: relative;
+        margin-bottom: 12px;
+        padding: 16px 20px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+        color: var(--text-primary);
+        contain: layout;
+        transform: none;
+        transition: transform var(--duration-normal) var(--ease-out),
+                    box-shadow var(--duration-normal) var(--ease-out),
+                    border-color var(--duration-normal) var(--ease-out),
+                    background var(--duration-slow) var(--ease-out);
+        animation: cardSlideIn var(--duration-slow) var(--ease-spring) both;
+        animation-delay: calc(var(--i, 0) * 60ms);
+      }
+
+      .section:hover {
+        border-color: var(--border-medium);
+        box-shadow: var(--shadow-card-hover);
+        transform: translateY(-1px);
+      }
+
+      .section::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent-warm-soft), transparent);
+        opacity: 0;
+        transition: opacity var(--duration-normal) var(--ease-out);
+      }
+      .section:hover::before { opacity: 1; }
+
+      .section::after { display: none; }
+
+      .section h3 {
+        font: 700 0.96rem/1.2 var(--font-body);
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        letter-spacing: -0.01em;
+        border: 0;
+        display: block;
+        padding-bottom: 0;
+      }
+
+      h4 {
+        font: 600 0.9rem/1.3 var(--font-body);
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      /* --- 8. BUTTONS ------------------------------------------ */
+      button, .btn {
+        position: relative;
+        overflow: hidden;
+        min-height: 38px;
+        padding: 0.55rem 1rem;
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-sm);
+        font: 600 0.84rem var(--font-body);
+        color: var(--text-primary);
+        background: var(--bg-card);
+        box-shadow: var(--shadow-button);
+        cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-out);
+        transform: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+      }
+
+      button:hover, .btn:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: var(--shadow-card);
+        border-color: var(--accent-warm);
+      }
+
+      button:active, .btn:active {
+        transform: translateY(0) !important;
+        box-shadow: var(--shadow-button);
+      }
+
+      button:focus-visible, .btn:focus-visible,
+      a:focus-visible, input:focus-visible,
+      select:focus-visible, textarea:focus-visible {
+        outline: 2px solid var(--accent-warm);
+        outline-offset: 2px;
+      }
+
+      .btn-primary {
+        color: #fff;
+        background: linear-gradient(135deg, var(--accent-warm) 0%, #c25a2e 100%);
+        border-color: transparent;
+        box-shadow: 0 2px 6px var(--accent-warm-glow);
+      }
+      .btn-primary:hover {
+        filter: brightness(1.08);
+        box-shadow: 0 4px 14px var(--accent-warm-glow);
+      }
+      .button-ripple {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.45);
+        transform: translate(-50%, -50%) scale(0);
+        pointer-events: none;
+        animation: buttonRipple .55s ease-out forwards;
+      }
+
+      .btn-secondary {
+        color: var(--text-primary);
+        background: var(--bg-card);
+        border-color: var(--border-medium);
+      }
+      body.dark .btn-secondary {
+        background: var(--bg-input);
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+      }
+
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      /* --- 9. FORM INPUTS -------------------------------------- */
+      input, textarea, select {
+        width: 100%;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+        background: var(--bg-input);
+        color: var(--text-primary);
+        font: 400 0.86rem var(--font-body);
+        box-shadow: none;
+        transition: all var(--duration-fast) var(--ease-out);
+        margin-bottom: 10px;
+        outline: none;
+      }
+
+      input::placeholder, textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      input:focus, textarea:focus, select:focus {
+        border-color: var(--accent-green);
+        background: var(--bg-card);
+        box-shadow: 0 0 0 3px var(--accent-green-soft);
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 5px;
+        border-radius: var(--radius-pill);
+        background: var(--border-medium);
+        border: none;
+        padding: 0;
+        margin-bottom: 0.6rem;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent-warm);
+        box-shadow: 0 1px 4px var(--accent-warm-glow);
+        cursor: pointer;
+        transition: transform var(--duration-fast) var(--ease-out);
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+
+      input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 22px;
+        height: 22px;
+        border: 1.5px solid var(--border-medium);
+        border-radius: 5px;
+        cursor: pointer;
+        background: var(--bg-input);
+        position: relative;
+        flex-shrink: 0;
+        transition: all var(--duration-fast) var(--ease-out);
+        box-shadow: none;
+      }
+      input[type="checkbox"]:hover {
+        border-color: var(--accent-green);
+      }
+      input[type="checkbox"]:checked {
+        background: var(--accent-green);
+        border-color: var(--accent-green);
+      }
+      input[type="checkbox"]:checked::after {
+        content: '';
+        position: absolute;
+        top: 3px; left: 7px;
+        width: 6px; height: 11px;
+        border: 2px solid #fff;
+        border-top: none; border-left: none;
+        transform: rotate(45deg);
+      }
+
+      /* --- 10. CONNECTION STATUS -------------------------------- */
+      .connection-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--radius-pill);
+        font: 600 0.78rem var(--font-body);
+        transition: all var(--duration-normal) var(--ease-out);
+      }
+      .connection-status::before {
+        content: '';
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        animation: pulseDot 2s var(--ease-out) infinite;
+      }
+
+      .status-connected {
+        background: rgba(42, 122, 86, 0.1);
+        border: 1px solid rgba(42, 122, 86, 0.25);
+        color: var(--accent-green);
+      }
+      .status-connected::before { background: var(--accent-green); }
+
+      .status-disconnected {
+        background: var(--accent-red-soft);
+        border: 1px solid rgba(196, 80, 80, 0.25);
+        color: var(--accent-red);
+      }
+      .status-disconnected::before { background: var(--accent-red); animation-name: pulseDotWarn; }
+
+      .status-paused {
+        background: rgba(212, 164, 58, 0.1);
+        border: 1px solid rgba(212, 164, 58, 0.25);
+        color: #b8862e;
+      }
+      .status-paused::before { background: #d4a43a; }
+
+      .status-message {
+        margin-top: 10px;
+        font-size: 0.8rem;
+        line-height: 1.45;
+        color: var(--text-secondary);
+      }
+
+      /* --- 11. FOCUS TASK BANNER ------------------------------- */
+      .focus-task-banner {
+        display: none;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, var(--accent-warm) 0%, #c25a2e 100%);
+        color: #fff;
+        font: 600 0.86rem var(--font-body);
+        margin-bottom: 12px;
+        box-shadow: 0 2px 10px var(--accent-warm-glow);
+        animation: cardSlideIn var(--duration-slow) var(--ease-spring) both;
+      }
+
+      /* --- 12. BLOCK BANNER ------------------------------------ */
+      .block-banner {
+        display: none;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.6rem 1rem;
+        background: var(--accent-red-soft);
+        border: 1px solid rgba(196, 80, 80, 0.25);
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+        font: 600 0.82rem var(--font-body);
+        color: var(--accent-red);
+        animation: cardSlideIn var(--duration-slow) var(--ease-spring) both;
+      }
+      .block-banner.visible { display: flex; }
+      .block-banner .banner-count {
+        background: var(--accent-red);
+        color: #fff;
+        border-radius: 50%;
+        width: 20px; height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .block-banner a.banner-link {
+        margin-left: auto;
+        font-size: 0.76rem;
+        color: var(--accent-red);
+        text-decoration: none;
+        opacity: 0.7;
+        transition: opacity var(--duration-fast);
+      }
+      .block-banner a.banner-link:hover { opacity: 1; text-decoration: underline; }
+
+      body.dark .block-banner {
+        background: rgba(224, 96, 96, 0.08);
+      }
+
+      /* --- 13. POMODORO TIMER ---------------------------------- */
+      .pomodoro-timer {
+        text-align: center;
+        margin-bottom: 12px;
+        padding: 8px 0;
+      }
+      .pomodoro-label {
+        font: 700 0.7rem var(--font-body);
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent-green);
+        margin-bottom: 6px;
+      }
+      .pomodoro-time {
+        font: 700 3.2rem/1 var(--font-display);
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        padding: 8px 16px;
+        border-radius: var(--radius-md);
+        background: var(--bg-input);
+        border: 1px solid var(--border-soft);
+        display: inline-block;
+        min-width: 256px; /* Scaled up by 60% */
+        text-align: center;
+        transition: box-shadow var(--duration-normal) var(--ease-out);
+      }
+
+      /* --- 14. FOCUS SHIELD SECTION ----------------------------- */
+      #extFocusShieldSection {
+        background: linear-gradient(135deg,
+          rgba(196, 80, 80, 0.06) 0%,
+          rgba(212, 104, 58, 0.05) 100%) !important;
+        border-color: rgba(196, 80, 80, 0.2) !important;
+      }
+      #extFocusShieldSection:hover {
+        border-color: rgba(196, 80, 80, 0.35) !important;
+      }
+      body.dark #extFocusShieldSection {
+        background: linear-gradient(135deg,
+          rgba(224, 96, 96, 0.08) 0%,
+          rgba(232, 132, 90, 0.06) 100%) !important;
+      }
+
+      .shield-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .shield-badge {
+        font: 700 0.74rem var(--font-body);
+        padding: 0.25rem 0.65rem;
+        border-radius: var(--radius-pill);
+        background: var(--border-soft);
+        color: var(--text-secondary);
+        transition: all var(--duration-fast) var(--ease-out);
+      }
+      .shield-description {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin: 8px 0 12px;
+        line-height: 1.4;
+      }
+
+      /* --- 15. SMART RECOMMENDATION ----------------------------- */
+      #smartRecommendation {
+        margin-bottom: 12px;
+        padding: 12px 16px;
+        border: 1px solid rgba(42, 122, 86, 0.2) !important;
+        border-radius: var(--radius-sm) !important;
+        background: var(--accent-green-soft) !important;
+        transition: border-color var(--duration-fast) var(--ease-out);
+      }
+      .recommendation-text {
+        font: 600 0.84rem var(--font-body);
+        color: var(--text-primary);
+        margin-bottom: 6px;
+      }
+      .recommendation-stats {
+        font-size: 0.76rem;
+        color: var(--text-secondary);
+      }
+
+      /* --- 16. ACCORDION / DETAILS ----------------------------- */
+      details.plan-details,
+      details.tools-details {
+        margin-top: 10px;
+      }
+
+      details summary {
+        cursor: pointer;
+        font: 600 0.82rem var(--font-body);
+        color: var(--accent-warm);
+        padding: 8px 0;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        user-select: none;
+        transition: color var(--duration-fast) var(--ease-out);
+      }
+      details summary:hover { color: #c25a2e; }
+      details summary::-webkit-details-marker { display: none; }
+      details summary::marker { display: none; }
+
+      details summary::before {
+        content: '';
+        width: 18px; height: 18px;
+        background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'/%3E%3C/svg%3E") no-repeat center;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'/%3E%3C/svg%3E") no-repeat center;
+        flex-shrink: 0;
+        transition: transform var(--duration-normal) var(--ease-spring);
+      }
+      details[open] summary::before {
+        transform: rotate(90deg);
+      }
+
+      details .details-content {
+        animation: accordionOpen var(--duration-normal) var(--ease-out) both;
+        padding-top: 8px;
+      }
+
+      /* --- 17. TABS LIST & TAB ITEMS --------------------------- */
+      .tabs-list {
+        max-height: 220px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+      }
+
+      .tab-item, .popup-task-item {
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        box-shadow: none;
+        transform: none;
+        transition: all var(--duration-fast) var(--ease-out);
+      }
+      .tab-item:hover, .popup-task-item:hover {
+        border-color: var(--border-medium);
+        background: var(--bg-card-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-card);
+      }
+
+      .tab-item.inactive {
+        background: var(--accent-red-soft);
+        border-color: rgba(196, 80, 80, 0.15);
+      }
+      .tab-item.active-tab {
+        background: var(--accent-green-soft);
+        border-color: rgba(42, 122, 86, 0.2);
+      }
+
+      .tab-title {
+        font: 600 0.86rem var(--font-body);
+        color: var(--text-primary);
+      }
+      .tab-url {
+        font-size: 0.74rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .tab-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 6px;
+        font-size: 0.74rem;
+        color: var(--text-secondary);
+      }
+      .tab-status.inactive {
+        color: var(--accent-red);
+        font-weight: 600;
+      }
+
+      .popup-task-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+      }
+
+      /* --- 18. ACTION LINKS ------------------------------------ */
+      .action-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 8px 0 12px;
+        animation: cardSlideIn var(--duration-slow) var(--ease-spring) both;
+        animation-delay: calc(var(--i, 0) * 60ms);
+      }
+      .action-link {
+        padding: 0.4rem 0.8rem;
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-pill);
+        background: var(--bg-card);
+        font: 600 0.74rem var(--font-body);
+        color: var(--accent-green);
+        text-decoration: none;
+        box-shadow: none;
+        transition: all var(--duration-fast) var(--ease-out);
+      }
+      .action-link:hover {
+        background: var(--accent-green-soft);
+        border-color: rgba(42, 122, 86, 0.25);
+        transform: translateY(-1px);
+      }
+
+      /* --- 19. WEB CLIPPER SUBCARD ----------------------------- */
+      .clipper-card {
+        margin-top: 10px;
+        padding: 12px 16px;
+        background: var(--bg-input);
+        border: 1px solid var(--border-soft);
+        border-radius: var(--radius-sm);
+      }
+      .clipper-card h4 {
+        margin-bottom: 8px;
+      }
+      .clipper-status {
+        font-size: 0.78rem;
+        color: var(--accent-green);
+        margin-top: 6px;
+        display: none;
+      }
+
+      /* --- 20. PLAN DISPLAY ------------------------------------ */
+      .current-plan {
+        display: none;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed var(--border-medium);
+      }
+
+      /* --- 21. EMPTY STATE ------------------------------------- */
+      .empty-state {
+        padding: 16px;
+        font-size: 0.84rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+
+      /* --- 22. FORM LABELS ------------------------------------- */
+      .form-label {
+        display: block;
+        font: 600 0.8rem var(--font-body);
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+      }
+
+      /* --- 23. KEYFRAME ANIMATIONS ----------------------------- */
+      @keyframes fadeSlideDown {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes cardSlideIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes accordionOpen {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes pulseDot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.5; transform: scale(0.85); }
+      }
+
+      @keyframes pulseDotWarn {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.4; transform: scale(0.7); }
+      }
+
+      @keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+
+      @keyframes buttonRipple {
+        to { transform: translate(-50%, -50%) scale(18); opacity: 0; }
+      }
+
+      /* --- 24. REDUCED MOTION ---------------------------------- */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* --- 25. RESPONSIVE -------------------------------------- */
+      @media (max-width: 720px) { /* Adjusted breakpoint */
+        html, body { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="popupAnnouncements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+    <div>
+      <!-- Blocking Status Banner -->
+      <div id="blockBanner" class="block-banner" role="status" aria-live="polite">
+        <span>🚫</span>
+        <span id="blockBannerText">Blocking active</span>
+        <span class="banner-count" id="blockBannerCount">0</span>
+        <a class="banner-link" href="#" id="blockBannerManage">Manage →</a>
+      </div>
+
+      <div class="header">
+        <div class="brand-block">
+          <div class="eyebrow">Tab Tracker</div>
+          <h1>Helpy</h1>
+          <p class="subtitle" id="subtitle">Keeping an eye on your Chrome tabs.</p>
+        </div>
+        <div class="header-controls">
+          <select id="langSwitcher" class="lang-switcher" aria-label="Select language" title="Switch language">
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="fr">FR</option>
+            <option value="de">DE</option>
+            <option value="zh-CN">ZH</option>
+            <option value="ja">JA</option>
+          </select>
+          <button id="darkModeBtn" class="dark-mode-btn" aria-label="Toggle dark mode">
+            <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="currentColor" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="quick-glance" aria-live="polite">
+        <div>
+          <span class="quick-glance-label">Today's focus</span>
+          <span id="quickGlanceText" class="quick-glance-value">Checking your workspace...</span>
+        </div>
+        <span id="trackedTabCount" class="tab-count" title="Tracked tabs">0 tabs</span>
+      </div>
+
+      <!-- Active focus task banner -->
+      <div class="focus-task-banner" id="focusTaskBanner"></div>
+
+      <!-- Google Auth Section -->
+      <div class="section" id="googleAuthSection" style="--i:0">
+        <h3>Google Account</h3>
+        <div id="googleAuthContent"></div>
+      </div>
+
+      <!-- Connection Status Section -->
+      <div class="section" style="--i:1">
+        <div id="connectionStatus" class="connection-status status-disconnected">
+          App unavailable
+        </div>
+        <p id="statusMessage" class="status-message" role="status" aria-live="polite">
+          Waiting for connection.
+        </p>
+        <div class="btn-group">
+          <button id="toggleBtn" class="btn btn-primary">Pause Tracking</button>
+        </div>
+      </div>
+
+      <!-- Focus Shield Section -->
+      <div class="section" id="extFocusShieldSection" style="--i:2">
+        <div class="shield-header">
+          <h3 style="margin-bottom: 0;">🛡️ Focus Shield</h3>
+          <span id="extShieldStatusBadge" class="shield-badge">OFF</span>
+        </div>
+        <p class="shield-description">Block distraction websites and enforce single-task focus.</p>
+        <button id="extToggleShieldBtn" class="btn btn-primary" style="width: 100%;">Activate Focus Shield</button>
+      </div>
+
+      <!-- Pomodoro Timer Section -->
+      <div class="section" style="--i:3">
+        <h3>Pomodoro Timer</h3>
+        <div class="pomodoro-timer">
+          <div class="pomodoro-label" id="pomodoroLabel">Focus Time</div>
+          <div class="pomodoro-time" id="pomodoroTime">25:00</div>
+        </div>
+        <div class="btn-group">
+          <button id="pomodoroStart" class="btn btn-primary">Start</button>
+          <button id="pomodoroPause" class="btn btn-secondary" style="display: none">Pause</button>
+          <button id="pomodoroBreak" class="btn btn-secondary">Break</button>
+          <button id="pomodoroStop" class="btn btn-secondary" style="display: none">Stop</button>
+        </div>
+      </div>
+
+      <!-- Focus Plan Section (ADHD-Friendly) -->
+      <div class="section" id="planSection" style="--i:4">
+        <h3>Create Focus Plan</h3>
+
+        <!-- Smart Recommendation -->
+        <div id="smartRecommendation">
+          <div id="recommendationText" class="recommendation-text"></div>
+          <div id="recommendationStats" class="recommendation-stats"></div>
+        </div>
+
+        <form id="popupPlanForm">
+          <input type="text" id="popupPlanTitle" placeholder="Plan title..." required />
+          <input type="number" id="popupPlanDuration" min="5" max="240" value="30" placeholder="Duration (minutes)" required />
+
+          <details class="plan-details">
+            <summary>Customize Plan Settings</summary>
+            <div class="details-content">
+              <label for="userEnergy" class="form-label">Energy Level (1-100)</label>
+              <input type="range" id="userEnergy" min="1" max="100" value="70" />
+
+              <label for="workIntensity" class="form-label">Work Intensity (1-100)</label>
+              <input type="range" id="workIntensity" min="1" max="100" value="60" />
+
+              <select id="popupChunkSize">
+                <option value="5">5-minute chunks</option>
+                <option value="10">10-minute chunks</option>
+                <option value="15" selected>15-minute chunks</option>
+                <option value="20">20-minute chunks</option>
+                <option value="30">30-minute chunks</option>
+              </select>
+            </div>
+          </details>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Create Plan</button>
+        </form>
+
+        <!-- Current Plan Display -->
+        <div id="currentPopupPlan" class="current-plan">
+          <h4>Current Plan</h4>
+          <div id="currentPopupPlanContent"></div>
+          <div class="btn-group" style="margin-top: 0.5rem;">
+            <button id="startPopupPlanBtn" class="btn btn-primary">Start Timer</button>
+            <button id="clearPopupPlanBtn" class="btn btn-secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Smart Web Tools Section -->
+      <div class="section" id="smartToolsSection" style="--i:5">
+        <details class="tools-details">
+          <summary>Smart Web Tools</summary>
+          <div class="details-content">
+            <div class="btn-group" style="margin-top: 4px; margin-bottom: 8px;">
+              <button id="groupFocusTabsBtn" class="btn btn-secondary" title="Group active tabs into a Helpy Focus Chrome Tab Group">📁 Group Focus Tabs</button>
+              <button id="toggleReaderModeBtn" class="btn btn-secondary" title="Toggle Clean Reader Overlay on current page">📖 Reader Mode</button>
+            </div>
+
+            <div class="clipper-card">
+              <h4>Quick Web Clipper Note</h4>
+              <textarea id="clipperNoteInput" rows="2" placeholder="Note down key ideas or web clips to sync with Helpy desktop..."></textarea>
+              <button id="saveClipperNoteBtn" class="btn btn-primary" style="width: 100%;">Clip to Helpy Desktop</button>
+              <div id="clipperStatus" class="clipper-status">Saved to Helpy Desktop!</div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Tracked Tabs Section -->
+      <div class="section" style="--i:6">
+        <h3>Tracked Tabs</h3>
+        <div id="tabsList" class="tabs-list" role="list"></div>
+      </div>
+
+      <div class="action-links" style="--i:7">
+        <a href="#" id="exportBtn" class="action-link">Export Data</a>
+        <a href="#" id="importBtn" class="action-link">Import Data</a>
+        <a href="#" id="reportsLink" class="action-link">View Reports</a>
+        <a href="#" id="settingsLink" class="action-link">Open Settings</a>
+      </div>
+
+      <input type="file" id="importFile" accept=".json" style="display: none" />
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

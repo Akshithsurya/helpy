@@ -78,10 +78,9 @@ aggregate_plans(Plans) ->
         fun(Plan, {Total, Completed, DurSum}) ->
             case maps:get(status, Plan, undefined) of
                 ?COMPLETED_STATUS ->
-                    {Total + 1,
-                     Completed + 1,
-                     DurSum + maps:get(duration_minutes, Plan, 0)};
-                _Status ->
+                    AddDur = maps:get(duration_minutes, Plan, 0),
+                    {Total + 1, Completed + 1, DurSum + AddDur};
+                _ ->
                     {Total + 1, Completed, DurSum}
             end
         end,
@@ -97,7 +96,7 @@ optimal_focus_time(AvgDuration) ->
     max(?MIN_FOCUS_TIME, min(?MAX_FOCUS_TIME, Raw)).
 
 -spec safe_divide(number(), number()) -> float().
-safe_divide(_N, D) when D == 0 -> 0.0;
+safe_divide(_, 0) -> 0.0;
 safe_divide(N, D) when is_number(N), is_number(D) -> N / D.
 
 -spec recommendations_for(float(), non_neg_integer()) -> [binary()].

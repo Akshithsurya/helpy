@@ -2,25 +2,45 @@
  [{description, "Helpy Plan Service - Core planning and scheduling engine"},
   {vsn, "1.0.0"},
   {modules, [
+      %% Application lifecycle
       helpy_plan_app,        % Application entry point
       helpy_plan_sup,        % Root supervisor
+      
+      %% Core service layer
       helpy_plan_service,    % Main business logic service
       helpy_plan_validator,  % Request/input validation
       helpy_plan_parser,      % Plan data parser
+      
+      %% Stateful servers
       helpy_plan_history,     % Plan history tracking server
+      
+      %% HTTP layer
       helpy_plan_http_handler, % Cowboy HTTP request handlers
+      
+      %% Cross-cutting concerns
       helpy_plan_config,      % Configuration management
       helpy_plan_error,       % Error types and handling
       helpy_plan_analytics,   % Plan usage analytics
       helpy_plan_metrics,     % Prometheus metrics collection
+      
+      %% Native integration
       helpy_plan_nif          % Native implementation wrapper
   ]},
-  {registered, [helpy_plan_sup, helpy_plan_history]},
-  {applications, [kernel, stdlib, cowboy, jsx, crypto]},
+  {registered, [helpy_plan_sup, helpy_plan_history, helpy_plan_service]},
+  {applications, [kernel, stdlib, cowboy, jsx, crypto, prometheus, jesse]},
   {mod, {helpy_plan_app, []}},
   {env, [
+      %% Network configuration
       {http_port, 8080},
+      
+      %% Resource limits
       {max_history_size, 1000},
+      {max_concurrent_plans, 100},    % Maximum number of active plan executions
+      
+      %% Timeouts and intervals
       {validation_timeout, 5000},
+      {metrics_flush_interval, 15000}, % Prometheus metrics flush period (ms)
+      
+      %% Feature flags
       {analytics_enabled, true}
   ]}]}.
